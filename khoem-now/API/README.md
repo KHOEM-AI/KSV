@@ -664,5 +664,107 @@ KSV ទទួលតែ identity/token ចាំបាច់តាម OAuth 2.0 /
 
 *ឯកសារនេះជា Blueprint/Specification ដំណាក់កាល "មុនសរសេរកូដ" — គោលដៅគឺបញ្ចប់ Architecture & Requirements ជាមុនសិន មុននឹងចាប់ផ្តើមសាងសង់ API និង Database ជាក់ស្តែង។*
 
+khoem-now/
+│
+├── .bolt/
+│   ├── config.json
+│   └── prompt
+│
+├── API/
+│   ├── README.md
+│   ├── account-recovery.ts
+│   ├── authentication.ts
+│   ├── authorization.ts
+│   ├── automation.ts
+│   ├── command.ts
+│   ├── device.ts
+│   ├── discovery.ts
+│   ├── gateway.ts
+│   ├── identity.ts
+│   ├── international.ts
+│   ├── organization.ts
+│   ├── package-lock.json
+│   ├── protocol.ts
+│   └── safety.ts
+│
+├── DOCUMENTATION/
+│   ├── account-recovery.md
+│   ├── administration.md
+│   ├── audit.md
+│   ├── authentication.md
+│   ├── authorization.md
+│   ├── command-automation.md
+│   ├── device.md
+│   ├── discovery-pairing.md
+│   ├── identity.md
+│   ├── international.md
+│   ├── notification.md
+│   ├── organization.md
+│   ├── protocol-gateway.md
+│   ├── safety.md
+│   └── security.md
+│
+├── archive/
+│   └── package-lock.json.backup
+│
+├── data/
+│   └── countries.json
+│
+├── scripts/
+│   ├── run-migrations.mjs
+│   ├── seed-countries.mjs
+│   └── seed-languages.mjs
+│
+├── src/
+│   ├── components/
+│   │   ├── LanguageSelector.tsx
+│   │   ├── nav.tsx
+│   │   └── ui.tsx
+│   │
+│   ├── data/
+│   │   ├── countries.ts
+│   │   └── domain.ts
+│   │
+│   ├── i18n/
+│   │   ├── LanguageContext.tsx
+│   │   └── translations.ts
+│   │
+│   ├── views/
+│   │   ├── AuditView.tsx
+│   │   ├── CertificatesView.tsx
+│   │   ├── ControlsView.tsx
+│   │   ├── DashboardView.tsx
+│   │   ├── DevicesView.tsx
+│   │   ├── GatewayView.tsx
+│   │   ├── InternationalView.tsx
+│   │   ├── OrganizationView.tsx
+│   │   ├── ProtocolsView.tsx
+│   │   ├── SafetyView.tsx
+│   │   ├── SecurityView.tsx
+│   │   └── SettingsView.tsx
+│   │
+│   ├── App.tsx
+│   ├── App_1.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   └── vite-env.d.ts
+│
+├── .gitignore
+├── AI_INSTRUCTIONS.md
+├── README.md
+├── eslint.config.js
+├── index.html
+├── ksv.sh
+├── package-lock.json
+├── package.json
+├── postcss.config.cjs
+├── setup_ksv.sh
+├── sync.sh
+├── tailwind.config.cjs
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
 
 [![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-s6rw1asx)
