@@ -312,6 +312,21 @@ const en: Dict = {
   'view.organization.perms.networkAdmin': 'Gateway + protocol config',
   'view.organization.perms.operator': 'Device control + view audit',
   'view.organization.perms.viewer': 'Read-only dashboard access',
+
+  // Protocols View 
+  'view.protocols.abstractionTitle': 'Protocol Abstraction Layer',
+  'view.protocols.abstractionSubtitle': 'Unified adapter interface across all transport protocols',
+  'view.protocols.latency': 'Latency',
+  'view.protocols.encryptionTitle': 'Encryption Standards',
+  'view.protocols.capabilityRegistryTitle': 'Capability Registry',
+  'view.protocols.dev': 'dev',
+  'view.protocols.status.active': 'active',
+  'view.protocols.status.degraded': 'degraded',
+  'view.protocols.status.offline': 'offline',
+  'view.protocols.enc.tls': 'TLS 1.3',
+  'view.protocols.enc.wpa3': 'WPA3-Enterprise',
+  'view.protocols.enc.aesBle': 'AES-CCM (BLE)',
+  'view.protocols.enc.aesZigbee': 'AES-128 (Zigbee)', 
 };
 
 const km: Dict = {
@@ -575,6 +590,21 @@ const km: Dict = {
   'view.organization.perms.networkAdmin': 'ការកំណត់ច្រកបញ្ជូន + ពិធីការ',
   'view.organization.perms.operator': 'គ្រប់គ្រងឧបករណ៍ + មើលកំណត់ត្រា',
   'view.organization.perms.viewer': 'ចូលមើលផ្ទាំងគ្រប់គ្រងតែប៉ុណ្ណោះ',
+
+  // Protocols View
+  'view.protocols.abstractionTitle': 'ស្រទាប់អរូបីនីយកម្មពិធីការ',
+  'view.protocols.abstractionSubtitle': 'ចំណុចប្រទាក់ adapter រួមគ្នាសម្រាប់គ្រប់ពិធីការដឹកជញ្ជូន',
+  'view.protocols.latency': 'ភាពយឺត',
+  'view.protocols.encryptionTitle': 'ស្តង់ដារអ៊ិនគ្រីប',
+  'view.protocols.capabilityRegistryTitle': 'បញ្ជីសមត្ថភាព',
+  'view.protocols.dev': 'ឧបករណ៍',
+  'view.protocols.status.active': 'សកម្ម',
+  'view.protocols.status.degraded': 'ចុះខ្សោយ',
+  'view.protocols.status.offline': 'គ្មានអនឡាញ',
+  'view.protocols.enc.tls': 'TLS 1.3',
+  'view.protocols.enc.wpa3': 'WPA3-Enterprise',
+  'view.protocols.enc.aesBle': 'AES-CCM (BLE)',
+  'view.protocols.enc.aesZigbee': 'AES-128 (Zigbee)',
 };
 
 const ja: Dict = {
