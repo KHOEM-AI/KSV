@@ -22,27 +22,27 @@ const statusVariant: Record<DeviceStatus, 'success' | 'warning' | 'neutral' | 'b
 };
 
 const categoryKey: Record<string, string> = {
-  access: 'devices.category.access',
-  climate: 'devices.category.climate',
-  industrial: 'devices.category.industrial',
-  vehicle: 'devices.category.vehicle',
-  sensor: 'devices.category.sensor',
-  network: 'devices.category.network',
+  access: 'view.devices.category.access',
+  climate: 'view.devices.category.climate',
+  industrial: 'view.devices.category.industrial',
+  vehicle: 'view.devices.category.vehicle',
+  sensor: 'view.devices.category.sensor',
+  network: 'view.devices.category.network',
 };
 
 const filterKey: Record<string, string> = {
-  all: 'devices.filter.all',
-  online: 'devices.filter.online',
-  warning: 'devices.filter.warning',
-  maintenance: 'devices.filter.maintenance',
-  offline: 'devices.filter.offline',
+  all: 'view.devices.filter.all',
+  online: 'view.devices.filter.online',
+  warning: 'view.devices.filter.warning',
+  maintenance: 'view.devices.filter.maintenance',
+  offline: 'view.devices.filter.offline',
 };
 
 const statusKey: Record<DeviceStatus, string> = {
-  online: 'devices.status.online',
-  warning: 'devices.status.warning',
-  offline: 'devices.status.offline',
-  maintenance: 'devices.status.maintenance',
+  online: 'view.devices.status.online',
+  warning: 'view.devices.status.warning',
+  offline: 'view.devices.status.offline',
+  maintenance: 'view.devices.status.maintenance',
 };
 
 export function DevicesView() {
@@ -73,12 +73,12 @@ export function DevicesView() {
       {/* Device table */}
       <Panel className="p-5 animate-fade-in">
         <SectionHeader
-          title={t('devices.registry.title')}
-          subtitle={t('devices.registry.subtitle', { count: devices.length })}
+          title={t('view.devices.registryTitle')}
+          subtitle={`${devices.length.toLocaleString()} ${t('view.devices.acrossAllSites')}`}
           icon={<Cpu size={18} />}
           action={
             <div className="flex gap-2">
-              <button className="btn-ghost text-xs"><Download size={14} /> {t('devices.registry.export')}</button>
+              <button className="btn-ghost text-xs"><Download size={14} /> {t('view.devices.export')}</button>
             </div>
           }
         />
@@ -89,7 +89,7 @@ export function DevicesView() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               className="input pl-9"
-              placeholder={t('devices.registry.searchPlaceholder')}
+              placeholder={t('view.devices.searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -114,13 +114,13 @@ export function DevicesView() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-ink-700 text-left text-xs uppercase tracking-wider text-ink-400">
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.device')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.category')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.protocol')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.location')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.signal')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.firmware')}</th>
-                <th className="pb-3 pr-4 font-semibold">{t('devices.table.status')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.device')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.category')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.protocol')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.location')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.signal')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.firmware')}</th>
+                <th className="pb-3 pr-4 font-semibold">{t('view.devices.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-800">
@@ -155,7 +155,7 @@ export function DevicesView() {
             </tbody>
           </table>
           {filtered.length === 0 && (
-            <div className="py-12 text-center text-ink-400">{t('devices.empty')}</div>
+            <div className="py-12 text-center text-ink-400">{t('view.devices.noMatch')}</div>
           )}
         </div>
       </Panel>
