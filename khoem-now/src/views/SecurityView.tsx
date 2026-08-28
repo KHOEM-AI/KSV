@@ -1,8 +1,10 @@
 import { ShieldCheck, KeyRound, Fingerprint, Lock, UserCheck, AlertTriangle } from 'lucide-react';
 import { Panel, SectionHeader, Badge, StatusDot, ProgressBar, Donut } from '@/components/ui';
 import { sessions } from '@/data/domain';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function SecurityView() {
+  const { t } = useLanguage();
   const activeSessions = sessions.filter((s) => s.status === 'active').length;
   const mfaEnabled = sessions.filter((s) => s.mfa).length;
   const mfaPct = Math.round((mfaEnabled / sessions.length) * 100);
@@ -14,6 +16,15 @@ export function SecurityView() {
     { value: sessions.filter((s) => s.method === 'Password').length, color: '#f59e0b', label: 'Password' },
   ];
 
+  const policies = [
+    { key: 'zeroPlaintext', name: t('view.security.policy.zeroPlaintext'), status: t('view.security.status.enforced'), pct: 100 },
+    { key: 'oauthOidc', name: t('view.security.policy.oauthOidc'), status: t('view.security.status.enforced'), pct: 100 },
+    { key: 'otpRecovery', name: t('view.security.policy.otpRecovery'), status: t('view.security.status.enforced'), pct: 100 },
+    { key: 'sessionAudit', name: t('view.security.policy.sessionAudit'), status: t('view.security.status.enforced'), pct: 100 },
+    { key: 'forceMfaAdmins', name: t('view.security.policy.forceMfaAdmins'), status: t('view.security.status.enforced'), pct: 100 },
+    { key: 'ipAllowlist', name: t('view.security.policy.ipAllowlist'), status: t('view.security.status.partial'), pct: 72 },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Security posture */}
@@ -21,25 +32,25 @@ export function SecurityView() {
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-success-500/10 text-success-400"><ShieldCheck size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">A+</p><p className="text-xs text-ink-400">Security grade</p></div>
+            <div><p className="text-2xl font-bold text-white">A+</p><p className="text-xs text-ink-400">{t('view.security.stat.grade')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400"><UserCheck size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">{activeSessions}</p><p className="text-xs text-ink-400">Active sessions</p></div>
+            <div><p className="text-2xl font-bold text-white">{activeSessions}</p><p className="text-xs text-ink-400">{t('view.security.stat.activeSessions')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400"><Fingerprint size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">{mfaPct}%</p><p className="text-xs text-ink-400">MFA coverage</p></div>
+            <div><p className="text-2xl font-bold text-white">{mfaPct}%</p><p className="text-xs text-ink-400">{t('view.security.stat.mfaCoverage')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-warning-500/10 text-warning-400"><AlertTriangle size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">2</p><p className="text-xs text-ink-400">Denied attempts (24h)</p></div>
+            <div><p className="text-2xl font-bold text-white">2</p><p className="text-xs text-ink-400">{t('view.security.stat.deniedAttempts')}</p></div>
           </div>
         </Panel>
       </div>
@@ -47,17 +58,17 @@ export function SecurityView() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Sessions */}
         <Panel className="p-5 lg:col-span-2 animate-fade-in">
-          <SectionHeader title="Active Sessions" subtitle="Authenticated user sessions across the platform" icon={<KeyRound size={18} />} />
+          <SectionHeader title={t('view.security.sessions.title')} subtitle={t('view.security.sessions.subtitle')} icon={<KeyRound size={18} />} />
           <div className="overflow-x-auto scrollbar-thin">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-ink-700 text-left text-xs uppercase tracking-wider text-ink-400">
-                  <th className="pb-3 pr-4 font-semibold">User</th>
-                  <th className="pb-3 pr-4 font-semibold">Method</th>
-                  <th className="pb-3 pr-4 font-semibold">Location</th>
-                  <th className="pb-3 pr-4 font-semibold">MFA</th>
-                  <th className="pb-3 pr-4 font-semibold">Last active</th>
-                  <th className="pb-3 pr-4 font-semibold">Status</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.user')}</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.method')}</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.location')}</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.mfa')}</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.lastActive')}</th>
+                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-800">
@@ -73,7 +84,7 @@ export function SecurityView() {
                       <div className="text-xs text-ink-400 font-mono">{s.ip}</div>
                     </td>
                     <td className="py-3 pr-4">
-                      {s.mfa ? <Badge variant="success"><Lock size={10} /> On</Badge> : <Badge variant="warning">Off</Badge>}
+                      {s.mfa ? <Badge variant="success"><Lock size={10} /> {t('view.security.mfa.on')}</Badge> : <Badge variant="warning">{t('view.security.mfa.off')}</Badge>}
                     </td>
                     <td className="py-3 pr-4 text-ink-300">{s.lastActive}</td>
                     <td className="py-3 pr-4"><StatusDot status={s.status} label={s.status} /></td>
@@ -87,9 +98,9 @@ export function SecurityView() {
         {/* Auth methods donut + policies */}
         <div className="space-y-4">
           <Panel className="p-5 animate-fade-in">
-            <SectionHeader title="Auth Methods" icon={<Fingerprint size={18} />} />
+            <SectionHeader title={t('view.security.authMethods.title')} icon={<Fingerprint size={18} />} />
             <div className="flex flex-col items-center gap-4">
-              <Donut segments={authMethods} centerLabel={`${sessions.length}`} centerSub="sessions" size={130} />
+              <Donut segments={authMethods} centerLabel={`${sessions.length}`} centerSub={t('view.security.authMethods.sessions')} size={130} />
               <div className="w-full space-y-2">
                 {authMethods.map((m) => (
                   <div key={m.label} className="flex items-center justify-between text-sm">
@@ -105,17 +116,10 @@ export function SecurityView() {
           </Panel>
 
           <Panel className="p-5 animate-fade-in">
-            <SectionHeader title="Security Policies" icon={<ShieldCheck size={18} />} />
+            <SectionHeader title={t('view.security.policies.title')} icon={<ShieldCheck size={18} />} />
             <div className="space-y-3">
-              {[
-                { name: 'Zero-plaintext password policy', status: 'Enforced', pct: 100 },
-                { name: 'OAuth 2.0 / OIDC flow', status: 'Enforced', pct: 100 },
-                { name: 'OTP recovery backup', status: 'Enforced', pct: 100 },
-                { name: 'Session audit logging', status: 'Enforced', pct: 100 },
-                { name: 'Force MFA for admins', status: 'Enforced', pct: 100 },
-                { name: 'IP allowlist (prod)', status: 'Partial', pct: 72 },
-              ].map((p) => (
-                <div key={p.name}>
+              {policies.map((p) => (
+                <div key={p.key}>
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="text-ink-200">{p.name}</span>
                     <Badge variant={p.pct === 100 ? 'success' : 'warning'}>{p.status}</Badge>
