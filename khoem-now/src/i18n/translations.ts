@@ -77,6 +77,82 @@ const en: Dict = {
   'intl.chooseLanguage': 'Choose your language',
   'intl.daytime': 'Daytime',
   'intl.nighttime': 'Nighttime',
+
+  // nav groups (used by src/components/nav.tsx)
+  'navgroup.overview': 'Overview',
+  'navgroup.devicesControl': 'Devices & Control',
+  'navgroup.securitySafety': 'Security & Safety',
+  'navgroup.organization': 'Organization',
+
+  // view subtitles (used by src/components/nav.tsx -> viewMeta)
+  'view.dashboard.subtitle': 'Live overview of your entire KSV fleet',
+  'view.devices.subtitle': 'Manage every connected device',
+  'view.controls.subtitle': 'Send and review device commands',
+  'view.protocols.subtitle': 'Connectivity and protocol health',
+  'view.gateway.subtitle': 'Edge gateways and offline mode',
+  'view.security.subtitle': 'Identity, sessions, and access',
+  'view.safety.subtitle': 'Safety rules and interlocks',
+  'view.organization.subtitle': 'Sites, teams, and roles',
+  'view.international.subtitle': 'Country, language, and time zone',
+  'view.audit.subtitle': 'Full activity and security log',
+  'view.certificates.subtitle': 'Training and compliance records',
+  'view.settings.subtitle': 'Account and platform preferences',
+
+  // Dashboard — stat cards
+  'dashboard.stat.connectedDevices': 'Connected Devices',
+  'dashboard.stat.activeSafetyRules': 'Active Safety Rules',
+  'dashboard.stat.edgeGateways': 'Edge Gateways',
+  'dashboard.stat.online': 'online',
+  'dashboard.stat.countriesDeployed': 'Countries Deployed',
+  'dashboard.trend.devicesUp': '2.4%',
+  'dashboard.trend.rulesNew': '12 new',
+  'dashboard.trend.gatewayOffline': '1 offline',
+  'dashboard.trend.countriesAdded': '3 added',
+
+  // Dashboard — traffic panel
+  'dashboard.traffic.title': 'Platform Traffic',
+  'dashboard.traffic.subtitle': 'Command messages per minute — last 24 hours',
+  'dashboard.traffic.live': 'Live',
+  'dashboard.traffic.peakThroughput': 'Peak throughput',
+  'dashboard.traffic.cmdPerMin': '{count} cmd/min',
+  'dashboard.traffic.avgLatency': 'Avg latency',
+  'dashboard.traffic.ms': '{count} ms',
+  'dashboard.traffic.uptime': 'Uptime',
+  'dashboard.traffic.days': '{count} days',
+
+  // Dashboard — device health donut
+  'dashboard.health.title': 'Device Health',
+  'dashboard.health.subtitle': 'Global fleet status',
+  'dashboard.health.online': 'Online',
+  'dashboard.health.warning': 'Warning',
+  'dashboard.health.offline': 'Offline',
+
+  // Dashboard — alert activity
+  'dashboard.alerts.title': 'Alert Activity',
+  'dashboard.alerts.subtitle': 'Safety + security triggers',
+  'dashboard.alerts.openAlerts': 'Open alerts',
+  'dashboard.alerts.critical': '{count} critical',
+
+  // Dashboard — site load
+  'dashboard.sites.title': 'Site Load',
+  'dashboard.sites.subtitle': 'Devices per site and gateway utilization',
+  'dashboard.sites.viewAll': 'View all',
+  'dashboard.sites.devicesAndLoad': '{count} devices · {load}%',
+
+  // Dashboard — recent devices / safety rules / protocol health
+  'dashboard.recentDevices.title': 'Recent Devices',
+  'dashboard.safetyRules.title': 'Safety Rules',
+  'dashboard.safetyRules.triggered': '{scope} · triggered {count}×',
+  'dashboard.protocols.title': 'Protocol Health',
+  'dashboard.protocols.devicesAndLatency': '{count} devices · {latency}ms',
+
+  // Dashboard — gateway fleet
+  'dashboard.gateway.title': 'Edge Gateway Fleet',
+  'dashboard.gateway.subtitle': 'Local controllers with offline-mode capability',
+  'dashboard.gateway.onlineBadge': '{online}/{total} online',
+  'dashboard.gateway.cpu': 'CPU',
+  'dashboard.gateway.mem': 'Mem',
+  'dashboard.gateway.devices': 'Devices',
 };
 
 const km: Dict = {
@@ -115,6 +191,73 @@ const km: Dict = {
   'intl.chooseLanguage': 'ជ្រើសរើសភាសារបស់អ្នក',
   'intl.daytime': 'ពេលថ្ងៃ',
   'intl.nighttime': 'ពេលយប់',
+
+  'navgroup.overview': 'ទិដ្ឋភាពទូទៅ',
+  'navgroup.devicesControl': 'ឧបករណ៍ និងការគ្រប់គ្រង',
+  'navgroup.securitySafety': 'សុវត្ថិភាព',
+  'navgroup.organization': 'អង្គភាព',
+
+  'view.dashboard.subtitle': 'ទិដ្ឋភាពផ្ទាល់នៃប្រព័ន្ធ KSV ទាំងមូល',
+  'view.devices.subtitle': 'គ្រប់គ្រងគ្រប់ឧបករណ៍ដែលបានភ្ជាប់',
+  'view.controls.subtitle': 'ផ្ញើ និងពិនិត្យបញ្ជាឧបករណ៍',
+  'view.protocols.subtitle': 'ការតភ្ជាប់ និងសុខភាពពិធីការ',
+  'view.gateway.subtitle': 'ច្រកបញ្ជូនគែម និងម៉ូដក្រៅបណ្ដាញ',
+  'view.security.subtitle': 'អត្តសញ្ញាណ សម័យប្រើប្រាស់ និងសិទ្ធិចូលប្រើ',
+  'view.safety.subtitle': 'ក្បួនសុវត្ថិភាព និងប្រព័ន្ធចាក់សោអន្តរាគមន៍',
+  'view.organization.subtitle': 'ទីតាំង ក្រុម និងតួនាទី',
+  'view.international.subtitle': 'ប្រទេស ភាសា និងម៉ោងសកល',
+  'view.audit.subtitle': 'កំណត់ត្រាសកម្មភាព និងសុវត្ថិភាពពេញលេញ',
+  'view.certificates.subtitle': 'កំណត់ត្រាបណ្តុះបណ្តាល និងអនុលោមភាព',
+  'view.settings.subtitle': 'ចំណូលចិត្តគណនី និងវេទិកា',
+
+  'dashboard.stat.connectedDevices': 'ឧបករណ៍បានភ្ជាប់',
+  'dashboard.stat.activeSafetyRules': 'ក្បួនសុវត្ថិភាពសកម្ម',
+  'dashboard.stat.edgeGateways': 'ច្រកបញ្ជូនគែម',
+  'dashboard.stat.online': 'អនឡាញ',
+  'dashboard.stat.countriesDeployed': 'ប្រទេសបានដាក់ឱ្យប្រើ',
+  'dashboard.trend.devicesUp': '2.4%',
+  'dashboard.trend.rulesNew': 'ថ្មី 12',
+  'dashboard.trend.gatewayOffline': 'ក្រៅបណ្តាញ 1',
+  'dashboard.trend.countriesAdded': 'បន្ថែម 3',
+
+  'dashboard.traffic.title': 'ចរាចរណ៍វេទិកា',
+  'dashboard.traffic.subtitle': 'សារបញ្ជាក្នុងមួយនាទី — 24 ម៉ោងចុងក្រោយ',
+  'dashboard.traffic.live': 'បន្តផ្ទាល់',
+  'dashboard.traffic.peakThroughput': 'ល្បឿនកំពូល',
+  'dashboard.traffic.cmdPerMin': '{count} បញ្ជា/នាទី',
+  'dashboard.traffic.avgLatency': 'ភាពយឺតជាមធ្យម',
+  'dashboard.traffic.ms': '{count} ម.វិ.',
+  'dashboard.traffic.uptime': 'ពេលដំណើរការជាប់',
+  'dashboard.traffic.days': '{count} ថ្ងៃ',
+
+  'dashboard.health.title': 'សុខភាពឧបករណ៍',
+  'dashboard.health.subtitle': 'ស្ថានភាពក្រុមឧបករណ៍សកល',
+  'dashboard.health.online': 'អនឡាញ',
+  'dashboard.health.warning': 'ព្រមាន',
+  'dashboard.health.offline': 'គ្មានអនឡាញ',
+
+  'dashboard.alerts.title': 'សកម្មភាពជូនដំណឹង',
+  'dashboard.alerts.subtitle': 'ការជូនដំណឹងសុវត្ថិភាព',
+  'dashboard.alerts.openAlerts': 'ការជូនដំណឹងកំពុងបើក',
+  'dashboard.alerts.critical': 'ធ្ងន់ធ្ងរ {count}',
+
+  'dashboard.sites.title': 'បន្ទុកទីតាំង',
+  'dashboard.sites.subtitle': 'ឧបករណ៍តាមទីតាំង និងការប្រើប្រាស់ច្រកបញ្ជូន',
+  'dashboard.sites.viewAll': 'មើលទាំងអស់',
+  'dashboard.sites.devicesAndLoad': 'ឧបករណ៍ {count} · {load}%',
+
+  'dashboard.recentDevices.title': 'ឧបករណ៍ថ្មីៗ',
+  'dashboard.safetyRules.title': 'ក្បួនសុវត្ថិភាព',
+  'dashboard.safetyRules.triggered': '{scope} · បានកេះ {count}×',
+  'dashboard.protocols.title': 'សុខភាពពិធីការ',
+  'dashboard.protocols.devicesAndLatency': 'ឧបករណ៍ {count} · {latency}ម.វិ.',
+
+  'dashboard.gateway.title': 'ក្រុមច្រកបញ្ជូនគែម',
+  'dashboard.gateway.subtitle': 'ឧបករណ៍បញ្ជាមូលដ្ឋានដែលអាចដំណើរការក្រៅបណ្តាញ',
+  'dashboard.gateway.onlineBadge': '{online}/{total} អនឡាញ',
+  'dashboard.gateway.cpu': 'ស៊ីភីយូ',
+  'dashboard.gateway.mem': 'អង្គចងចាំ',
+  'dashboard.gateway.devices': 'ឧបករណ៍',
 };
 
 const ja: Dict = {
