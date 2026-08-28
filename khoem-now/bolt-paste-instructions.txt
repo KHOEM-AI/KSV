@@ -1,0 +1,15 @@
+Please create/update these files in this project with EXACTLY the content below (do not modify, summarize, or "improve" the code — use it verbatim). Also update src/main.tsx: import LanguageProvider from './i18n/LanguageContext' and wrap <App /> with <LanguageProvider>...</LanguageProvider>.
+
+=== FILE: src/i18n/translations.ts ===
+
+=== FILE: src/i18n/LanguageContext.tsx ===
+
+=== FILE: src/components/LanguageSelector.tsx ===
+
+=== FILE: src/components/nav.tsx ===
+
+=== FILE: src/App.tsx ===
+
+=== FILE: src/data/countries.ts ===
+
+=== FILE: src/views/InternationalView.tsx ===
