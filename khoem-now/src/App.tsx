@@ -1,78 +1,190 @@
-import React from 'react';
-import { Shield, Activity, Cpu, Globe, Lock, AlertTriangle, CheckCircle, Server } from 'lucide-react';
+import { useState } from 'react';
+import { Menu, X, Search, Bell, ChevronDown, Shield } from 'lucide-react';
+import { navGroups, viewMeta, type ViewId } from '@/components/nav';
+import { stats } from '@/data/domain';
+import { useLanguage } from '@/i18n/LanguageContext';
+import LanguageSelector from '@/components/LanguageSelector';
+import { DashboardView } from '@/views/DashboardView';
+import { DevicesView } from '@/views/DevicesView';
+import { ControlsView } from '@/views/ControlsView';
+import { ProtocolsView } from '@/views/ProtocolsView';
+import { GatewayView } from '@/views/GatewayView';
+import { SecurityView } from '@/views/SecurityView';
+import { SafetyView } from '@/views/SafetyView';
+import { AuditView } from '@/views/AuditView';
+import { OrganizationView } from '@/views/OrganizationView';
+import { InternationalView } from '@/views/InternationalView';
+import { CertificatesView } from '@/views/CertificatesView';
+import { SettingsView } from '@/views/SettingsView';
+
+const views: Record<ViewId, () => JSX.Element> = {
+  dashboard: DashboardView,
+  devices: DevicesView,
+  controls: ControlsView,
+  protocols: ProtocolsView,
+  gateway: GatewayView,
+  security: SecurityView,
+  safety: SafetyView,
+  audit: AuditView,
+  organization: OrganizationView,
+  international: InternationalView,
+  certificates: CertificatesView,
+  settings: SettingsView,
+};
 
 export default function App() {
+  const [active, setActive] = useState<ViewId>('dashboard');
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // t() is the ONLY source of on-screen text below. Switching language
+  // in <LanguageSelector /> updates this same t(), so every string in
+  // this file — sidebar, header, buttons — updates in the same render.
+  const { t } = useLanguage();
+
+  const ActiveView = views[active];
+  const meta = viewMeta[active];
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 font-sans">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
-        <div>
-          <h1 className="text-xl font-bold text-blue-400">KSV Operations Dashboard</h1>
-          <p className="text-xs text-slate-400">Universal Secure Control Platform</p>
-        </div>
-        <span className="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded-full border border-emerald-500/20">
-          System Active
-        </span>
-      </div>
+    <div className="min-h-screen bg-ink-950">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
-          <div className="flex items-center gap-2 text-blue-400 mb-1">
-            <Cpu className="w-4 h-4" />
-            <span className="text-xs font-medium">Devices</span>
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-ink-700/70 bg-ink-900/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between border-b border-ink-700/70 px-5 py-5">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 shadow-glow-sm">
+              <Shield size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-tight">KSV Universal</h1>
+              <p className="text-[10px] text-ink-400 uppercase tracking-wider">{t('app.subtitle')}</p>
+            </div>
           </div>
-          <p className="text-lg font-bold">12,847</p>
-          <span className="text-[10px] text-emerald-400">↑ 2.4%</span>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
-          <div className="flex items-center gap-2 text-amber-400 mb-1">
-            <Shield className="w-4 h-4" />
-            <span className="text-xs font-medium">Safety Rules</span>
-          </div>
-          <p className="text-lg font-bold">342</p>
-          <span className="text-[10px] text-emerald-400">↑ 12 new</span>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
-          <div className="flex items-center gap-2 text-emerald-400 mb-1">
-            <Server className="w-4 h-4" />
-            <span className="text-xs font-medium">Gateways</span>
-          </div>
-          <p className="text-lg font-bold">86 <span className="text-xs text-slate-500 font-normal">/ 87</span></p>
-          <span className="text-[10px] text-rose-400">↓ 1 offline</span>
+          <button onClick={() => setMobileOpen(false)} className="text-ink-400 hover:text-white lg:hidden">
+            <X size={20} />
+          </button>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
-          <div className="flex items-center gap-2 text-purple-400 mb-1">
-            <Globe className="w-4 h-4" />
-            <span className="text-xs font-medium">Countries</span>
-          </div>
-          <p className="text-lg font-bold">41 <span className="text-xs text-slate-500 font-normal">/ 195</span></p>
-          <span className="text-[10px] text-emerald-400">↑ 3 added</span>
-        </div>
-      </div>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-5">
+              {/* group.label / item.label come from @/components/nav.
+                  To translate the menu text itself, that file's labels
+                  need the same t('nav.xxx') treatment — see note below. */}
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-ink-500">{group.label}</p>
+              <div className="space-y-0.5">
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActive(item.id); setMobileOpen(false); }}
+                    className={`nav-item w-full text-left ${active === item.id ? 'nav-item-active' : ''}`}
+                  >
+                    <span className={active === item.id ? 'text-brand-400' : ''}>{item.icon}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="rounded-full bg-danger-500/20 px-1.5 py-0.5 text-[10px] font-bold text-danger-400">{item.badge}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
 
-      {/* Protocol Health */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6">
-        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-blue-400" /> Protocol Health
-        </h2>
-        <div className="space-y-2 text-xs">
-          <div className="flex justify-between items-center py-1 border-b border-slate-800/50">
-            <span>Bluetooth</span>
-            <span className="text-emerald-400 font-mono">99.97%</span>
-          </div>
-          <div className="flex justify-between items-center py-1 border-b border-slate-800/50">
-            <span>Wi-Fi</span>
-            <span className="text-emerald-400 font-mono">99.92%</span>
-          </div>
-          <div className="flex justify-between items-center py-1">
-            <span>MQTT</span>
-            <span className="text-emerald-400 font-mono">99.99%</span>
+        {/* Footer status */}
+        <div className="border-t border-ink-700/70 p-4">
+          <div className="rounded-xl border border-ink-700/50 bg-ink-850/60 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-ink-400">{t('sidebar.systemStatus')}</span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-success-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75 animate-pulse-ring" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
+                </span>
+                {t('sidebar.operational')}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs text-ink-400">
+              <span>{t('sidebar.devicesOnline', { count: stats.onlineDevices.toLocaleString() })}</span>
+              <span>{t('sidebar.uptime', { count: stats.uptimeDays })}</span>
+            </div>
           </div>
         </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="lg:pl-72">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 border-b border-ink-700/70 bg-ink-950/80 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setMobileOpen(true)} className="text-ink-400 hover:text-white lg:hidden">
+                <Menu size={22} />
+              </button>
+              <div>
+                {/* meta.title / meta.subtitle come from viewMeta in
+                    @/components/nav — same note as the nav menu above. */}
+                <h2 className="text-base font-semibold text-white">{meta.title}</h2>
+                <p className="hidden text-xs text-ink-400 sm:block">{meta.subtitle}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Search */}
+              <div className="relative hidden md:block">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+                <input
+                  className="w-56 rounded-xl border border-ink-700 bg-ink-850/60 py-2 pl-9 pr-3 text-sm text-ink-100 placeholder:text-ink-400 transition-all focus:w-72 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  placeholder={t('common.search')}
+                />
+              </div>
+
+              {/* Language — 3D flip selector; changing it retranslates
+                  every t() call on this page immediately */}
+              <LanguageSelector />
+
+              {/* Notifications */}
+              <button
+                aria-label={t('common.notifications')}
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-ink-700 bg-ink-850/60 text-ink-400 transition-colors hover:text-white"
+              >
+                <Bell size={17} />
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[9px] font-bold text-white">{stats.openAlerts}</span>
+              </button>
+
+              {/* User */}
+              <button className="flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-850/60 py-1.5 pl-1.5 pr-2 transition-colors hover:border-ink-600">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-xs font-bold text-white">CS</div>
+                <div className="hidden text-left sm:block">
+                  {/* "Carlos Silva" is this user's actual name — a proper
+                      noun, so it is never translated. Only the role
+                      label next to it changes with the language. */}
+                  <p className="text-xs font-semibold text-white">Carlos Silva</p>
+                  <p className="text-[10px] text-ink-400">{t('user.orgOwner')}</p>
+                </div>
+                <ChevronDown size={14} className="text-ink-400" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* View content */}
+        <main className="bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6">
+          <div key={active} className="animate-fade-in">
+            <ActiveView />
+          </div>
+        </main>
       </div>
     </div>
   );
