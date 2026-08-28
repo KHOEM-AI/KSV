@@ -1,4 +1,4 @@
-import { countries } from './ksv';
+import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
 import { Menu, X, Search, Bell, ChevronDown, Shield } from 'lucide-react';
 import { navGroups, viewMeta, type ViewId } from '@/components/nav';
@@ -154,6 +154,7 @@ export default function App() {
               {/* Language — 3D flip selector; changing it retranslates
                   every t() call on this page immediately */}
               <LanguageSelector />
+              <CountryClock />
 
               {/* Notifications */}
               <button
