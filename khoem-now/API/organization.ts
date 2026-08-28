@@ -281,3 +281,45 @@ export type OrganizationAuditEvent =
   | 'org.policy.created'
   | 'org.policy.updated'
   | 'org.policy.deleted';
+
+// ---------------------------------------------------------------
+// Security Rules
+// ---------------------------------------------------------------
+
+export const ORGANIZATION_SECURITY_RULES = {
+  /** Only the org owner can delete the organization. Requires a confirm phrase. */
+  ONLY_OWNER_CAN_DELETE_ORG: true,
+
+  /** An organization must always retain at least one owner-level member. */
+  MINIMUM_ONE_OWNER_REQUIRED: true,
+
+  /** A member cannot assign a role higher than their own to someone else. */
+  CANNOT_ASSIGN_ROLE_ABOVE_OWN: true,
+
+  /** Removing a member revokes their device access unless explicitly retained. */
+  MEMBER_REMOVAL_REVOKES_DEVICE_ACCESS_BY_DEFAULT: true,
+
+  /** Devices must be reassigned or decommissioned before a site/building/room can be deleted. */
+  CANNOT_DELETE_LOCATION_WITH_ACTIVE_DEVICES: true,
+} as const;
+
+// ---------------------------------------------------------------
+// Security Rules
+// ---------------------------------------------------------------
+
+export const ORGANIZATION_SECURITY_RULES = {
+  /** Only the org owner can delete the organization. Requires a confirm phrase. */
+  ONLY_OWNER_CAN_DELETE_ORG: true,
+
+  /** An organization must always retain at least one owner-level member. */
+  MINIMUM_ONE_OWNER_REQUIRED: true,
+
+  /** A member cannot assign a role higher than their own to someone else. */
+  CANNOT_ASSIGN_ROLE_ABOVE_OWN: true,
+
+  /** Removing a member revokes their device access unless explicitly retained. */
+  MEMBER_REMOVAL_REVOKES_DEVICE_ACCESS_BY_DEFAULT: true,
+
+  /** Devices must be reassigned or decommissioned before a site/building/room can be deleted. */
+  CANNOT_DELETE_LOCATION_WITH_ACTIVE_DEVICES: true,
+} as const;

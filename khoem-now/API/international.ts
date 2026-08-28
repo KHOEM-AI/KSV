@@ -188,3 +188,57 @@ export function toUserLocalTime(
 ): string {
   return formatInTimeZone(utcIsoTimestamp, localeContext.timeZone, options);
 }
+
+// ---------------------------------------------------------------
+// API Route Definitions
+// ---------------------------------------------------------------
+
+export const INTERNATIONAL_ROUTES = {
+  LIST_COUNTRIES:          'GET  /api/v1/international/countries',
+  GET_COUNTRY:             'GET  /api/v1/international/countries/:code',
+  RESOLVE_LOCALE:          'POST /api/v1/international/resolve-locale',
+  UPDATE_ACCOUNT_LOCALE:   'PUT  /api/v1/international/account/locale',
+} as const;
+
+// ---------------------------------------------------------------
+// Handler Interfaces
+// ---------------------------------------------------------------
+
+export interface InternationalAPIHandlers {
+  listCountries(): Promise<CountryRecord[]>;
+  getCountry(code: string): Promise<CountryRecord>;
+  resolveLocale(input: {
+    deviceTimeZone?: string | null;
+    headerTimeZone?: string | null;
+    countryCode?: string | null;
+    languageCode?: string | null;
+  }): Promise<ResolvedLocaleContext>;
+  updateAccountLocale(
+    accountId: string,
+    req: { preferredCountry?: string; preferredLanguage?: string; preferredTimeZone?: string }
+  ): Promise<{ success: boolean }>;
+}
+
+// ---------------------------------------------------------------
+// Security Rules
+// ---------------------------------------------------------------
+
+export const INTERNATIONAL_SECURITY_RULES = {
+  /** Country is never treated as equivalent to time zone or language — always resolved separately. */
+  COUNTRY_NEVER_EQUALS_TIMEZONE_OR_LANGUAGE: true,
+
+  /** All stored timestamps are UTC; conversion happens only at display/render time. */
+  STORAGE_ALWAYS_UTC: true,
+
+  /** An unrecognized or invalid time zone falls back to UTC rather than failing the request. */
+  INVALID_TIMEZONE_FALLS_BACK_TO_UTC: true,
+} as const;
+
+// ---------------------------------------------------------------
+// Audit Events
+// ---------------------------------------------------------------
+
+export type InternationalAuditEvent =
+  | 'international.locale.resolved'
+  | 'international.locale.fallback_used'
+  | 'international.account_locale.updated';
