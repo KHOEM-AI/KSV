@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShieldAlert, DoorClosed, Car, Factory, Zap } from 'lucide-react';
 import { Panel, SectionHeader, Badge, Toggle, StatusDot } from '@/components/ui';
 import { safetyRules, type SafetyRule } from '@/data/domain';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const scopeIcon: Record<string, typeof DoorClosed> = {
   door: DoorClosed,
@@ -17,6 +18,7 @@ const severityVariant: Record<string, 'danger' | 'warning' | 'neutral' | 'brand'
 };
 
 export function SafetyView() {
+  const { t } = useLanguage();
   const [rules, setRules] = useState<SafetyRule[]>(safetyRules);
   const [scopeFilter, setScopeFilter] = useState<string>('all');
 
@@ -35,19 +37,19 @@ export function SafetyView() {
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-success-500/10 text-success-400"><ShieldAlert size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">{enabledCount}/{rules.length}</p><p className="text-xs text-ink-400">Rules active</p></div>
+            <div><p className="text-2xl font-bold text-white">{enabledCount}/{rules.length}</p><p className="text-xs text-ink-400">{t('view.safety.stat.rulesActive')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-warning-500/10 text-warning-400"><Zap size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">{totalTriggers}</p><p className="text-xs text-ink-400">Total triggers (30d)</p></div>
+            <div><p className="text-2xl font-bold text-white">{totalTriggers}</p><p className="text-xs text-ink-400">{t('view.safety.stat.totalTriggers')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-danger-500/10 text-danger-400"><ShieldAlert size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">4</p><p className="text-xs text-ink-400">Critical rules</p></div>
+            <div><p className="text-2xl font-bold text-white">4</p><p className="text-xs text-ink-400">{t('view.safety.stat.criticalRules')}</p></div>
           </div>
         </Panel>
       </div>
@@ -62,7 +64,7 @@ export function SafetyView() {
               scopeFilter === s ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'border border-ink-700 text-ink-400 hover:text-ink-200'
             }`}
           >
-            {s === 'all' ? 'All scopes' : s}
+            {s === 'all' ? t('view.safety.scope.all') : t(`view.safety.scope.${s}`)}
           </button>
         ))}
       </div>
@@ -80,7 +82,7 @@ export function SafetyView() {
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-white">{r.name}</h3>
-                    <p className="text-xs text-ink-400">{r.id} · {r.scope}</p>
+                    <p className="text-xs text-ink-400">{r.id} · {t(`view.safety.scope.${r.scope}`)}</p>
                   </div>
                 </div>
                 <Toggle checked={r.enabled} onChange={() => toggleRule(r.id)} />
@@ -88,23 +90,27 @@ export function SafetyView() {
 
               <div className="mt-4 space-y-2.5 rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Condition</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">{t('view.safety.condition')}</p>
                   <p className="mt-0.5 text-sm text-ink-200">{r.condition}</p>
                 </div>
                 <div className="divider" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Action</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">{t('view.safety.action')}</p>
                   <p className="mt-0.5 text-sm text-ink-200">{r.action}</p>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge variant={severityVariant[r.severity]}>{r.severity}</Badge>
-                  <span className="text-xs text-ink-400">Triggered {r.triggered}×</span>
+                  <Badge variant={severityVariant[r.severity]}>{t(`view.safety.severity.${r.severity}`)}</Badge>
+                  <span className="text-xs text-ink-400">{t('view.safety.triggered', { count: r.triggered })}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {r.enabled ? <StatusDot status="online" label="Active" /> : <span className="text-xs text-ink-400">Disabled</span>}
+                  {r.enabled ? (
+                    <StatusDot status="online" label={t('view.safety.active')} />
+                  ) : (
+                    <span className="text-xs text-ink-400">{t('view.safety.disabled')}</span>
+                  )}
                   {r.lastTriggered && <span className="text-xs text-ink-400">· {r.lastTriggered}</span>}
                 </div>
               </div>
