@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Settings2, Bell, Shield, Globe, Palette, Database, Save } from 'lucide-react';
+import { Settings2, Bell, Shield, Globe, Database, Save } from 'lucide-react';
 import { Panel, SectionHeader, Toggle, Badge } from '@/components/ui';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function SettingsView() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState({
     autoUpdate: true,
     offlineMode: true,
@@ -16,18 +18,31 @@ export function SettingsView() {
 
   const toggle = (key: keyof typeof settings) => setSettings((s) => ({ ...s, [key]: !s[key] }));
 
+  const platformSettings = [
+    { key: 'autoUpdate' as const, label: t('view.settings.autoUpdate.label'), desc: t('view.settings.autoUpdate.desc') },
+    { key: 'offlineMode' as const, label: t('view.settings.offlineMode.label'), desc: t('view.settings.offlineMode.desc') },
+    { key: 'auditLog' as const, label: t('view.settings.auditLog.label'), desc: t('view.settings.auditLog.desc') },
+  ];
+
+  const securitySettings = [
+    { key: 'twoFactor' as const, label: t('view.settings.twoFactor.label'), desc: t('view.settings.twoFactor.desc') },
+    { key: 'zeroPlaintext' as const, label: t('view.settings.zeroPlaintext.label'), desc: t('view.settings.zeroPlaintext.desc') },
+    { key: 'safetyOverride' as const, label: t('view.settings.safetyOverride.label'), desc: t('view.settings.safetyOverride.desc') },
+  ];
+
+  const notificationSettings = [
+    { key: 'emailAlerts' as const, label: t('view.settings.emailAlerts.label'), desc: t('view.settings.emailAlerts.desc') },
+    { key: 'smsAlerts' as const, label: t('view.settings.smsAlerts.label'), desc: t('view.settings.smsAlerts.desc') },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* General */}
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Platform" subtitle="Core platform behavior" icon={<Settings2 size={18} />} />
+          <SectionHeader title={t('view.settings.platform.title')} subtitle={t('view.settings.platform.subtitle')} icon={<Settings2 size={18} />} />
           <div className="space-y-4">
-            {[
-              { key: 'autoUpdate' as const, label: 'Automatic firmware updates', desc: 'Push OTA updates to eligible devices' },
-              { key: 'offlineMode' as const, label: 'Edge offline mode', desc: 'Allow gateways to operate without cloud' },
-              { key: 'auditLog' as const, label: 'Immutable audit logging', desc: 'Cryptographically chain all events' },
-            ].map((s) => (
+            {platformSettings.map((s) => (
               <div key={s.key} className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div><p className="text-sm font-medium text-ink-100">{s.label}</p><p className="text-xs text-ink-400">{s.desc}</p></div>
                 <Toggle checked={settings[s.key]} onChange={() => toggle(s.key)} />
@@ -38,13 +53,9 @@ export function SettingsView() {
 
         {/* Security */}
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Security" subtitle="Authentication and access policies" icon={<Shield size={18} />} />
+          <SectionHeader title={t('view.settings.security.title')} subtitle={t('view.settings.security.subtitle')} icon={<Shield size={18} />} />
           <div className="space-y-4">
-            {[
-              { key: 'twoFactor' as const, label: 'Require 2FA for all admins', desc: 'Enforce MFA on admin and operator roles' },
-              { key: 'zeroPlaintext' as const, label: 'Zero-plaintext password policy', desc: 'Argon2id hashing, no plaintext storage' },
-              { key: 'safetyOverride' as const, label: 'Allow safety rule override', desc: 'Let engineers temporarily disable rules' },
-            ].map((s) => (
+            {securitySettings.map((s) => (
               <div key={s.key} className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div><p className="text-sm font-medium text-ink-100">{s.label}</p><p className="text-xs text-ink-400">{s.desc}</p></div>
                 <Toggle checked={settings[s.key]} onChange={() => toggle(s.key)} />
@@ -55,12 +66,9 @@ export function SettingsView() {
 
         {/* Notifications */}
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Notifications" subtitle="Alert delivery channels" icon={<Bell size={18} />} />
+          <SectionHeader title={t('view.settings.notifications.title')} subtitle={t('view.settings.notifications.subtitle')} icon={<Bell size={18} />} />
           <div className="space-y-4">
-            {[
-              { key: 'emailAlerts' as const, label: 'Email alerts', desc: 'Send critical alerts to admin emails' },
-              { key: 'smsAlerts' as const, label: 'SMS alerts', desc: 'Send critical alerts via SMS gateway' },
-            ].map((s) => (
+            {notificationSettings.map((s) => (
               <div key={s.key} className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div><p className="text-sm font-medium text-ink-100">{s.label}</p><p className="text-xs text-ink-400">{s.desc}</p></div>
                 <Toggle checked={settings[s.key]} onChange={() => toggle(s.key)} />
@@ -71,10 +79,10 @@ export function SettingsView() {
 
         {/* International + DB */}
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Localization & Data" subtitle="Language and storage preferences" icon={<Globe size={18} />} />
+          <SectionHeader title={t('view.settings.localization.title')} subtitle={t('view.settings.localization.subtitle')} icon={<Globe size={18} />} />
           <div className="space-y-4">
             <div className="rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
-              <label className="label">Default language</label>
+              <label className="label">{t('view.settings.defaultLanguage')}</label>
               <select className="input">
                 <option>English (en-US)</option>
                 <option>Deutsch (de-DE)</option>
@@ -85,9 +93,9 @@ export function SettingsView() {
               </select>
             </div>
             <div className="rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
-              <label className="label">Default timezone</label>
+              <label className="label">{t('view.settings.defaultTimezone')}</label>
               <select className="input">
-                <option>Auto (detect from browser)</option>
+                <option>{t('view.settings.timezoneAuto')}</option>
                 <option>Europe/Berlin (+02:00)</option>
                 <option>Asia/Singapore (+08:00)</option>
                 <option>Asia/Tokyo (+09:00)</option>
@@ -97,9 +105,9 @@ export function SettingsView() {
             <div className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
               <div className="flex items-center gap-2">
                 <Database size={16} className="text-ink-400" />
-                <span className="text-sm text-ink-100">Database backup</span>
+                <span className="text-sm text-ink-100">{t('view.settings.databaseBackup')}</span>
               </div>
-              <Badge variant="success">Auto · 6h interval</Badge>
+              <Badge variant="success">{t('view.settings.backupInterval', { hours: 6 })}</Badge>
             </div>
           </div>
         </Panel>
@@ -107,8 +115,8 @@ export function SettingsView() {
 
       {/* Save bar */}
       <div className="flex items-center justify-between rounded-2xl border border-ink-700 bg-ink-850/80 p-4">
-        <p className="text-sm text-ink-400">Changes apply across all sites and gateways.</p>
-        <button className="btn-primary"><Save size={16} /> Save changes</button>
+        <p className="text-sm text-ink-400">{t('view.settings.saveBar.note')}</p>
+        <button className="btn-primary"><Save size={16} /> {t('view.settings.saveBar.save')}</button>
       </div>
     </div>
   );

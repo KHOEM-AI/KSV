@@ -1,12 +1,14 @@
+// src/views/OrganizationView.tsx
 import { Building2, ChevronRight, Users, Cpu, Shield } from 'lucide-react';
 import { Panel, SectionHeader, Badge, ProgressBar } from '@/components/ui';
 import { orgTree, type OrgNode } from '@/data/domain';
+import { useLanguage } from '@/i18n/LanguageContext';
 
-const typeIcon: Record<string, string> = {
-  company: 'Holding',
-  site: 'Region/Site',
-  building: 'Building',
-  floor: 'Floor',
+const typeKey: Record<string, string> = {
+  company: 'view.organization.type.company',
+  site: 'view.organization.type.site',
+  building: 'view.organization.type.building',
+  floor: 'view.organization.type.floor',
 };
 
 const typeVariant: Record<string, 'brand' | 'accent' | 'success' | 'neutral'> = {
@@ -22,7 +24,27 @@ function buildTree(nodes: OrgNode[], parentId?: string, depth = 0): OrgNode[] {
     .flatMap((n) => [n, ...buildTree(nodes, n.id, depth + 1)]);
 }
 
+// Data below is illustrative UI content, not domain data — kept as
+// translation-key references so labels localize with everything else.
+const accessPolicies = [
+  { nameKey: 'view.organization.policy.hqStrict', scopeKey: 'view.organization.site.frankfurt', rules: 24, coverage: 100 },
+  { nameKey: 'view.organization.policy.dcCritical', scopeKey: 'view.organization.site.singapore', rules: 31, coverage: 100 },
+  { nameKey: 'view.organization.policy.fabCleanroom', scopeKey: 'view.organization.site.taipei', rules: 18, coverage: 94 },
+  { nameKey: 'view.organization.policy.emeaBaseline', scopeKey: 'view.organization.site.emea', rules: 12, coverage: 100 },
+  { nameKey: 'view.organization.policy.apacBaseline', scopeKey: 'view.organization.site.apac', rules: 12, coverage: 88 },
+];
+
+const roleDefinitions = [
+  { roleKey: 'view.organization.role.orgOwner', users: 3, permsKey: 'view.organization.perms.orgOwner', color: 'danger' as const },
+  { roleKey: 'view.organization.role.siteAdmin', users: 18, permsKey: 'view.organization.perms.siteAdmin', color: 'warning' as const },
+  { roleKey: 'view.organization.role.safetyEngineer', users: 42, permsKey: 'view.organization.perms.safetyEngineer', color: 'brand' as const },
+  { roleKey: 'view.organization.role.networkAdmin', users: 12, permsKey: 'view.organization.perms.networkAdmin', color: 'accent' as const },
+  { roleKey: 'view.organization.role.operator', users: 856, permsKey: 'view.organization.perms.operator', color: 'success' as const },
+  { roleKey: 'view.organization.role.viewer', users: 309, permsKey: 'view.organization.perms.viewer', color: 'neutral' as const },
+];
+
 export function OrganizationView() {
+  const { t } = useLanguage();
   const tree = buildTree(orgTree);
 
   return (
@@ -30,10 +52,10 @@ export function OrganizationView() {
       {/* Hierarchy tree */}
       <Panel className="p-5 animate-fade-in">
         <SectionHeader
-          title="Organization Hierarchy"
-          subtitle="Company → Site → Building → Device policy inheritance"
+          title={t('view.organization.hierarchyTitle')}
+          subtitle={t('view.organization.hierarchySubtitle')}
           icon={<Building2 size={18} />}
-          action={<Badge variant="brand">{orgTree.length} nodes</Badge>}
+          action={<Badge variant="brand">{orgTree.length} {t('view.organization.nodes')}</Badge>}
         />
         <div className="space-y-1">
           {tree.map((node) => {
@@ -52,17 +74,17 @@ export function OrganizationView() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-ink-100">{node.name}</span>
-                    <Badge variant={typeVariant[node.type]}>{typeIcon[node.type]}</Badge>
+                    <Badge variant={typeVariant[node.type]}>{t(typeKey[node.type])}</Badge>
                   </div>
                   <p className="text-xs text-ink-400">{node.policy}</p>
                 </div>
                 <div className="hidden gap-4 sm:flex">
                   <div className="text-right">
-                    <p className="text-xs text-ink-400"><Cpu size={10} className="inline" /> Devices</p>
+                    <p className="text-xs text-ink-400"><Cpu size={10} className="inline" /> {t('dashboard.gateway.devices')}</p>
                     <p className="text-sm font-semibold text-white tabular-nums">{node.devices.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-ink-400"><Users size={10} className="inline" /> Users</p>
+                    <p className="text-xs text-ink-400"><Users size={10} className="inline" /> {t('view.organization.users')}</p>
                     <p className="text-sm font-semibold text-white tabular-nums">{node.users}</p>
                   </div>
                 </div>
@@ -75,20 +97,14 @@ export function OrganizationView() {
       {/* Policy-based access control */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Access Policies" subtitle="Policy-based access control (PBAC) rules" icon={<Shield size={18} />} />
+          <SectionHeader title={t('view.organization.accessPoliciesTitle')} subtitle={t('view.organization.accessPoliciesSubtitle')} icon={<Shield size={18} />} />
           <div className="space-y-3">
-            {[
-              { name: 'HQ Strict', scope: 'Frankfurt HQ', rules: 24, coverage: 100 },
-              { name: 'DC Critical', scope: 'Singapore DC', rules: 31, coverage: 100 },
-              { name: 'Fab Cleanroom', scope: 'Taipei Fab', rules: 18, coverage: 94 },
-              { name: 'EMEA Baseline', scope: 'EMEA Region', rules: 12, coverage: 100 },
-              { name: 'APAC Baseline', scope: 'APAC Region', rules: 12, coverage: 88 },
-            ].map((p) => (
-              <div key={p.name} className="rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
+            {accessPolicies.map((p) => (
+              <div key={p.nameKey} className="rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-ink-100">{p.name}</p>
-                    <p className="text-xs text-ink-400">{p.scope} · {p.rules} rules</p>
+                    <p className="text-sm font-medium text-ink-100">{t(p.nameKey)}</p>
+                    <p className="text-xs text-ink-400">{t(p.scopeKey)} · {p.rules} {t('view.organization.rules')}</p>
                   </div>
                   <Badge variant={p.coverage === 100 ? 'success' : 'warning'}>{p.coverage}%</Badge>
                 </div>
@@ -99,20 +115,13 @@ export function OrganizationView() {
         </Panel>
 
         <Panel className="p-5 animate-fade-in">
-          <SectionHeader title="Role Definitions" subtitle="Platform-wide role catalog" icon={<Users size={18} />} />
+          <SectionHeader title={t('view.organization.roleDefinitionsTitle')} subtitle={t('view.organization.roleDefinitionsSubtitle')} icon={<Users size={18} />} />
           <div className="space-y-3">
-            {[
-              { role: 'Org Owner', users: 3, perms: 'Full platform control', color: 'danger' as const },
-              { role: 'Site Admin', users: 18, perms: 'Site-level management', color: 'warning' as const },
-              { role: 'Safety Engineer', users: 42, perms: 'Safety rules + device controls', color: 'brand' as const },
-              { role: 'Network Admin', users: 12, perms: 'Gateway + protocol config', color: 'accent' as const },
-              { role: 'Operator', users: 856, perms: 'Device control + view audit', color: 'success' as const },
-              { role: 'Viewer', users: 309, perms: 'Read-only dashboard access', color: 'neutral' as const },
-            ].map((r) => (
-              <div key={r.role} className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
+            {roleDefinitions.map((r) => (
+              <div key={r.roleKey} className="flex items-center justify-between rounded-xl border border-ink-700/50 bg-ink-900/40 p-3">
                 <div className="flex items-center gap-3">
-                  <Badge variant={r.color}>{r.role}</Badge>
-                  <span className="text-xs text-ink-400">{r.perms}</span>
+                  <Badge variant={r.color}>{t(r.roleKey)}</Badge>
+                  <span className="text-xs text-ink-400">{t(r.permsKey)}</span>
                 </div>
                 <span className="text-sm font-semibold text-white tabular-nums">{r.users}</span>
               </div>

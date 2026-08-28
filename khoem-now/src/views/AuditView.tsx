@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScrollText, Search, Filter } from 'lucide-react';
 import { Panel, SectionHeader, Badge, StatusDot } from '@/components/ui';
 import { auditEvents } from '@/data/domain';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const resultVariant: Record<string, 'success' | 'danger' | 'warning'> = {
   success: 'success',
@@ -17,7 +18,25 @@ const categoryColor: Record<string, string> = {
   network: 'text-ink-300',
 };
 
+// Category codes → translation keys (button labels + inline category tag)
+const catKey: Record<string, string> = {
+  all: 'view.audit.category.all',
+  auth: 'view.audit.category.auth',
+  device: 'view.audit.category.device',
+  safety: 'view.audit.category.safety',
+  admin: 'view.audit.category.admin',
+  network: 'view.audit.category.network',
+};
+
+// Result codes → translation keys (badge text)
+const resultKey: Record<string, string> = {
+  success: 'view.audit.result.success',
+  denied: 'view.audit.result.denied',
+  error: 'view.audit.result.error',
+};
+
 export function AuditView() {
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
 
@@ -33,10 +52,10 @@ export function AuditView() {
     <div className="space-y-6">
       <Panel className="p-5 animate-fade-in">
         <SectionHeader
-          title="Immutable Audit Trail"
-          subtitle="Cryptographically chained event log — all platform activity"
+          title={t('view.audit.title')}
+          subtitle={t('view.audit.subtitleText')}
           icon={<ScrollText size={18} />}
-          action={<Badge variant="success">Chain verified</Badge>}
+          action={<Badge variant="success">{t('view.audit.chainVerified')}</Badge>}
         />
 
         {/* Search + filter */}
@@ -45,7 +64,7 @@ export function AuditView() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               className="input pl-9"
-              placeholder="Search by actor, action, or target…"
+              placeholder={t('view.audit.searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -59,7 +78,7 @@ export function AuditView() {
                   catFilter === c ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'border border-ink-700 text-ink-400 hover:text-ink-200'
                 }`}
               >
-                {c}
+                {t(catKey[c])}
               </button>
             ))}
           </div>
@@ -79,8 +98,8 @@ export function AuditView() {
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`font-mono text-xs font-semibold ${categoryColor[e.category]}`}>{e.action}</span>
-                  <Badge variant={resultVariant[e.result]}>{e.result}</Badge>
-                  <span className="text-xs text-ink-400">· {e.category}</span>
+                  <Badge variant={resultVariant[e.result]}>{t(resultKey[e.result])}</Badge>
+                  <span className="text-xs text-ink-400">· {t(catKey[e.category])}</span>
                 </div>
                 <p className="mt-1 text-sm text-ink-100">
                   <span className="text-ink-200">{e.target}</span>
@@ -94,7 +113,7 @@ export function AuditView() {
             </div>
           ))}
         </div>
-        {filtered.length === 0 && <div className="py-12 text-center text-ink-400">No events match your filters.</div>}
+        {filtered.length === 0 && <div className="py-12 text-center text-ink-400">{t('view.audit.noMatch')}</div>}
       </Panel>
     </div>
   );

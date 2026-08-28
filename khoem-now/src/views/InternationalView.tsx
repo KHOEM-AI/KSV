@@ -1,6 +1,8 @@
+// src/views/InternationalView.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Globe2, Clock, Star } from 'lucide-react';
 import { COUNTRIES, getLocalTime, getLocalDateTime, getUtcOffset, type Country } from '@/data/countries';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 // ======================================================================
 // KSV — International View (Domain #1: Global & International)
@@ -28,6 +30,7 @@ function isDaytime(timezone: string): boolean {
 }
 
 function CountryCard({ country, pinned, onTogglePin }: { country: Country; pinned: boolean; onTogglePin: () => void }) {
+  const { t } = useLanguage();
   useTick(1000);
   const day = isDaytime(country.timezone);
 
@@ -36,7 +39,7 @@ function CountryCard({ country, pinned, onTogglePin }: { country: Country; pinne
       <div className="flex items-center gap-3 min-w-0">
         <span
           className={`h-2 w-2 shrink-0 rounded-full ${day ? 'bg-emerald-400' : 'bg-indigo-400'}`}
-          title={day ? 'Daytime' : 'Nighttime'}
+          title={day ? t('intl.daytime') : t('intl.nighttime')}
         />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -54,7 +57,7 @@ function CountryCard({ country, pinned, onTogglePin }: { country: Country; pinne
         </div>
         <button
           onClick={onTogglePin}
-          aria-label={pinned ? `Unpin ${country.name}` : `Pin ${country.name}`}
+          aria-label={pinned ? t('intl.unpin', { name: country.name }) : t('intl.pin', { name: country.name })}
           className={`p-1.5 rounded-md transition-colors ${pinned ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'}`}
         >
           <Star size={16} fill={pinned ? 'currentColor' : 'none'} />
@@ -65,6 +68,7 @@ function CountryCard({ country, pinned, onTogglePin }: { country: Country; pinne
 }
 
 export function InternationalView() {
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [pinned, setPinned] = useState<string[]>(() => {
     // Default pins: a small, geographically spread starter set.
@@ -100,9 +104,9 @@ export function InternationalView() {
           <Globe2 size={22} />
         </div>
         <div>
-          <h1 className="text-xl font-semibold">International</h1>
+          <h1 className="text-xl font-semibold">{t('intl.title')}</h1>
           <p className="text-sm text-slate-500">
-            Country, language, and time zone are kept separate — {COUNTRIES.length} countries and territories supported.
+            {t('intl.subtitle', { count: COUNTRIES.length })}
           </p>
         </div>
       </header>
@@ -123,7 +127,7 @@ export function InternationalView() {
               <span className="text-sm">UTC{getUtcOffset(selectedCountry.timezone)}</span>
             </div>
             <p className="text-xs text-slate-600 mt-1">{selectedCountry.timezone}</p>
-            <p className="text-xs text-slate-600">Dial code {selectedCountry.dialCode}</p>
+            <p className="text-xs text-slate-600">{t('intl.dialCode')} {selectedCountry.dialCode}</p>
           </div>
         </div>
       </div>
@@ -131,7 +135,7 @@ export function InternationalView() {
       {/* Pinned countries — each keeps its own real local time, independently */}
       {pinnedCountries.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-slate-400 mb-2">Pinned</h2>
+          <h2 className="text-sm font-medium text-slate-400 mb-2">{t('common.pinned')}</h2>
           <div className="grid gap-2 sm:grid-cols-2">
             {pinnedCountries.map((c) => (
               <button key={c.code} className="text-left" onClick={() => setSelected(c.code)}>
@@ -150,11 +154,11 @@ export function InternationalView() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search country, code, or dial code…"
+              placeholder={t('intl.search')}
               className="w-full rounded-lg border border-white/10 bg-white/[0.03] pl-9 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 outline-none focus:border-sky-500/50"
             />
           </div>
-          <span className="text-xs text-slate-500 shrink-0">{filtered.length} results</span>
+          <span className="text-xs text-slate-500 shrink-0">{filtered.length} {t('common.results')}</span>
         </div>
 
         <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
