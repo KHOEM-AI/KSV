@@ -79,11 +79,11 @@ export default function App() {
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
           {navGroups.map((group) => (
-            <div key={group.label} className="mb-5">
+            <div key={group.labelKey} className="mb-5">
               {/* group.label / item.label come from @/components/nav.
                   To translate the menu text itself, that file's labels
                   need the same t('nav.xxx') treatment — see note below. */}
-              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-ink-500">{group.label}</p>
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-ink-500">{t(group.labelKey)}</p>
               <div className="space-y-0.5">
                 {group.items.map((item) => (
                   <button
@@ -92,7 +92,7 @@ export default function App() {
                     className={`nav-item w-full text-left ${active === item.id ? 'nav-item-active' : ''}`}
                   >
                     <span className={active === item.id ? 'text-brand-400' : ''}>{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
+                    <span className="flex-1">{t(item.labelKey)}</span>
                     {item.badge && (
                       <span className="rounded-full bg-danger-500/20 px-1.5 py-0.5 text-[10px] font-bold text-danger-400">{item.badge}</span>
                     )}
@@ -136,8 +136,8 @@ export default function App() {
               <div>
                 {/* meta.title / meta.subtitle come from viewMeta in
                     @/components/nav — same note as the nav menu above. */}
-                <h2 className="text-base font-semibold text-white">{meta.title}</h2>
-                <p className="hidden text-xs text-ink-400 sm:block">{meta.subtitle}</p>
+                <h2 className="text-base font-semibold text-white">{t(meta.titleKey)}</h2>
+                <p className="hidden text-xs text-ink-400 sm:block">{t(meta.subtitleKey)}</p>
               </div>
             </div>
 
