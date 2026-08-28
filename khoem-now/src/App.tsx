@@ -1,3 +1,4 @@
+import { countries } from './ksv';
 import { useState } from 'react';
 import { Menu, X, Search, Bell, ChevronDown, Shield } from 'lucide-react';
 import { navGroups, viewMeta, type ViewId } from '@/components/nav';
