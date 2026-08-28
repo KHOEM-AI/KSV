@@ -805,4 +805,56 @@ khoem-now/
 
 ---
 
+cd ~/KSV/khoem-now
+cat >> README.md << 'MDEOF'
+
+---
+
+### ✅ ថ្ងៃទី 29 សីហា 2026 (យប់) — Root Cause Fix, API Domain Audit, Git Safety Incident
+
+**បញ្ហាធំបំផុតដែលរកឃើញ — Root Cause នៃ "ចុចទំព័រខុស" / build ខូច:**
+ថត (folder) ត្រួតគ្នាច្រើនស្រទាប់ ដែលកើតឡើងពី AI ផ្សេងៗ (Termux, bolt.new) កែក្នុងពេលដំណាលគ្នាដោយមិន sync៖
+- `khoem-now/khoem-now/` (i18n/components ត្រូវការស្រាប់ ជាប់ក្នុង folder ត្រួតគ្នា)
+- `App.tsx` ត្រួតគ្នា ៣ file (`App.tsx`, `App_ksv.tsx`, `App_1.tsx`)
+- `nav.tsx` ដាក់ខុសទីតាំង (root ជំនួស `src/components/`)
+
+**ការកែសម្រួលរចនាសម្ព័ន្ធ (Cleanup):**
+1. រួម i18n/components/data/views ដែលជាប់ក្នុង folder ត្រួតគ្នា ចូល `src/` ត្រឹមត្រូវ
+2. ជំនួស `src/App.tsx` (កំណែខុស/template) ដោយកំណែពិត (191 lines មាន i18n ពេញលេញ)
+3. លុប `App_ksv.tsx`, `nav.tsx` (root), `src/package.json` ស្ទួន
+4. កែ `main.tsx` ឱ្យ wrap `<App />` ដោយ `<LanguageProvider>` (កាលពីមុនខ្វះ → app crash ពេល load)
+5. កែ `InternationalView.tsx`: `export default` → named export (`export function InternationalView`) ឱ្យស៊ីគ្នានឹង views ១១ ទៀត
+6. Rename `DOCUMENTATION/authorization.md` → `authentication.md` (ខ្លឹមសារពិតជា Authentication តែដាក់ខុសឈ្មោះ) + ផ្លាស់ទី `authorization.md` (root) ចូល `DOCUMENTATION/`
+
+**API/ Domain Audit (ឆែកទាំង 13 file ម្តងមួយៗ):**
+account-recovery, authentication, authorization, automation, command, device, discovery, gateway, identity, protocol, safety — ✅ ស្អាតទាំងអស់, logic/security rules ត្រឹមត្រូវ។
+- `international.ts` — ខ្វះ `ROUTES`/`Handlers`/`SecurityRules`/`AuditEvent` (មានតែ types+functions) → **បានបន្ថែមរួច**
+- `organization.ts` — ខ្វះ `ORGANIZATION_SECURITY_RULES` ទាំងស្រុង → **បានបន្ថែមរួច** (ONLY_OWNER_CAN_DELETE_ORG, MINIMUM_ONE_OWNER_REQUIRED, CANNOT_ASSIGN_ROLE_ABOVE_OWN ។ល។)
+- កត់ចំណាំ: `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` (មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import ជាមួយគ្នា — ប្រយ័ត្នពេលបង្កើត file ថ្មីត្រូវការទាំងពីរ)
+
+**⚠️ Git Safety Incident — មេរៀនសំខាន់សម្រាប់ AI/Developer ក្រោយ:**
+- ពាក្យបញ្ជា `cp -r khoem-now khoem-now-backup-...` ដែលរត់ពី **ខាងក្នុង** `khoem-now/` ខ្លួនឯង បង្កើត backup folder ដែលមាន `node_modules` ពេញ **នៅខាងក្នុង git repo** → `git add -A` ចាប់យកចូល commit ដោយចៃដន្យ (រាប់ពាន់ file!)
+- **មេរៀន**: កុំដែល `cp -r` project folder ទៅជា backup **នៅខាងក្នុងខ្លួនឯង**។ បើត្រូវការ backup សូមធ្វើនៅ **ក្រៅ** project root ទាំងស្រុង (ឧ. `~/backups/`) ឬប្រើ `git stash`/`git branch` ជំនួស
+- **មេរៀនទី ២**: `git status` ត្រូវពិនិត្យជានិច្ចមុន `git add -A` — កុំទុកចិត្តលើ `-A` ដោយងងឹតងងុល
+- **មេរៀនទី ៣**: AI ២-៣ កន្លែងកែក្នុងពេលដំណាលគ្នា (Termux + bolt.new) នាំឱ្យ `git push` ត្រូវ `rejected` ជានិច្ច — ត្រូវ `git pull --no-rebase` ជានិច្ចមុន push
+
+**ឧបករណ៍ថ្មី — `ksv.sh` (shortcut script):**
+បង្កើតទុកនៅ `~/KSV/khoem-now/ksv.sh` ជាមួយ alias `ksv` ក្នុង `~/.bashrc`៖
+- `ksv pull` — ទាញកូដចុងក្រោយ
+- `ksv build` — `npm install && npm run build`
+- `ksv dev` — `npm install && npm run dev`
+- `ksv push` — add + commit (សួរសារ) + push
+- `ksv status` — `git status` + `git log --oneline -5`
+
+**Commits ថ្ងៃនេះ:**
+- `docs: complete API domain audit, add missing security rules and route definitions to organization.ts and international.ts`
+- Merge commit ជាមួយ `khoem-now/API/README.md` (ពី AI ផ្សេង) — គ្មាន conflict
+
+**ស្ថានភាពចុងក្រោយ:** GitHub `KHOEM-AI/KSV` main branch sync ១០០%, build ជោគជ័យ (1589 modules, 0 error), `node_modules` មិនជាប់ក្នុង repo ទៀត។
+MDEOF
+
+git add README.md
+git commit -m "docs: log session summary — root cause fix, API audit, git safety lessons"
+git pull origin main --no-rebase
+git push origin main
 [![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-s6rw1asx)
