@@ -170,7 +170,7 @@ export default function App() {
                   {/* "Carlos Silva" is this user's actual name — a proper
                       noun, so it is never translated. Only the role
                       label next to it changes with the language. */}
-                  <p className="text-xs font-semibold text-white">KHOEM SOKSIVUTHA</p>
+                  <p className="text-xs font-semibold text-white">𝒦𝒽𝑜𝑒𝓂  𝒮𝑜𝓀𝓈𝒾𝓋𝓊𝓉𝒽𝒶</p>
                   <p className="text-[10px] text-ink-400">{t('user.orgOwner')}</p>
                 </div>
                 <ChevronDown size={14} className="text-ink-400" />
