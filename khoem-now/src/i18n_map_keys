@@ -1,0 +1,323 @@
+cd /mnt/user-data/outputs
+# 1. Fix MapView.tsx import to use the @ alias matching the codebase convention
+sed -i "s|import { useLanguage } from '../i18n/LanguageContext';|import { useLanguage } from '@/i18n/LanguageContext';|" src/views/MapView.tsx
+grep -n "useLanguage" src/views/MapView.tsx
+
+mkdir -p /mnt/user-data/outputs/src/components
+cat > /mnt/user-data/outputs/src/components/nav.tsx << 'TSXEOF'
+import { type ReactNode } from 'react';
+import {
+  LayoutDashboard,
+  Map,
+  Cpu,
+  SlidersHorizontal,
+  ShieldCheck,
+  ShieldAlert,
+  Radio,
+  Network,
+  Building2,
+  Globe2,
+  ScrollText,
+  GraduationCap,
+  Settings,
+} from 'lucide-react';
+
+// ======================================================================
+// KSV — Navigation registry (Domain #1, part 2: Language)
+//
+// This file used to hold hardcoded English strings ("Dashboard",
+// "Overview", ...). It now holds translation KEYS only — the actual
+// text lives in src/i18n/translations.ts, one place per language.
+// App.tsx calls t(group.labelKey) / t(item.labelKey) / t(meta.titleKey)
+// when rendering, so the sidebar and header follow whatever language
+// is active without this file ever changing again.
+//
+// 2026-08-XX: added 'map' (README Section 44 — Interactive GIS Map),
+// placed in devicesControl group next to devices/controls, matching
+// the "Devices | Fleet | Map" grouping in README Section 43.1.
+// ======================================================================
+
+export type ViewId =
+  | 'dashboard'
+  | 'devices'
+  | 'map'
+  | 'controls'
+  | 'security'
+  | 'safety'
+  | 'protocols'
+  | 'gateway'
+  | 'organization'
+  | 'international'
+  | 'audit'
+  | 'certificates'
+  | 'settings';
+
+export interface NavGroup {
+  labelKey: string;
+  items: { id: ViewId; labelKey: string; icon: ReactNode; badge?: string }[];
+}
+
+export const navGroups: NavGroup[] = [
+  {
+    labelKey: 'navgroup.overview',
+    items: [
+      { id: 'dashboard', labelKey: 'nav.dashboard', icon: <LayoutDashboard size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.devicesControl',
+    items: [
+      { id: 'devices', labelKey: 'nav.devices', icon: <Cpu size={18} /> },
+      { id: 'map', labelKey: 'nav.map', icon: <Map size={18} /> },
+      { id: 'controls', labelKey: 'nav.controls', icon: <SlidersHorizontal size={18} /> },
+      { id: 'protocols', labelKey: 'nav.protocols', icon: <Radio size={18} /> },
+      { id: 'gateway', labelKey: 'nav.gateway', icon: <Network size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.securitySafety',
+    items: [
+      { id: 'security', labelKey: 'nav.security', icon: <ShieldCheck size={18} /> },
+      { id: 'safety', labelKey: 'nav.safety', icon: <ShieldAlert size={18} /> },
+      { id: 'audit', labelKey: 'nav.audit', icon: <ScrollText size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.organization',
+    items: [
+      { id: 'organization', labelKey: 'nav.organization', icon: <Building2 size={18} /> },
+      { id: 'international', labelKey: 'nav.international', icon: <Globe2 size={18} /> },
+      { id: 'certificates', labelKey: 'nav.certificates', icon: <GraduationCap size={18} /> },
+      { id: 'settings', labelKey: 'nav.settings', icon: <Settings size={18} /> },
+    ],
+  },
+];
+
+// titleKey reuses the same key as the sidebar label (the page header
+// says the same name as the menu item that opened it — one word to
+// translate instead of two). subtitleKey is its own key since the
+// description text is unique to each page.
+export const viewMeta: Record<ViewId, { titleKey: string; subtitleKey: string }> = {
+  dashboard: { titleKey: 'nav.dashboard', subtitleKey: 'view.dashboard.subtitle' },
+  devices: { titleKey: 'nav.devices', subtitleKey: 'view.devices.subtitle' },
+  map: { titleKey: 'nav.map', subtitleKey: 'view.map.subtitle' },
+  controls: { titleKey: 'nav.controls', subtitleKey: 'view.controls.subtitle' },
+  protocols: { titleKey: 'nav.protocols', subtitleKey: 'view.protocols.subtitle' },
+  gateway: { titleKey: 'nav.gateway', subtitleKey: 'view.gateway.subtitle' },
+  security: { titleKey: 'nav.security', subtitleKey: 'view.security.subtitle' },
+  safety: { titleKey: 'nav.safety', subtitleKey: 'view.safety.subtitle' },
+  organization: { titleKey: 'nav.organization', subtitleKey: 'view.organization.subtitle' },
+  international: { titleKey: 'nav.international', subtitleKey: 'view.international.subtitle' },
+  audit: { titleKey: 'nav.audit', subtitleKey: 'view.audit.subtitle' },
+  certificates: { titleKey: 'nav.certificates', subtitleKey: 'view.certificates.subtitle' },
+  settings: { titleKey: 'nav.settings', subtitleKey: 'view.settings.subtitle' },
+};
+TSXEOF
+echo "nav.tsx written"
+
+cat > /mnt/user-data/outputs/apply_map_to_app.sh << 'SHEOF'
+#!/bin/bash
+# ដំណើរការនៅ ~/KSV/khoem-now — បន្ថែម MapView ចូល App.tsx (2 ចំណុចប៉ុណ្ណោះ, មិនប៉ះអ្វីផ្សេង)
+set -e
+
+FILE="src/App.tsx"
+
+# 1. បន្ថែម import MapView ក្រោម import GatewayView
+sed -i "/import { GatewayView } from '@\/views\/GatewayView';/a import { MapView } from '@/views/MapView';" "$FILE"
+
+# 2. បន្ថែម map: MapView, ក្រោម gateway: GatewayView,
+sed -i "/gateway: GatewayView,/a\\  map: MapView," "$FILE"
+
+echo "=== ត្រួតពិនិត្យលទ្ធផល ==="
+grep -n "MapView" "$FILE"
+SHEOF
+chmod +x /mnt/user-data/outputs/apply_map_to_app.sh
+echo "apply_map_to_app.sh written"
+
+I need to add map-related translation keys (nav label, title, subtitle, and filter options for statuses) across all 10 language dictionaries, following the same insertion pattern used for other sections.
+
+Finishing the Khmer translations and now starting the Japanese localization strings for the map view.
+
+Adding translation strings...
+
+Adding Korean status labels, then moving on to French translations for the map interface.
+
+Adding Spanish and Vietnamese translations...
+
+Finishing the Arabic translation strings, then I'm shifting to writing a shell script that inserts each language dictionary block using sed, anchored on the `const xx: Dict = {` pattern — I'll use temp files instead of inline heredoc quoting to avoid escaping issues.…
+
+mkdir -p /mnt/user-data/outputs/i18n_map_keys
+cd /mnt/user-data/outputs/i18n_map_keys
+
+cat > en.txt << 'EOF'
+  'nav.map': 'Map',
+  'view.map.title': 'Interactive Map',
+  'view.map.subtitle': 'Live geolocation of every device across your fleet',
+  'view.map.filter.all': 'All',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Warning',
+  'view.map.filter.critical': 'Critical',
+  'view.map.filter.offline': 'Offline',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.detail.category': 'Category',
+  'view.map.detail.protocol': 'Protocol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coordinates',
+  'view.map.detail.controlNote': 'Open Device Detail to send commands — Authorization and Safety checks are never bypassed from the map.',
+EOF
+
+cat > km.txt << 'EOF'
+  'nav.map': 'ផែនទី',
+  'view.map.title': 'ផែនទីអន្តរកម្ម',
+  'view.map.subtitle': 'ទីតាំងផ្ទាល់នៃឧបករណ៍ទាំងអស់ក្នុង Fleet',
+  'view.map.filter.all': 'ទាំងអស់',
+  'view.map.filter.online': 'អនឡាញ',
+  'view.map.filter.warning': 'ព្រមាន',
+  'view.map.filter.critical': 'គ្រោះថ្នាក់',
+  'view.map.filter.offline': 'គ្មានអនឡាញ',
+  'view.map.filter.maintenance': 'ថែទាំ',
+  'view.map.detail.category': 'ប្រភេទ',
+  'view.map.detail.protocol': 'ពិធីការ',
+  'view.map.detail.status': 'ស្ថានភាព',
+  'view.map.detail.coords': 'កូអរដោនេ',
+  'view.map.detail.controlNote': 'បើក Device Detail ដើម្បីផ្ញើបញ្ជា — Authorization និង Safety មិនអាចរំលងបានពី Map ទេ។',
+EOF
+
+cat > ja.txt << 'EOF'
+  'nav.map': 'マップ',
+  'view.map.title': 'インタラクティブマップ',
+  'view.map.subtitle': 'フリート全体のデバイスをリアルタイムで地図表示',
+  'view.map.filter.all': 'すべて',
+  'view.map.filter.online': 'オンライン',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '重大',
+  'view.map.filter.offline': 'オフライン',
+  'view.map.filter.maintenance': 'メンテナンス',
+  'view.map.detail.category': 'カテゴリ',
+  'view.map.detail.protocol': 'プロトコル',
+  'view.map.detail.status': 'ステータス',
+  'view.map.detail.coords': '座標',
+  'view.map.detail.controlNote': 'コマンド送信はデバイス詳細から行います — 認可と安全確認はマップからバイパスされません。',
+EOF
+
+cat > zh.txt << 'EOF'
+  'nav.map': '地图',
+  'view.map.title': '交互式地图',
+  'view.map.subtitle': '实时查看整个车队设备的地理位置',
+  'view.map.filter.all': '全部',
+  'view.map.filter.online': '在线',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '严重',
+  'view.map.filter.offline': '离线',
+  'view.map.filter.maintenance': '维护中',
+  'view.map.detail.category': '类别',
+  'view.map.detail.protocol': '协议',
+  'view.map.detail.status': '状态',
+  'view.map.detail.coords': '坐标',
+  'view.map.detail.controlNote': '请打开设备详情发送指令 — 地图不会绕过授权与安全检查。',
+EOF
+
+cat > th.txt << 'EOF'
+  'nav.map': 'แผนที่',
+  'view.map.title': 'แผนที่แบบอินเทอร์แอกทีฟ',
+  'view.map.subtitle': 'ตำแหน่งอุปกรณ์ทั้งหมดในกองยานแบบเรียลไทม์',
+  'view.map.filter.all': 'ทั้งหมด',
+  'view.map.filter.online': 'ออนไลน์',
+  'view.map.filter.warning': 'คำเตือน',
+  'view.map.filter.critical': 'วิกฤต',
+  'view.map.filter.offline': 'ออฟไลน์',
+  'view.map.filter.maintenance': 'ซ่อมบำรุง',
+  'view.map.detail.category': 'หมวดหมู่',
+  'view.map.detail.protocol': 'โปรโตคอล',
+  'view.map.detail.status': 'สถานะ',
+  'view.map.detail.coords': 'พิกัด',
+  'view.map.detail.controlNote': 'เปิดรายละเอียดอุปกรณ์เพื่อส่งคำสั่ง — แผนที่จะไม่ข้ามการตรวจสอบสิทธิ์และความปลอดภัย',
+EOF
+
+cat > ko.txt << 'EOF'
+  'nav.map': '지도',
+  'view.map.title': '인터랙티브 지도',
+  'view.map.subtitle': '전체 플릿 장치의 실시간 위치',
+  'view.map.filter.all': '전체',
+  'view.map.filter.online': '온라인',
+  'view.map.filter.warning': '경고',
+  'view.map.filter.critical': '심각',
+  'view.map.filter.offline': '오프라인',
+  'view.map.filter.maintenance': '유지보수',
+  'view.map.detail.category': '카테고리',
+  'view.map.detail.protocol': '프로토콜',
+  'view.map.detail.status': '상태',
+  'view.map.detail.coords': '좌표',
+  'view.map.detail.controlNote': '명령은 장치 상세 페이지에서 전송하세요 — 지도에서는 권한 및 안전 검사를 우회하지 않습니다.',
+EOF
+
+cat > fr.txt << 'EOF'
+  'nav.map': 'Carte',
+  'view.map.title': 'Carte interactive',
+  'view.map.subtitle': 'Géolocalisation en direct de tous les appareils de votre flotte',
+  'view.map.filter.all': 'Tous',
+  'view.map.filter.online': 'En ligne',
+  'view.map.filter.warning': 'Avertissement',
+  'view.map.filter.critical': 'Critique',
+  'view.map.filter.offline': 'Hors ligne',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.detail.category': 'Catégorie',
+  'view.map.detail.protocol': 'Protocole',
+  'view.map.detail.status': 'Statut',
+  'view.map.detail.coords': 'Coordonnées',
+  'view.map.detail.controlNote': "Ouvrez la fiche de l'appareil pour envoyer des commandes — la carte ne contourne jamais l'autorisation ni la sécurité.",
+EOF
+
+cat > es.txt << 'EOF'
+  'nav.map': 'Mapa',
+  'view.map.title': 'Mapa interactivo',
+  'view.map.subtitle': 'Ubicación en tiempo real de todos los dispositivos de tu flota',
+  'view.map.filter.all': 'Todos',
+  'view.map.filter.online': 'En línea',
+  'view.map.filter.warning': 'Advertencia',
+  'view.map.filter.critical': 'Crítico',
+  'view.map.filter.offline': 'Sin conexión',
+  'view.map.filter.maintenance': 'Mantenimiento',
+  'view.map.detail.category': 'Categoría',
+  'view.map.detail.protocol': 'Protocolo',
+  'view.map.detail.status': 'Estado',
+  'view.map.detail.coords': 'Coordenadas',
+  'view.map.detail.controlNote': 'Abre el detalle del dispositivo para enviar comandos — el mapa nunca omite la autorización ni la seguridad.',
+EOF
+
+cat > vi.txt << 'EOF'
+  'nav.map': 'Bản đồ',
+  'view.map.title': 'Bản đồ tương tác',
+  'view.map.subtitle': 'Vị trí trực tiếp của mọi thiết bị trong đội thiết bị của bạn',
+  'view.map.filter.all': 'Tất cả',
+  'view.map.filter.online': 'Trực tuyến',
+  'view.map.filter.warning': 'Cảnh báo',
+  'view.map.filter.critical': 'Nghiêm trọng',
+  'view.map.filter.offline': 'Ngoại tuyến',
+  'view.map.filter.maintenance': 'Bảo trì',
+  'view.map.detail.category': 'Danh mục',
+  'view.map.detail.protocol': 'Giao thức',
+  'view.map.detail.status': 'Trạng thái',
+  'view.map.detail.coords': 'Tọa độ',
+  'view.map.detail.controlNote': 'Mở chi tiết thiết bị để gửi lệnh — bản đồ không bao giờ bỏ qua việc phân quyền và an toàn.',
+EOF
+
+cat > ar.txt << 'EOF'
+  'nav.map': 'الخريطة',
+  'view.map.title': 'خريطة تفاعلية',
+  'view.map.subtitle': 'الموقع الفعلي لجميع الأجهزة في أسطولك',
+  'view.map.filter.all': 'الكل',
+  'view.map.filter.online': 'متصل',
+  'view.map.filter.warning': 'تحذير',
+  'view.map.filter.critical': 'حرج',
+  'view.map.filter.offline': 'غير متصل',
+  'view.map.filter.maintenance': 'صيانة',
+  'view.map.detail.category': 'الفئة',
+  'view.map.detail.protocol': 'البروتوكول',
+  'view.map.detail.status': 'الحالة',
+  'view.map.detail.coords': 'الإحداثيات',
+  'view.map.detail.controlNote': 'افتح تفاصيل الجهاز لإرسال الأوامر — لا يمكن للخريطة تجاوز التفويض وفحوصات السلامة.',
+EOF
+
+ls -la
+echo "10 language key files written"
