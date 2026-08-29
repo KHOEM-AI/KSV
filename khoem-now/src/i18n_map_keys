@@ -1,0 +1,552 @@
+cd /mnt/user-data/outputs
+# 1. Fix MapView.tsx import to use the @ alias matching the codebase convention
+sed -i "s|import { useLanguage } from '../i18n/LanguageContext';|import { useLanguage } from '@/i18n/LanguageContext';|" src/views/MapView.tsx
+grep -n "useLanguage" src/views/MapView.tsx
+
+mkdir -p /mnt/user-data/outputs/src/views
+cat > /mnt/user-data/outputs/src/views/MapView.tsx << 'TSXEOF'
+import { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useLanguage } from '../i18n/LanguageContext';
+
+/**
+ * MapView.tsx — KSV Interactive GIS / Geo-Location Map (README Section 44)
+ *
+ * ចំណាំសំខាន់មុននឹង build:
+ *   npm install leaflet
+ *   npm install -D @types/leaflet
+ *
+ * Marker color តាម Section 44.2 ក្នុង README:
+ *   GREEN = NORMAL/ONLINE, YELLOW = WARNING, RED = CRITICAL,
+ *   GRAY = OFFLINE, BLUE = MAINTENANCE
+ *
+ * Map មិនត្រូវជំនួស Authorization ទេ (Section 44.2) — ចុច marker បង្ហាញតែ
+ * ព័ត៌មាន Device Detail ជា read-only; ប៊ូតុង Control ត្រូវទៅ Device Detail
+ * page ដែលឆ្លង Auth/Authorization/Safety ដូចធម្មតា (មិនប្រតិបត្តិដោយផ្ទាល់ពី Map ទេ)។
+ */
+
+type DeviceStatus = 'online' | 'warning' | 'critical' | 'offline' | 'maintenance';
+
+interface MapDevice {
+  id: string;
+  name: string;
+  category: string;
+  site: string;
+  lat: number;
+  lng: number;
+  status: DeviceStatus;
+  protocol: string;
+}
+
+// TODO: ជំនួសដោយហៅ /api/devices?fields=id,name,lat,lng,status ពិតប្រាកដ
+// ពេលមាន backend — ឥឡូវប្រើទិន្នន័យដូច Device Registry (screenshot) ជា placeholder
+const MOCK_DEVICES: MapDevice[] = [
+  { id: 'DEV-04821', name: 'North Vault Door',      category: 'Access',     site: 'Frankfurt HQ',    lat: 50.1109, lng: 8.6821,   status: 'online',      protocol: 'MQTT' },
+  { id: 'DEV-04822', name: 'Cleanroom HVAC Unit 3',  category: 'Climate',    site: 'Taipei Fab',      lat: 25.0330, lng: 121.5654, status: 'warning',     protocol: 'Wi-Fi' },
+  { id: 'DEV-04823', name: 'Press Line 7 Interlock', category: 'Industrial', site: 'Stuttgart Plant', lat: 48.7758, lng: 9.1829,   status: 'online',      protocol: 'Zigbee' },
+  { id: 'DEV-04824', name: 'Fleet Van KR-2291',      category: 'Vehicle',    site: 'Seoul Depot',     lat: 37.5665, lng: 126.9780, status: 'offline',     protocol: 'Bluetooth' },
+  { id: 'DEV-04825', name: 'Rooftop Air Sensor',     category: 'Sensor',     site: 'Frankfurt HQ',    lat: 50.1160, lng: 8.6900,   status: 'online',      protocol: 'LoRaWAN' },
+  { id: 'DEV-04826', name: 'East Gate Barrier',      category: 'Access',     site: 'Dubai Logistics', lat: 25.2048, lng: 55.2708,  status: 'maintenance', protocol: 'MQTT' },
+  { id: 'DEV-04827', name: 'Core Switch RACK-12',    category: 'Network',    site: 'Singapore DC',    lat: 1.3521,  lng: 103.8198, status: 'online',      protocol: 'Wi-Fi' },
+  { id: 'DEV-04828', name: 'Robot Arm RA-04',        category: 'Industrial', site: 'Osaka Factory',   lat: 34.6937, lng: 135.5023, status: 'warning',     protocol: 'MQTT' },
+  { id: 'DEV-04829', name: 'Server Room Door',       category: 'Access',     site: 'Singapore DC',    lat: 1.3500,  lng: 103.8200, status: 'online',      protocol: 'Zigbee' },
+  { id: 'DEV-04830', name: 'Cold Storage Monitor',   category: 'Climate',    site: 'Rotterdam Port',  lat: 51.9244, lng: 4.4777,   status: 'online',      protocol: 'Wi-Fi' },
+];
+
+const STATUS_COLOR: Record<DeviceStatus, string> = {
+  online: '#22c55e',
+  warning: '#eab308',
+  critical: '#ef4444',
+  offline: '#6b7280',
+  maintenance: '#3b82f6',
+};
+
+function makeIcon(status: DeviceStatus): L.DivIcon {
+  const color = STATUS_COLOR[status];
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:16px;height:16px;border-radius:50%;
+      background:${color};
+      box-shadow:0 0 0 4px ${color}33, 0 0 8px ${color};
+      border:2px solid #0b0d14;
+    "></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
+
+export function MapView() {
+  const { t } = useLanguage();
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const [statusFilter, setStatusFilter] = useState<DeviceStatus | 'all'>('all');
+  const [selectedDevice, setSelectedDevice] = useState<MapDevice | null>(null);
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [30, 20],
+      zoom: 2,
+      minZoom: 2,
+      worldCopyJump: true,
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      maxZoom: 19,
+    }).addTo(map);
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // ធ្វើ marker ឡើងវិញរាល់ដង filter ប្តូរ
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const markers: L.Marker[] = [];
+    const visible = MOCK_DEVICES.filter(
+      (d) => statusFilter === 'all' || d.status === statusFilter
+    );
+
+    for (const device of visible) {
+      const marker = L.marker([device.lat, device.lng], { icon: makeIcon(device.status) })
+        .addTo(map)
+        .on('click', () => setSelectedDevice(device));
+      markers.push(marker);
+    }
+
+    return () => {
+      markers.forEach((m) => m.remove());
+    };
+  }, [statusFilter]);
+
+  const statusCounts = MOCK_DEVICES.reduce<Record<string, number>>((acc, d) => {
+    acc[d.status] = (acc[d.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <div>
+        <h1 className="text-lg font-semibold text-white">{t('view.map.title')}</h1>
+        <p className="text-sm text-ink-400">{t('view.map.subtitle')}</p>
+      </div>
+
+      {/* Status filter chips — Section 44.3 (status filter) */}
+      <div className="flex flex-wrap gap-2">
+        {(['all', 'online', 'warning', 'critical', 'offline', 'maintenance'] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              statusFilter === s
+                ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300'
+                : 'border-white/10 text-ink-400 hover:border-white/30'
+            }`}
+          >
+            {s === 'all' ? t('view.map.filter.all') : t(`view.map.filter.${s}`)}
+            {s !== 'all' && (
+              <span className="ml-1 opacity-60">({statusCounts[s] ?? 0})</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative">
+        <div
+          ref={mapContainerRef}
+          style={{ height: '420px', width: '100%' }}
+          className="overflow-hidden rounded-xl border border-white/10"
+        />
+
+        {/* Legend — Section 44.2 */}
+        <div className="absolute bottom-3 left-3 z-[1000] rounded-lg bg-[#0b0d14]/90 p-3 text-xs text-white border border-white/10">
+          {Object.entries(STATUS_COLOR).map(([status, color]) => (
+            <div key={status} className="flex items-center gap-2 py-0.5">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ background: color }}
+              />
+              <span className="capitalize">{t(`view.map.filter.${status}`)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Device detail panel — read-only, click marker → Section 44.3 */}
+      {selectedDevice && (
+        <div className="rounded-xl border border-white/10 bg-[#151a28] p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-white">{selectedDevice.name}</h3>
+              <p className="text-xs text-ink-400">{selectedDevice.id} · {selectedDevice.site}</p>
+            </div>
+            <button
+              onClick={() => setSelectedDevice(null)}
+              className="text-ink-400 hover:text-white"
+              aria-label={t('common.close')}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <div>
+              <div className="text-ink-400 text-xs">{t('view.map.detail.category')}</div>
+              <div className="text-white">{selectedDevice.category}</div>
+            </div>
+            <div>
+              <div className="text-ink-400 text-xs">{t('view.map.detail.protocol')}</div>
+              <div className="text-white">{selectedDevice.protocol}</div>
+            </div>
+            <div>
+              <div className="text-ink-400 text-xs">{t('view.map.detail.status')}</div>
+              <div className="text-white capitalize">{selectedDevice.status}</div>
+            </div>
+            <div>
+              <div className="text-ink-400 text-xs">{t('view.map.detail.coords')}</div>
+              <div className="text-white">{selectedDevice.lat.toFixed(3)}, {selectedDevice.lng.toFixed(3)}</div>
+            </div>
+          </div>
+
+          {/* 
+            មិនដាក់ប៊ូតុង Control ត្រង់ៗនៅទីនេះទេ (Section 44.2: marker មិនត្រូវ
+            ជំនួស Authorization) — ត្រូវ navigate ទៅ Device Detail page ដែលឆ្លង
+            Auth → Authorization → Safety ដូចធម្មតា។ ជំនួសដោយ router navigate
+            ពិតប្រាកដនៅពេលភ្ជាប់ (ឧ. react-router `navigate(\`/devices/${selectedDevice.id}\`)`)
+          */}
+          <p className="mt-3 text-xs text-ink-500">{t('view.map.detail.controlNote')}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+TSXEOF
+echo "1/1 src/views/MapView.tsx written"
+mkdir -p /mnt/user-data/outputs/src/components
+cat > /mnt/user-data/outputs/src/components/nav.tsx << 'TSXEOF'
+import { type ReactNode } from 'react';
+import {
+  LayoutDashboard,
+  Map,
+  Cpu,
+  SlidersHorizontal,
+  ShieldCheck,
+  ShieldAlert,
+  Radio,
+  Network,
+  Building2,
+  Globe2,
+  ScrollText,
+  GraduationCap,
+  Settings,
+} from 'lucide-react';
+
+// ======================================================================
+// KSV — Navigation registry (Domain #1, part 2: Language)
+//
+// This file used to hold hardcoded English strings ("Dashboard",
+// "Overview", ...). It now holds translation KEYS only — the actual
+// text lives in src/i18n/translations.ts, one place per language.
+// App.tsx calls t(group.labelKey) / t(item.labelKey) / t(meta.titleKey)
+// when rendering, so the sidebar and header follow whatever language
+// is active without this file ever changing again.
+//
+// 2026-08-XX: added 'map' (README Section 44 — Interactive GIS Map),
+// placed in devicesControl group next to devices/controls, matching
+// the "Devices | Fleet | Map" grouping in README Section 43.1.
+// ======================================================================
+
+export type ViewId =
+  | 'dashboard'
+  | 'devices'
+  | 'map'
+  | 'controls'
+  | 'security'
+  | 'safety'
+  | 'protocols'
+  | 'gateway'
+  | 'organization'
+  | 'international'
+  | 'audit'
+  | 'certificates'
+  | 'settings';
+
+export interface NavGroup {
+  labelKey: string;
+  items: { id: ViewId; labelKey: string; icon: ReactNode; badge?: string }[];
+}
+
+export const navGroups: NavGroup[] = [
+  {
+    labelKey: 'navgroup.overview',
+    items: [
+      { id: 'dashboard', labelKey: 'nav.dashboard', icon: <LayoutDashboard size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.devicesControl',
+    items: [
+      { id: 'devices', labelKey: 'nav.devices', icon: <Cpu size={18} /> },
+      { id: 'map', labelKey: 'nav.map', icon: <Map size={18} /> },
+      { id: 'controls', labelKey: 'nav.controls', icon: <SlidersHorizontal size={18} /> },
+      { id: 'protocols', labelKey: 'nav.protocols', icon: <Radio size={18} /> },
+      { id: 'gateway', labelKey: 'nav.gateway', icon: <Network size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.securitySafety',
+    items: [
+      { id: 'security', labelKey: 'nav.security', icon: <ShieldCheck size={18} /> },
+      { id: 'safety', labelKey: 'nav.safety', icon: <ShieldAlert size={18} /> },
+      { id: 'audit', labelKey: 'nav.audit', icon: <ScrollText size={18} /> },
+    ],
+  },
+  {
+    labelKey: 'navgroup.organization',
+    items: [
+      { id: 'organization', labelKey: 'nav.organization', icon: <Building2 size={18} /> },
+      { id: 'international', labelKey: 'nav.international', icon: <Globe2 size={18} /> },
+      { id: 'certificates', labelKey: 'nav.certificates', icon: <GraduationCap size={18} /> },
+      { id: 'settings', labelKey: 'nav.settings', icon: <Settings size={18} /> },
+    ],
+  },
+];
+
+// titleKey reuses the same key as the sidebar label (the page header
+// says the same name as the menu item that opened it — one word to
+// translate instead of two). subtitleKey is its own key since the
+// description text is unique to each page.
+export const viewMeta: Record<ViewId, { titleKey: string; subtitleKey: string }> = {
+  dashboard: { titleKey: 'nav.dashboard', subtitleKey: 'view.dashboard.subtitle' },
+  devices: { titleKey: 'nav.devices', subtitleKey: 'view.devices.subtitle' },
+  map: { titleKey: 'nav.map', subtitleKey: 'view.map.subtitle' },
+  controls: { titleKey: 'nav.controls', subtitleKey: 'view.controls.subtitle' },
+  protocols: { titleKey: 'nav.protocols', subtitleKey: 'view.protocols.subtitle' },
+  gateway: { titleKey: 'nav.gateway', subtitleKey: 'view.gateway.subtitle' },
+  security: { titleKey: 'nav.security', subtitleKey: 'view.security.subtitle' },
+  safety: { titleKey: 'nav.safety', subtitleKey: 'view.safety.subtitle' },
+  organization: { titleKey: 'nav.organization', subtitleKey: 'view.organization.subtitle' },
+  international: { titleKey: 'nav.international', subtitleKey: 'view.international.subtitle' },
+  audit: { titleKey: 'nav.audit', subtitleKey: 'view.audit.subtitle' },
+  certificates: { titleKey: 'nav.certificates', subtitleKey: 'view.certificates.subtitle' },
+  settings: { titleKey: 'nav.settings', subtitleKey: 'view.settings.subtitle' },
+};
+TSXEOF
+echo "nav.tsx written"
+
+cat > /mnt/user-data/outputs/apply_map_to_app.sh << 'SHEOF'
+#!/bin/bash
+# ដំណើរការនៅ ~/KSV/khoem-now — បន្ថែម MapView ចូល App.tsx (2 ចំណុចប៉ុណ្ណោះ, មិនប៉ះអ្វីផ្សេង)
+set -e
+
+FILE="src/App.tsx"
+
+# 1. បន្ថែម import MapView ក្រោម import GatewayView
+sed -i "/import { GatewayView } from '@\/views\/GatewayView';/a import { MapView } from '@/views/MapView';" "$FILE"
+
+# 2. បន្ថែម map: MapView, ក្រោម gateway: GatewayView,
+sed -i "/gateway: GatewayView,/a\\  map: MapView," "$FILE"
+
+echo "=== ត្រួតពិនិត្យលទ្ធផល ==="
+grep -n "MapView" "$FILE"
+SHEOF
+chmod +x /mnt/user-data/outputs/apply_map_to_app.sh
+echo "apply_map_to_app.sh written"
+
+I need to add map-related translation keys (nav label, title, subtitle, and filter options for statuses) across all 10 language dictionaries, following the same insertion pattern used for other sections.
+
+Finishing the Khmer translations and now starting the Japanese localization strings for the map view.
+
+Adding translation strings...
+
+Adding Korean status labels, then moving on to French translations for the map interface.
+
+Adding Spanish and Vietnamese translations...
+
+Finishing the Arabic translation strings, then I'm shifting to writing a shell script that inserts each language dictionary block using sed, anchored on the `const xx: Dict = {` pattern — I'll use temp files instead of inline heredoc quoting to avoid escaping issues.…
+
+mkdir -p /mnt/user-data/outputs/i18n_map_keys
+cd /mnt/user-data/outputs/i18n_map_keys
+
+cat > en.txt << 'EOF'
+  'nav.map': 'Map',
+  'view.map.title': 'Interactive Map',
+  'view.map.subtitle': 'Live geolocation of every device across your fleet',
+  'view.map.filter.all': 'All',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Warning',
+  'view.map.filter.critical': 'Critical',
+  'view.map.filter.offline': 'Offline',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.detail.category': 'Category',
+  'view.map.detail.protocol': 'Protocol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coordinates',
+  'view.map.detail.controlNote': 'Open Device Detail to send commands — Authorization and Safety checks are never bypassed from the map.',
+EOF
+
+cat > km.txt << 'EOF'
+  'nav.map': 'ផែនទី',
+  'view.map.title': 'ផែនទីអន្តរកម្ម',
+  'view.map.subtitle': 'ទីតាំងផ្ទាល់នៃឧបករណ៍ទាំងអស់ក្នុង Fleet',
+  'view.map.filter.all': 'ទាំងអស់',
+  'view.map.filter.online': 'អនឡាញ',
+  'view.map.filter.warning': 'ព្រមាន',
+  'view.map.filter.critical': 'គ្រោះថ្នាក់',
+  'view.map.filter.offline': 'គ្មានអនឡាញ',
+  'view.map.filter.maintenance': 'ថែទាំ',
+  'view.map.detail.category': 'ប្រភេទ',
+  'view.map.detail.protocol': 'ពិធីការ',
+  'view.map.detail.status': 'ស្ថានភាព',
+  'view.map.detail.coords': 'កូអរដោនេ',
+  'view.map.detail.controlNote': 'បើក Device Detail ដើម្បីផ្ញើបញ្ជា — Authorization និង Safety មិនអាចរំលងបានពី Map ទេ។',
+EOF
+
+cat > ja.txt << 'EOF'
+  'nav.map': 'マップ',
+  'view.map.title': 'インタラクティブマップ',
+  'view.map.subtitle': 'フリート全体のデバイスをリアルタイムで地図表示',
+  'view.map.filter.all': 'すべて',
+  'view.map.filter.online': 'オンライン',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '重大',
+  'view.map.filter.offline': 'オフライン',
+  'view.map.filter.maintenance': 'メンテナンス',
+  'view.map.detail.category': 'カテゴリ',
+  'view.map.detail.protocol': 'プロトコル',
+  'view.map.detail.status': 'ステータス',
+  'view.map.detail.coords': '座標',
+  'view.map.detail.controlNote': 'コマンド送信はデバイス詳細から行います — 認可と安全確認はマップからバイパスされません。',
+EOF
+
+cat > zh.txt << 'EOF'
+  'nav.map': '地图',
+  'view.map.title': '交互式地图',
+  'view.map.subtitle': '实时查看整个车队设备的地理位置',
+  'view.map.filter.all': '全部',
+  'view.map.filter.online': '在线',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '严重',
+  'view.map.filter.offline': '离线',
+  'view.map.filter.maintenance': '维护中',
+  'view.map.detail.category': '类别',
+  'view.map.detail.protocol': '协议',
+  'view.map.detail.status': '状态',
+  'view.map.detail.coords': '坐标',
+  'view.map.detail.controlNote': '请打开设备详情发送指令 — 地图不会绕过授权与安全检查。',
+EOF
+
+cat > th.txt << 'EOF'
+  'nav.map': 'แผนที่',
+  'view.map.title': 'แผนที่แบบอินเทอร์แอกทีฟ',
+  'view.map.subtitle': 'ตำแหน่งอุปกรณ์ทั้งหมดในกองยานแบบเรียลไทม์',
+  'view.map.filter.all': 'ทั้งหมด',
+  'view.map.filter.online': 'ออนไลน์',
+  'view.map.filter.warning': 'คำเตือน',
+  'view.map.filter.critical': 'วิกฤต',
+  'view.map.filter.offline': 'ออฟไลน์',
+  'view.map.filter.maintenance': 'ซ่อมบำรุง',
+  'view.map.detail.category': 'หมวดหมู่',
+  'view.map.detail.protocol': 'โปรโตคอล',
+  'view.map.detail.status': 'สถานะ',
+  'view.map.detail.coords': 'พิกัด',
+  'view.map.detail.controlNote': 'เปิดรายละเอียดอุปกรณ์เพื่อส่งคำสั่ง — แผนที่จะไม่ข้ามการตรวจสอบสิทธิ์และความปลอดภัย',
+EOF
+
+cat > ko.txt << 'EOF'
+  'nav.map': '지도',
+  'view.map.title': '인터랙티브 지도',
+  'view.map.subtitle': '전체 플릿 장치의 실시간 위치',
+  'view.map.filter.all': '전체',
+  'view.map.filter.online': '온라인',
+  'view.map.filter.warning': '경고',
+  'view.map.filter.critical': '심각',
+  'view.map.filter.offline': '오프라인',
+  'view.map.filter.maintenance': '유지보수',
+  'view.map.detail.category': '카테고리',
+  'view.map.detail.protocol': '프로토콜',
+  'view.map.detail.status': '상태',
+  'view.map.detail.coords': '좌표',
+  'view.map.detail.controlNote': '명령은 장치 상세 페이지에서 전송하세요 — 지도에서는 권한 및 안전 검사를 우회하지 않습니다.',
+EOF
+
+cat > fr.txt << 'EOF'
+  'nav.map': 'Carte',
+  'view.map.title': 'Carte interactive',
+  'view.map.subtitle': 'Géolocalisation en direct de tous les appareils de votre flotte',
+  'view.map.filter.all': 'Tous',
+  'view.map.filter.online': 'En ligne',
+  'view.map.filter.warning': 'Avertissement',
+  'view.map.filter.critical': 'Critique',
+  'view.map.filter.offline': 'Hors ligne',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.detail.category': 'Catégorie',
+  'view.map.detail.protocol': 'Protocole',
+  'view.map.detail.status': 'Statut',
+  'view.map.detail.coords': 'Coordonnées',
+  'view.map.detail.controlNote': "Ouvrez la fiche de l'appareil pour envoyer des commandes — la carte ne contourne jamais l'autorisation ni la sécurité.",
+EOF
+
+cat > es.txt << 'EOF'
+  'nav.map': 'Mapa',
+  'view.map.title': 'Mapa interactivo',
+  'view.map.subtitle': 'Ubicación en tiempo real de todos los dispositivos de tu flota',
+  'view.map.filter.all': 'Todos',
+  'view.map.filter.online': 'En línea',
+  'view.map.filter.warning': 'Advertencia',
+  'view.map.filter.critical': 'Crítico',
+  'view.map.filter.offline': 'Sin conexión',
+  'view.map.filter.maintenance': 'Mantenimiento',
+  'view.map.detail.category': 'Categoría',
+  'view.map.detail.protocol': 'Protocolo',
+  'view.map.detail.status': 'Estado',
+  'view.map.detail.coords': 'Coordenadas',
+  'view.map.detail.controlNote': 'Abre el detalle del dispositivo para enviar comandos — el mapa nunca omite la autorización ni la seguridad.',
+EOF
+
+cat > vi.txt << 'EOF'
+  'nav.map': 'Bản đồ',
+  'view.map.title': 'Bản đồ tương tác',
+  'view.map.subtitle': 'Vị trí trực tiếp của mọi thiết bị trong đội thiết bị của bạn',
+  'view.map.filter.all': 'Tất cả',
+  'view.map.filter.online': 'Trực tuyến',
+  'view.map.filter.warning': 'Cảnh báo',
+  'view.map.filter.critical': 'Nghiêm trọng',
+  'view.map.filter.offline': 'Ngoại tuyến',
+  'view.map.filter.maintenance': 'Bảo trì',
+  'view.map.detail.category': 'Danh mục',
+  'view.map.detail.protocol': 'Giao thức',
+  'view.map.detail.status': 'Trạng thái',
+  'view.map.detail.coords': 'Tọa độ',
+  'view.map.detail.controlNote': 'Mở chi tiết thiết bị để gửi lệnh — bản đồ không bao giờ bỏ qua việc phân quyền và an toàn.',
+EOF
+
+cat > ar.txt << 'EOF'
+  'nav.map': 'الخريطة',
+  'view.map.title': 'خريطة تفاعلية',
+  'view.map.subtitle': 'الموقع الفعلي لجميع الأجهزة في أسطولك',
+  'view.map.filter.all': 'الكل',
+  'view.map.filter.online': 'متصل',
+  'view.map.filter.warning': 'تحذير',
+  'view.map.filter.critical': 'حرج',
+  'view.map.filter.offline': 'غير متصل',
+  'view.map.filter.maintenance': 'صيانة',
+  'view.map.detail.category': 'الفئة',
+  'view.map.detail.protocol': 'البروتوكول',
+  'view.map.detail.status': 'الحالة',
+  'view.map.detail.coords': 'الإحداثيات',
+  'view.map.detail.controlNote': 'افتح تفاصيل الجهاز لإرسال الأوامر — لا يمكن للخريطة تجاوز التفويض وفحوصات السلامة.',
+EOF
+
+ls -la
+echo "10 language key files written"

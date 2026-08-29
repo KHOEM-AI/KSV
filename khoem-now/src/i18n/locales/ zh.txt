@@ -1,0 +1,16 @@
+  'nav.map': '地图',
+  'view.map.title': '交互式地图',
+  'view.map.subtitle': '实时查看整个车队设备的地理位置',
+  'view.map.filter.all': '全部',
+  'view.map.filter.online': '在线',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '严重',
+  'view.map.filter.offline': '离线',
+  'view.map.filter.maintenance': '维护中',
+  'view.map.detail.category': '类别',
+  'view.map.detail.protocol': '协议',
+  'view.map.detail.status': '状态',
+  'view.map.detail.coords': '坐标',
+  'view.map.detail.controlNote': '请打开设备详情发送指令 — 地图不会绕过授权与安全检查。',
+
+
