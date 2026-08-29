@@ -17,7 +17,7 @@
  * on purpose. Audit entries must not be editable.
  */
 
-import { AuditLog } from "../../infrastructure/database/models";
+import { AuditLog } from "../../infrastructure/database/models.ts";
 
 // ============================================================
 // Types

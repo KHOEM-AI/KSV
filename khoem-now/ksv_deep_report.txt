@@ -1,0 +1,1487 @@
+
+==============================================
+ KSV DEEP STRUCTURE / CONNECTION AUDIT
+ READ ONLY — NO SOURCE FILE CHANGED
+==============================================
+
+Source files scanned: 33
+
+----------------------------------------------
+1. VIEW / PAGE COMPONENTS
+----------------------------------------------
+VIEW: src/views/AuditView.tsx
+VIEW: src/views/CertificatesView.tsx
+VIEW: src/views/ControlsView.tsx
+VIEW: src/views/DashboardView.tsx
+VIEW: src/views/DevicesView.tsx
+VIEW: src/views/GatewayView.tsx
+VIEW: src/views/InternationalView.tsx
+VIEW: src/views/OrganizationView.tsx
+VIEW: src/views/ProtocolsView.tsx
+VIEW: src/views/SafetyView.tsx
+VIEW: src/views/SecurityView.tsx
+VIEW: src/views/SettingsView.tsx
+
+Total views: 12
+
+----------------------------------------------
+2. APP / VIEW IMPORT CONNECTIONS
+----------------------------------------------
+
+FILE: src/App.tsx
+  IMPORTS VIEW: @/views/DashboardView
+  IMPORTS VIEW: @/views/DevicesView
+  IMPORTS VIEW: @/views/ControlsView
+  IMPORTS VIEW: @/views/ProtocolsView
+  IMPORTS VIEW: @/views/GatewayView
+  IMPORTS VIEW: @/views/SecurityView
+  IMPORTS VIEW: @/views/SafetyView
+  IMPORTS VIEW: @/views/AuditView
+  IMPORTS VIEW: @/views/OrganizationView
+  IMPORTS VIEW: @/views/InternationalView
+  IMPORTS VIEW: @/views/CertificatesView
+  IMPORTS VIEW: @/views/SettingsView
+
+----------------------------------------------
+3. VIEW / PAGE SWITCHING LOGIC
+----------------------------------------------
+
+FILE: src/components/CountryClock.tsx
+  STATE/VALUE: N/A
+
+FILE: src/views/AuditView.tsx
+  STATE/VALUE: all
+
+----------------------------------------------
+4. NAVIGATION / CLICK HANDLERS
+----------------------------------------------
+
+FILE: src/App.tsx
+  onClick={() => setMobileOpen(false)}
+  onClick={() => { setActive(item.id); setMobileOpen(false); }
+  onClick={() => setMobileOpen(true)}
+  setMobileOpen(
+  setActive(
+
+FILE: src/components/CountryClock.tsx
+  setTime(
+  setInterval(
+  setSelected(
+
+FILE: src/components/LanguageSelector.tsx
+  onClick={() => setOpen((v) => !v)}
+  onClick={() => choose(l.code)}
+  setLanguage(
+  setOpen(
+  setFlipping(
+  setTimeout(
+
+FILE: src/components/ui.tsx
+  onClick={onChange}
+
+FILE: src/core/security/encryption.util.ts
+  setAuthTag(
+
+FILE: src/core/security/rate-limiter.ts
+  setInterval(
+  setHeader(
+
+FILE: src/i18n/LanguageContext.tsx
+  setItem(
+  setLanguage(
+  setLanguageState(
+
+FILE: src/views/AuditView.tsx
+  onClick={() => setCatFilter(c)}
+  setQuery(
+  setCatFilter(
+
+FILE: src/views/ControlsView.tsx
+  onClick={() => toggle('vault-lock')}
+  onClick={() => toggle('press-estop')}
+  onClick={() => toggle('east-barrier')}
+  setControls(
+  setValue(
+
+FILE: src/views/DevicesView.tsx
+  onClick={() => setFilter(f)}
+  setQuery(
+  setFilter(
+
+FILE: src/views/InternationalView.tsx
+  onClick={onTogglePin}
+  onClick={() => setSelected(c.code)}
+  setInterval(
+  setTick(
+  setPinned(
+  setSelected(
+  setQuery(
+
+FILE: src/views/SafetyView.tsx
+  onClick={() => setScopeFilter(s)}
+  setRules(
+  setScopeFilter(
+
+FILE: src/views/SettingsView.tsx
+  setSettings(
+
+----------------------------------------------
+5. VIEW COMPONENT RENDER REFERENCES
+----------------------------------------------
+
+FILE: src/App.tsx
+  REFERENCES: AuditView
+  REFERENCES: CertificatesView
+  REFERENCES: ControlsView
+  REFERENCES: DashboardView
+  REFERENCES: DevicesView
+  REFERENCES: GatewayView
+  REFERENCES: InternationalView
+  REFERENCES: OrganizationView
+  REFERENCES: ProtocolsView
+  REFERENCES: SafetyView
+  REFERENCES: SecurityView
+  REFERENCES: SettingsView
+
+FILE: src/core/security/audit.log.ts
+  REFERENCES: AuditView
+
+FILE: src/i18n/translations.ts
+  REFERENCES: SafetyView
+  REFERENCES: SecurityView
+  REFERENCES: SettingsView
+
+FILE: src/views/AuditView.tsx
+  REFERENCES: AuditView
+
+FILE: src/views/CertificatesView.tsx
+  REFERENCES: CertificatesView
+
+FILE: src/views/ControlsView.tsx
+  REFERENCES: ControlsView
+
+FILE: src/views/DashboardView.tsx
+  REFERENCES: DashboardView
+
+FILE: src/views/DevicesView.tsx
+  REFERENCES: DevicesView
+
+FILE: src/views/GatewayView.tsx
+  REFERENCES: GatewayView
+
+FILE: src/views/InternationalView.tsx
+  REFERENCES: InternationalView
+
+FILE: src/views/OrganizationView.tsx
+  REFERENCES: OrganizationView
+
+FILE: src/views/ProtocolsView.tsx
+  REFERENCES: ProtocolsView
+
+FILE: src/views/SafetyView.tsx
+  REFERENCES: SafetyView
+
+FILE: src/views/SecurityView.tsx
+  REFERENCES: SecurityView
+
+FILE: src/views/SettingsView.tsx
+  REFERENCES: SettingsView
+
+----------------------------------------------
+6. TRANSLATION FILES
+----------------------------------------------
+FILE: src/i18n/LanguageContext.tsx
+FILE: src/i18n/translations.ts
+
+----------------------------------------------
+7. TRANSLATION KEYS USED BY SOURCE
+----------------------------------------------
+Used translation keys: 223
+
+app.subtitle
+  <- src/App.tsx
+nav.xxx
+  <- src/App.tsx
+sidebar.systemStatus
+  <- src/App.tsx
+sidebar.operational
+  <- src/App.tsx
+sidebar.devicesOnline
+  <- src/App.tsx
+sidebar.uptime
+  <- src/App.tsx
+common.search
+  <- src/App.tsx
+common.notifications
+  <- src/App.tsx
+user.orgOwner
+  <- src/App.tsx
+intl.language
+  <- src/components/LanguageSelector.tsx
+intl.chooseLanguage
+  <- src/components/LanguageSelector.tsx
+key.name
+  <- src/i18n/translations.ts
+view.audit.title
+  <- src/views/AuditView.tsx
+view.audit.subtitleText
+  <- src/views/AuditView.tsx
+view.audit.chainVerified
+  <- src/views/AuditView.tsx
+view.audit.searchPlaceholder
+  <- src/views/AuditView.tsx
+view.audit.noMatch
+  <- src/views/AuditView.tsx
+view.certificates.heading
+  <- src/views/CertificatesView.tsx
+view.certificates.description
+  <- src/views/CertificatesView.tsx
+view.certificates.certificatesLabel
+  <- src/views/CertificatesView.tsx
+view.certificates.verifiedLabel
+  <- src/views/CertificatesView.tsx
+view.certificates.verified
+  <- src/views/CertificatesView.tsx
+view.certificates.issued
+  <- src/views/CertificatesView.tsx
+view.certificates.expires
+  <- src/views/CertificatesView.tsx
+view.certificates.viewCertificate
+  <- src/views/CertificatesView.tsx
+view.controls.vaultDoor.name
+  <- src/views/ControlsView.tsx
+view.controls.vaultDoor.site
+  <- src/views/ControlsView.tsx
+view.controls.secured
+  <- src/views/ControlsView.tsx
+view.controls.unlocked
+  <- src/views/ControlsView.tsx
+view.controls.unlock
+  <- src/views/ControlsView.tsx
+view.controls.lock
+  <- src/views/ControlsView.tsx
+view.controls.hvac.name
+  <- src/views/ControlsView.tsx
+view.controls.hvac.site
+  <- src/views/ControlsView.tsx
+view.controls.setpoint
+  <- src/views/ControlsView.tsx
+view.controls.fan
+  <- src/views/ControlsView.tsx
+view.controls.mode
+  <- src/views/ControlsView.tsx
+view.controls.cool
+  <- src/views/ControlsView.tsx
+view.controls.filter
+  <- src/views/ControlsView.tsx
+view.controls.pressEstop.name
+  <- src/views/ControlsView.tsx
+view.controls.pressEstop.site
+  <- src/views/ControlsView.tsx
+view.controls.estop
+  <- src/views/ControlsView.tsx
+view.controls.lineHalted
+  <- src/views/ControlsView.tsx
+view.controls.pressOperational
+  <- src/views/ControlsView.tsx
+view.controls.reset
+  <- src/views/ControlsView.tsx
+view.controls.robotArm.name
+  <- src/views/ControlsView.tsx
+view.controls.robotArm.site
+  <- src/views/ControlsView.tsx
+view.controls.speedLimit
+  <- src/views/ControlsView.tsx
+view.controls.humanZoneOverride
+  <- src/views/ControlsView.tsx
+view.controls.active
+  <- src/views/ControlsView.tsx
+view.controls.collisionDetection
+  <- src/views/ControlsView.tsx
+view.controls.enabled
+  <- src/views/ControlsView.tsx
+view.controls.eastGate.name
+  <- src/views/ControlsView.tsx
+view.controls.eastGate.site
+  <- src/views/ControlsView.tsx
+view.controls.maintenance
+  <- src/views/ControlsView.tsx
+view.controls.barrierOpen
+  <- src/views/ControlsView.tsx
+view.controls.barrierClosed
+  <- src/views/ControlsView.tsx
+view.controls.close
+  <- src/views/ControlsView.tsx
+view.controls.open
+  <- src/views/ControlsView.tsx
+view.controls.coldStorage.name
+  <- src/views/ControlsView.tsx
+view.controls.coldStorage.site
+  <- src/views/ControlsView.tsx
+view.controls.targetTemp
+  <- src/views/ControlsView.tsx
+view.controls.current
+  <- src/views/ControlsView.tsx
+view.controls.logTitle
+  <- src/views/ControlsView.tsx
+view.controls.logSubtitle
+  <- src/views/ControlsView.tsx
+key
+  <- src/views/DashboardView.tsx
+  <- src/views/DevicesView.tsx
+dashboard.health.online
+  <- src/views/DashboardView.tsx
+dashboard.health.warning
+  <- src/views/DashboardView.tsx
+dashboard.health.offline
+  <- src/views/DashboardView.tsx
+dashboard.stat.connectedDevices
+  <- src/views/DashboardView.tsx
+dashboard.trend.devicesUp
+  <- src/views/DashboardView.tsx
+dashboard.stat.activeSafetyRules
+  <- src/views/DashboardView.tsx
+dashboard.trend.rulesNew
+  <- src/views/DashboardView.tsx
+dashboard.stat.edgeGateways
+  <- src/views/DashboardView.tsx
+dashboard.stat.online
+  <- src/views/DashboardView.tsx
+dashboard.trend.gatewayOffline
+  <- src/views/DashboardView.tsx
+dashboard.stat.countriesDeployed
+  <- src/views/DashboardView.tsx
+dashboard.trend.countriesAdded
+  <- src/views/DashboardView.tsx
+dashboard.traffic.title
+  <- src/views/DashboardView.tsx
+dashboard.traffic.subtitle
+  <- src/views/DashboardView.tsx
+dashboard.traffic.live
+  <- src/views/DashboardView.tsx
+dashboard.traffic.peakThroughput
+  <- src/views/DashboardView.tsx
+dashboard.traffic.cmdPerMin
+  <- src/views/DashboardView.tsx
+dashboard.traffic.avgLatency
+  <- src/views/DashboardView.tsx
+dashboard.traffic.ms
+  <- src/views/DashboardView.tsx
+dashboard.traffic.uptime
+  <- src/views/DashboardView.tsx
+  <- src/views/ProtocolsView.tsx
+dashboard.traffic.days
+  <- src/views/DashboardView.tsx
+dashboard.health.title
+  <- src/views/DashboardView.tsx
+dashboard.health.subtitle
+  <- src/views/DashboardView.tsx
+dashboard.alerts.title
+  <- src/views/DashboardView.tsx
+dashboard.alerts.subtitle
+  <- src/views/DashboardView.tsx
+dashboard.alerts.openAlerts
+  <- src/views/DashboardView.tsx
+dashboard.alerts.critical
+  <- src/views/DashboardView.tsx
+dashboard.sites.title
+  <- src/views/DashboardView.tsx
+dashboard.sites.subtitle
+  <- src/views/DashboardView.tsx
+dashboard.sites.viewAll
+  <- src/views/DashboardView.tsx
+dashboard.sites.devicesAndLoad
+  <- src/views/DashboardView.tsx
+dashboard.recentDevices.title
+  <- src/views/DashboardView.tsx
+dashboard.safetyRules.title
+  <- src/views/DashboardView.tsx
+dashboard.safetyRules.triggered
+  <- src/views/DashboardView.tsx
+dashboard.protocols.title
+  <- src/views/DashboardView.tsx
+dashboard.protocols.devicesAndLatency
+  <- src/views/DashboardView.tsx
+dashboard.gateway.title
+  <- src/views/DashboardView.tsx
+dashboard.gateway.subtitle
+  <- src/views/DashboardView.tsx
+dashboard.gateway.onlineBadge
+  <- src/views/DashboardView.tsx
+dashboard.gateway.cpu
+  <- src/views/DashboardView.tsx
+  <- src/views/GatewayView.tsx
+dashboard.gateway.mem
+  <- src/views/DashboardView.tsx
+dashboard.gateway.devices
+  <- src/views/DashboardView.tsx
+  <- src/views/GatewayView.tsx
+  <- src/views/OrganizationView.tsx
+  <- src/views/ProtocolsView.tsx
+view.devices.registryTitle
+  <- src/views/DevicesView.tsx
+view.devices.acrossAllSites
+  <- src/views/DevicesView.tsx
+view.devices.export
+  <- src/views/DevicesView.tsx
+view.devices.searchPlaceholder
+  <- src/views/DevicesView.tsx
+view.devices.table.device
+  <- src/views/DevicesView.tsx
+view.devices.table.category
+  <- src/views/DevicesView.tsx
+view.devices.table.protocol
+  <- src/views/DevicesView.tsx
+view.devices.table.location
+  <- src/views/DevicesView.tsx
+view.devices.table.signal
+  <- src/views/DevicesView.tsx
+view.devices.table.firmware
+  <- src/views/DevicesView.tsx
+view.devices.table.status
+  <- src/views/DevicesView.tsx
+view.devices.noMatch
+  <- src/views/DevicesView.tsx
+view.gateway.online
+  <- src/views/GatewayView.tsx
+view.gateway.degraded
+  <- src/views/GatewayView.tsx
+view.gateway.offline
+  <- src/views/GatewayView.tsx
+view.gateway.memory
+  <- src/views/GatewayView.tsx
+view.gateway.firmware
+  <- src/views/GatewayView.tsx
+view.gateway.lastSync
+  <- src/views/GatewayView.tsx
+view.gateway.offlineMode
+  <- src/views/GatewayView.tsx
+view.gateway.connected
+  <- src/views/GatewayView.tsx
+view.gateway.reconnecting
+  <- src/views/GatewayView.tsx
+view.gateway.discoveryTitle
+  <- src/views/GatewayView.tsx
+view.gateway.discoverySubtitle
+  <- src/views/GatewayView.tsx
+intl.daytime
+  <- src/views/InternationalView.tsx
+intl.nighttime
+  <- src/views/InternationalView.tsx
+intl.unpin
+  <- src/views/InternationalView.tsx
+intl.pin
+  <- src/views/InternationalView.tsx
+intl.title
+  <- src/views/InternationalView.tsx
+intl.subtitle
+  <- src/views/InternationalView.tsx
+intl.dialCode
+  <- src/views/InternationalView.tsx
+common.pinned
+  <- src/views/InternationalView.tsx
+intl.search
+  <- src/views/InternationalView.tsx
+common.results
+  <- src/views/InternationalView.tsx
+view.organization.hierarchyTitle
+  <- src/views/OrganizationView.tsx
+view.organization.hierarchySubtitle
+  <- src/views/OrganizationView.tsx
+view.organization.nodes
+  <- src/views/OrganizationView.tsx
+view.organization.users
+  <- src/views/OrganizationView.tsx
+view.organization.accessPoliciesTitle
+  <- src/views/OrganizationView.tsx
+view.organization.accessPoliciesSubtitle
+  <- src/views/OrganizationView.tsx
+view.organization.rules
+  <- src/views/OrganizationView.tsx
+view.organization.roleDefinitionsTitle
+  <- src/views/OrganizationView.tsx
+view.organization.roleDefinitionsSubtitle
+  <- src/views/OrganizationView.tsx
+view.protocols.abstractionTitle
+  <- src/views/ProtocolsView.tsx
+view.protocols.abstractionSubtitle
+  <- src/views/ProtocolsView.tsx
+view.protocols.latency
+  <- src/views/ProtocolsView.tsx
+view.protocols.encryptionTitle
+  <- src/views/ProtocolsView.tsx
+view.protocols.dev
+  <- src/views/ProtocolsView.tsx
+view.protocols.capabilityRegistryTitle
+  <- src/views/ProtocolsView.tsx
+view.safety.stat.rulesActive
+  <- src/views/SafetyView.tsx
+view.safety.stat.totalTriggers
+  <- src/views/SafetyView.tsx
+view.safety.stat.criticalRules
+  <- src/views/SafetyView.tsx
+view.safety.scope.all
+  <- src/views/SafetyView.tsx
+view.safety.scope.${s}
+  <- src/views/SafetyView.tsx
+view.safety.scope.${r.scope}
+  <- src/views/SafetyView.tsx
+view.safety.condition
+  <- src/views/SafetyView.tsx
+view.safety.action
+  <- src/views/SafetyView.tsx
+view.safety.severity.${r.severity}
+  <- src/views/SafetyView.tsx
+view.safety.triggered
+  <- src/views/SafetyView.tsx
+view.safety.active
+  <- src/views/SafetyView.tsx
+view.safety.disabled
+  <- src/views/SafetyView.tsx
+view.security.policy.zeroPlaintext
+  <- src/views/SecurityView.tsx
+view.security.status.enforced
+  <- src/views/SecurityView.tsx
+view.security.policy.oauthOidc
+  <- src/views/SecurityView.tsx
+view.security.policy.otpRecovery
+  <- src/views/SecurityView.tsx
+view.security.policy.sessionAudit
+  <- src/views/SecurityView.tsx
+view.security.policy.forceMfaAdmins
+  <- src/views/SecurityView.tsx
+view.security.policy.ipAllowlist
+  <- src/views/SecurityView.tsx
+view.security.status.partial
+  <- src/views/SecurityView.tsx
+view.security.stat.grade
+  <- src/views/SecurityView.tsx
+view.security.stat.activeSessions
+  <- src/views/SecurityView.tsx
+view.security.stat.mfaCoverage
+  <- src/views/SecurityView.tsx
+view.security.stat.deniedAttempts
+  <- src/views/SecurityView.tsx
+view.security.sessions.title
+  <- src/views/SecurityView.tsx
+view.security.sessions.subtitle
+  <- src/views/SecurityView.tsx
+view.security.table.user
+  <- src/views/SecurityView.tsx
+view.security.table.method
+  <- src/views/SecurityView.tsx
+view.security.table.location
+  <- src/views/SecurityView.tsx
+view.security.table.mfa
+  <- src/views/SecurityView.tsx
+view.security.table.lastActive
+  <- src/views/SecurityView.tsx
+view.security.table.status
+  <- src/views/SecurityView.tsx
+view.security.mfa.on
+  <- src/views/SecurityView.tsx
+view.security.mfa.off
+  <- src/views/SecurityView.tsx
+view.security.authMethods.title
+  <- src/views/SecurityView.tsx
+view.security.authMethods.sessions
+  <- src/views/SecurityView.tsx
+view.security.policies.title
+  <- src/views/SecurityView.tsx
+view.settings.autoUpdate.label
+  <- src/views/SettingsView.tsx
+view.settings.autoUpdate.desc
+  <- src/views/SettingsView.tsx
+view.settings.offlineMode.label
+  <- src/views/SettingsView.tsx
+view.settings.offlineMode.desc
+  <- src/views/SettingsView.tsx
+view.settings.auditLog.label
+  <- src/views/SettingsView.tsx
+view.settings.auditLog.desc
+  <- src/views/SettingsView.tsx
+view.settings.twoFactor.label
+  <- src/views/SettingsView.tsx
+view.settings.twoFactor.desc
+  <- src/views/SettingsView.tsx
+view.settings.zeroPlaintext.label
+  <- src/views/SettingsView.tsx
+view.settings.zeroPlaintext.desc
+  <- src/views/SettingsView.tsx
+view.settings.safetyOverride.label
+  <- src/views/SettingsView.tsx
+view.settings.safetyOverride.desc
+  <- src/views/SettingsView.tsx
+view.settings.emailAlerts.label
+  <- src/views/SettingsView.tsx
+view.settings.emailAlerts.desc
+  <- src/views/SettingsView.tsx
+view.settings.smsAlerts.label
+  <- src/views/SettingsView.tsx
+view.settings.smsAlerts.desc
+  <- src/views/SettingsView.tsx
+view.settings.platform.title
+  <- src/views/SettingsView.tsx
+view.settings.platform.subtitle
+  <- src/views/SettingsView.tsx
+view.settings.security.title
+  <- src/views/SettingsView.tsx
+view.settings.security.subtitle
+  <- src/views/SettingsView.tsx
+view.settings.notifications.title
+  <- src/views/SettingsView.tsx
+view.settings.notifications.subtitle
+  <- src/views/SettingsView.tsx
+view.settings.localization.title
+  <- src/views/SettingsView.tsx
+view.settings.localization.subtitle
+  <- src/views/SettingsView.tsx
+view.settings.defaultLanguage
+  <- src/views/SettingsView.tsx
+view.settings.defaultTimezone
+  <- src/views/SettingsView.tsx
+view.settings.timezoneAuto
+  <- src/views/SettingsView.tsx
+view.settings.databaseBackup
+  <- src/views/SettingsView.tsx
+view.settings.backupInterval
+  <- src/views/SettingsView.tsx
+view.settings.saveBar.note
+  <- src/views/SettingsView.tsx
+view.settings.saveBar.save
+  <- src/views/SettingsView.tsx
+
+----------------------------------------------
+8. TRANSLATION KEY DEFINITIONS
+----------------------------------------------
+Defined candidate keys: 328
+
+----------------------------------------------
+9. USED BUT NOT FOUND IN TRANSLATION DEFINITIONS
+----------------------------------------------
+MISSING: nav.xxx
+MISSING: key.name
+MISSING: key
+MISSING: view.safety.scope.${s}
+MISSING: view.safety.scope.${r.scope}
+MISSING: view.safety.severity.${r.severity}
+
+Missing candidate translation keys: 6
+
+----------------------------------------------
+10. POSSIBLE DUPLICATE TRANSLATION KEYS
+----------------------------------------------
+DUPLICATE: app.title
+  <- src/i18n/translations.ts
+DUPLICATE: nav.dashboard
+  <- src/i18n/translations.ts
+DUPLICATE: nav.devices
+  <- src/i18n/translations.ts
+DUPLICATE: nav.controls
+  <- src/i18n/translations.ts
+DUPLICATE: nav.protocols
+  <- src/i18n/translations.ts
+DUPLICATE: nav.gateway
+  <- src/i18n/translations.ts
+DUPLICATE: nav.security
+  <- src/i18n/translations.ts
+DUPLICATE: nav.safety
+  <- src/i18n/translations.ts
+DUPLICATE: nav.audit
+  <- src/i18n/translations.ts
+DUPLICATE: nav.organization
+  <- src/i18n/translations.ts
+DUPLICATE: nav.international
+  <- src/i18n/translations.ts
+DUPLICATE: nav.certificates
+  <- src/i18n/translations.ts
+DUPLICATE: nav.settings
+  <- src/i18n/translations.ts
+DUPLICATE: common.search
+  <- src/i18n/translations.ts
+DUPLICATE: common.notifications
+  <- src/i18n/translations.ts
+DUPLICATE: common.save
+  <- src/i18n/translations.ts
+DUPLICATE: common.cancel
+  <- src/i18n/translations.ts
+DUPLICATE: common.confirm
+  <- src/i18n/translations.ts
+DUPLICATE: common.close
+  <- src/i18n/translations.ts
+DUPLICATE: common.pinned
+  <- src/i18n/translations.ts
+DUPLICATE: common.results
+  <- src/i18n/translations.ts
+DUPLICATE: app.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: sidebar.systemStatus
+  <- src/i18n/translations.ts
+DUPLICATE: sidebar.operational
+  <- src/i18n/translations.ts
+DUPLICATE: sidebar.devicesOnline
+  <- src/i18n/translations.ts
+DUPLICATE: sidebar.uptime
+  <- src/i18n/translations.ts
+DUPLICATE: user.orgOwner
+  <- src/i18n/translations.ts
+DUPLICATE: intl.title
+  <- src/i18n/translations.ts
+DUPLICATE: intl.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: intl.search
+  <- src/i18n/translations.ts
+DUPLICATE: intl.dialCode
+  <- src/i18n/translations.ts
+DUPLICATE: intl.language
+  <- src/i18n/translations.ts
+DUPLICATE: intl.chooseLanguage
+  <- src/i18n/translations.ts
+DUPLICATE: intl.daytime
+  <- src/i18n/translations.ts
+DUPLICATE: intl.nighttime
+  <- src/i18n/translations.ts
+DUPLICATE: intl.pin
+  <- src/i18n/translations.ts
+DUPLICATE: intl.unpin
+  <- src/i18n/translations.ts
+DUPLICATE: navgroup.overview
+  <- src/i18n/translations.ts
+DUPLICATE: navgroup.devicesControl
+  <- src/i18n/translations.ts
+DUPLICATE: navgroup.securitySafety
+  <- src/i18n/translations.ts
+DUPLICATE: navgroup.organization
+  <- src/i18n/translations.ts
+DUPLICATE: view.dashboard.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.international.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.stat.connectedDevices
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.stat.activeSafetyRules
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.stat.edgeGateways
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.stat.online
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.stat.countriesDeployed
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.trend.devicesUp
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.trend.rulesNew
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.trend.gatewayOffline
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.trend.countriesAdded
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.live
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.peakThroughput
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.cmdPerMin
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.avgLatency
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.ms
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.uptime
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.traffic.days
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.health.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.health.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.health.online
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.health.warning
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.health.offline
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.alerts.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.alerts.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.alerts.openAlerts
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.alerts.critical
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.sites.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.sites.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.sites.viewAll
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.sites.devicesAndLoad
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.recentDevices.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.safetyRules.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.safetyRules.triggered
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.protocols.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.protocols.devicesAndLatency
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.title
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.onlineBadge
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.cpu
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.mem
+  <- src/i18n/translations.ts
+DUPLICATE: dashboard.gateway.devices
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.registryTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.acrossAllSites
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.export
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.searchPlaceholder
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.noMatch
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.filter.all
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.filter.online
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.filter.warning
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.filter.maintenance
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.filter.offline
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.status.online
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.status.warning
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.status.offline
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.status.maintenance
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.access
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.climate
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.industrial
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.vehicle
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.sensor
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.category.network
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.device
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.category
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.protocol
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.location
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.signal
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.firmware
+  <- src/i18n/translations.ts
+DUPLICATE: view.devices.table.status
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.subtitleText
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.chainVerified
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.searchPlaceholder
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.noMatch
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.all
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.auth
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.device
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.safety
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.admin
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.category.network
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.result.success
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.result.denied
+  <- src/i18n/translations.ts
+DUPLICATE: view.audit.result.error
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.heading
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.description
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.certificatesLabel
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.verifiedLabel
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.verified
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.issued
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.expires
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.viewCertificate
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.category.development
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.category.security
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.category.iot
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.category.database
+  <- src/i18n/translations.ts
+DUPLICATE: view.certificates.category.cloud
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.vaultDoor.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.vaultDoor.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.hvac.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.hvac.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.pressEstop.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.pressEstop.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.robotArm.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.robotArm.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.eastGate.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.eastGate.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.coldStorage.name
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.coldStorage.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.secured
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.unlocked
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.unlock
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.lock
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.setpoint
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.fan
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.mode
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.cool
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.filter
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.estop
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.lineHalted
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.pressOperational
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.reset
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.speedLimit
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.humanZoneOverride
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.active
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.collisionDetection
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.enabled
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.maintenance
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.barrierOpen
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.barrierClosed
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.close
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.open
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.targetTemp
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.current
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.logTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.logSubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.log.vaultDoor
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.log.robotArm
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.log.hvac
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.log.pressLine
+  <- src/i18n/translations.ts
+DUPLICATE: view.controls.log.eastGate
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.online
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.degraded
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.offline
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.memory
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.firmware
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.lastSync
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.offlineMode
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.connected
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.reconnecting
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discoveryTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discoverySubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discovery.frankfurt
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discovery.badgeReader
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discovery.singapore
+  <- src/i18n/translations.ts
+DUPLICATE: view.gateway.discovery.airSensor
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.hierarchyTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.hierarchySubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.nodes
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.users
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.rules
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.accessPoliciesTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.accessPoliciesSubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.roleDefinitionsTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.roleDefinitionsSubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.type.company
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.type.site
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.type.building
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.type.floor
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.site.frankfurt
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.site.singapore
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.site.taipei
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.site.emea
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.site.apac
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.policy.hqStrict
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.policy.dcCritical
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.policy.fabCleanroom
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.policy.emeaBaseline
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.policy.apacBaseline
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.orgOwner
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.siteAdmin
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.safetyEngineer
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.networkAdmin
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.operator
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.role.viewer
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.orgOwner
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.siteAdmin
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.safetyEngineer
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.networkAdmin
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.operator
+  <- src/i18n/translations.ts
+DUPLICATE: view.organization.perms.viewer
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.abstractionTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.abstractionSubtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.latency
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.encryptionTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.capabilityRegistryTitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.dev
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.status.active
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.status.degraded
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.status.offline
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.enc.tls
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.enc.wpa3
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.enc.aesBle
+  <- src/i18n/translations.ts
+DUPLICATE: view.protocols.enc.aesZigbee
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.stat.rulesActive
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.stat.totalTriggers
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.stat.criticalRules
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.scope.all
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.scope.door
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.scope.vehicle
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.scope.industrial
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.condition
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.action
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.triggered
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.active
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.disabled
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.severity.critical
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.severity.high
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.severity.medium
+  <- src/i18n/translations.ts
+DUPLICATE: view.safety.severity.low
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.stat.grade
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.stat.activeSessions
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.stat.mfaCoverage
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.stat.deniedAttempts
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.sessions.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.sessions.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.user
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.method
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.location
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.mfa
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.lastActive
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.table.status
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.mfa.on
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.mfa.off
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.authMethods.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.authMethods.sessions
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policies.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.zeroPlaintext
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.oauthOidc
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.otpRecovery
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.sessionAudit
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.forceMfaAdmins
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.policy.ipAllowlist
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.status.enforced
+  <- src/i18n/translations.ts
+DUPLICATE: view.security.status.partial
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.platform.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.platform.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.autoUpdate.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.autoUpdate.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.offlineMode.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.offlineMode.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.auditLog.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.auditLog.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.security.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.security.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.twoFactor.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.twoFactor.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.zeroPlaintext.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.zeroPlaintext.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.safetyOverride.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.safetyOverride.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.notifications.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.notifications.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.emailAlerts.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.emailAlerts.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.smsAlerts.label
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.smsAlerts.desc
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.localization.title
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.localization.subtitle
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.defaultLanguage
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.defaultTimezone
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.timezoneAuto
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.databaseBackup
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.backupInterval
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.saveBar.note
+  <- src/i18n/translations.ts
+DUPLICATE: view.settings.saveBar.save
+  <- src/i18n/translations.ts
+
+Possible duplicate keys: 328
+
+----------------------------------------------
+11. COMPONENT IMPORT GRAPH
+----------------------------------------------
+
+src/App.tsx
+  -> @/components/CountryClock
+  -> @/components/nav
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+  -> @/components/LanguageSelector
+  -> @/views/DashboardView
+  -> @/views/DevicesView
+  -> @/views/ControlsView
+  -> @/views/ProtocolsView
+  -> @/views/GatewayView
+  -> @/views/SecurityView
+  -> @/views/SafetyView
+  -> @/views/AuditView
+  -> @/views/OrganizationView
+  -> @/views/InternationalView
+  -> @/views/CertificatesView
+  -> @/views/SettingsView
+
+src/components/CountryClock.tsx
+  -> @/ksv
+
+src/components/LanguageSelector.tsx
+  -> @/i18n/translations
+  -> @/i18n/LanguageContext
+
+src/core/security/audit.log.ts
+  -> ../../infrastructure/database/models.ts
+
+src/i18n/LanguageContext.tsx
+  -> ./translations
+
+src/main.tsx
+  -> ./App.tsx
+  -> ./i18n/LanguageContext
+
+src/server.ts
+  -> ./infrastructure/database/connection.ts
+
+src/views/AuditView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/CertificatesView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/ControlsView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/DashboardView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/DevicesView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/GatewayView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/InternationalView.tsx
+  -> @/data/countries
+  -> @/i18n/LanguageContext
+
+src/views/OrganizationView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/ProtocolsView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/SafetyView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/SecurityView.tsx
+  -> @/components/ui
+  -> @/data/domain
+  -> @/i18n/LanguageContext
+
+src/views/SettingsView.tsx
+  -> @/components/ui
+  -> @/i18n/LanguageContext
+
+----------------------------------------------
+12. POSSIBLE UNUSED VIEW FILES
+----------------------------------------------
+
+----------------------------------------------
+13. VIEW EXPORT CHECK
+----------------------------------------------
+src/views/AuditView.tsx -> default:NO named:YES
+src/views/CertificatesView.tsx -> default:NO named:YES
+src/views/ControlsView.tsx -> default:NO named:YES
+src/views/DashboardView.tsx -> default:NO named:YES
+src/views/DevicesView.tsx -> default:NO named:YES
+src/views/GatewayView.tsx -> default:NO named:YES
+src/views/InternationalView.tsx -> default:NO named:YES
+src/views/OrganizationView.tsx -> default:NO named:YES
+src/views/ProtocolsView.tsx -> default:NO named:YES
+src/views/SafetyView.tsx -> default:NO named:YES
+src/views/SecurityView.tsx -> default:NO named:YES
+src/views/SettingsView.tsx -> default:NO named:YES
+
+----------------------------------------------
+14. POTENTIAL CONNECTION / CODE RISKS
+----------------------------------------------
+src/core/auth/auth.middleware.ts:23
+  throw new Error(
+src/core/security/audit.log.ts:92
+  console.error("[AUDIT] Failed to write audit entry:", err, {
+src/core/security/encryption.util.ts:62
+  throw new Error(
+src/core/security/encryption.util.ts:99
+  throw new Error("Malformed encrypted value — expected 'iv:authTag:ciphertext'.");
+src/core/security/encryption.util.ts:107
+  throw new Error("Invalid auth tag length — value may be corrupted or tampered with.");
+src/i18n/LanguageContext.tsx:73
+  throw new Error('useLanguage() must be used inside <LanguageProvider>. Wrap your <App /> with it in main.tsx.');
+src/infrastructure/database/connection.ts:19
+  throw new Error(
+src/infrastructure/database/connection.ts:31
+  console.error("[DB] Connection failed:", err);
+src/server.ts:16
+  console.error("[Server] Fatal startup error:", err);
+
+Potential risk lines: 9
+
+==============================================
+ DEEP AUDIT COMPLETE
+ READ ONLY — NO SOURCE FILE CHANGED
+==============================================
+
+IMPORTANT:
+This audit reports possible problems only.
+It does NOT automatically modify, delete, rename,
+or rewrite any KSV source file.
+

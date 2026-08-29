@@ -5,7 +5,7 @@
  * This is the ONLY place that starts the Node/Mongoose backend.
  * Vite (npm run dev) only serves the frontend — it never touches this file.
  */
-import { connectDatabase } from "./infrastructure/database/connection";
+import { connectDatabase } from "./infrastructure/database/connection.ts";
 
 async function main() {
   await connectDatabase();

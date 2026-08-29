@@ -67,7 +67,7 @@ export default function App() {
               <Shield size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight">KSV Universal</h1>
+              <h1 className="text-sm font-bold text-white tracking-tight">KHOEM SOKSIVUTHA</h1>
               <p className="text-[10px] text-ink-400 uppercase tracking-wider">{t('app.subtitle')}</p>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function App() {
               <div>
                 {/* meta.title / meta.subtitle come from viewMeta in
                     @/components/nav — same note as the nav menu above. */}
-                <h2 className="text-base font-semibold text-white">{t(meta.titleKey)}</h2>
+                <h2 className="text-base font-semibold text-white">KHOEM SOKSIVUTHA</h2>
                 <p className="hidden text-xs text-ink-400 sm:block">{t(meta.subtitleKey)}</p>
               </div>
             </div>
