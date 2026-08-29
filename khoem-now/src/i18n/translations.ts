@@ -772,6 +772,11 @@ const km: Dict = {
 };
 
 const ja: Dict = {
+  'dashboard.stat.connectedDevices': '接続デバイス',
+  'dashboard.stat.activeSafetyRules': 'アクティブな安全ルール',
+  'dashboard.stat.edgeGateways': 'エッジゲートウェイ',
+  'dashboard.stat.online': 'オンライン',
+  'dashboard.stat.countriesDeployed': '導入国数',
   'app.title': 'KSV ユニバーサル・セキュア・コントロール',
   'nav.dashboard': 'ダッシュボード',
   'nav.devices': 'デバイス',
@@ -810,6 +815,11 @@ const ja: Dict = {
 };
 
 const zh: Dict = {
+  'dashboard.stat.connectedDevices': '已连接设备',
+  'dashboard.stat.activeSafetyRules': '有效安全规则',
+  'dashboard.stat.edgeGateways': '边缘网关',
+  'dashboard.stat.online': '在线',
+  'dashboard.stat.countriesDeployed': '已部署国家',
   'app.title': 'KSV 通用安全控制平台',
   'nav.dashboard': '仪表盘',
   'nav.devices': '设备',
@@ -848,6 +858,11 @@ const zh: Dict = {
 };
 
 const th: Dict = {
+  'dashboard.stat.connectedDevices': 'อุปกรณ์ที่เชื่อมต่อ',
+  'dashboard.stat.activeSafetyRules': 'กฎความปลอดภัยที่ใช้งานอยู่',
+  'dashboard.stat.edgeGateways': 'เกตเวย์เอดจ์',
+  'dashboard.stat.online': 'ออนไลน์',
+  'dashboard.stat.countriesDeployed': 'ประเทศที่ใช้งาน',
   'app.title': 'KSV แพลตฟอร์มควบคุมความปลอดภัยสากล',
   'nav.dashboard': 'แดชบอร์ด',
   'nav.devices': 'อุปกรณ์',
@@ -886,6 +901,11 @@ const th: Dict = {
 };
 
 const ko: Dict = {
+  'dashboard.stat.connectedDevices': '연결된 장치',
+  'dashboard.stat.activeSafetyRules': '활성 안전 규칙',
+  'dashboard.stat.edgeGateways': '엣지 게이트웨이',
+  'dashboard.stat.online': '온라인',
+  'dashboard.stat.countriesDeployed': '배포된 국가',
   'app.title': 'KSV 유니버설 보안 제어',
   'nav.dashboard': '대시보드',
   'nav.devices': '장치',
@@ -924,6 +944,11 @@ const ko: Dict = {
 };
 
 const fr: Dict = {
+  'dashboard.stat.connectedDevices': 'Appareils connectés',
+  'dashboard.stat.activeSafetyRules': 'Règles de sécurité actives',
+  'dashboard.stat.edgeGateways': 'Passerelles Edge',
+  'dashboard.stat.online': 'en ligne',
+  'dashboard.stat.countriesDeployed': 'Pays déployés',
   'app.title': 'KSV Contrôle Sécurisé Universel',
   'nav.dashboard': 'Tableau de bord',
   'nav.devices': 'Appareils',
@@ -962,6 +987,11 @@ const fr: Dict = {
 };
 
 const es: Dict = {
+  'dashboard.stat.connectedDevices': 'Dispositivos conectados',
+  'dashboard.stat.activeSafetyRules': 'Reglas de seguridad activas',
+  'dashboard.stat.edgeGateways': 'Puertas de enlace Edge',
+  'dashboard.stat.online': 'en línea',
+  'dashboard.stat.countriesDeployed': 'Países desplegados',
   'app.title': 'KSV Control Seguro Universal',
   'nav.dashboard': 'Panel',
   'nav.devices': 'Dispositivos',
@@ -1000,6 +1030,11 @@ const es: Dict = {
 };
 
 const vi: Dict = {
+  'dashboard.stat.connectedDevices': 'Thiết bị đã kết nối',
+  'dashboard.stat.activeSafetyRules': 'Quy tắc an toàn đang hoạt động',
+  'dashboard.stat.edgeGateways': 'Cổng Edge',
+  'dashboard.stat.online': 'trực tuyến',
+  'dashboard.stat.countriesDeployed': 'Quốc gia đã triển khai',
   'app.title': 'KSV Nền Tảng Kiểm Soát An Toàn Toàn Cầu',
   'nav.dashboard': 'Bảng điều khiển',
   'nav.devices': 'Thiết bị',
@@ -1038,6 +1073,11 @@ const vi: Dict = {
 };
 
 const ar: Dict = {
+  'dashboard.stat.connectedDevices': 'الأجهزة المتصلة',
+  'dashboard.stat.activeSafetyRules': 'قواعد السلامة النشطة',
+  'dashboard.stat.edgeGateways': 'بوابات الحافة',
+  'dashboard.stat.online': 'متصل',
+  'dashboard.stat.countriesDeployed': 'الدول التي تم النشر فيها',
   'app.title': 'KSV منصة التحكم الآمن الشامل',
   'nav.dashboard': 'لوحة التحكم',
   'nav.devices': 'الأجهزة',
