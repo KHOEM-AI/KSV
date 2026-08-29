@@ -14,7 +14,7 @@
  *      e.g. device serial numbers, API keys stored per-organization) → AES-256-GCM
  */
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 // ============================================================
