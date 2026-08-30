@@ -18,9 +18,13 @@
  * Fail-safe default: if a rule's condition cannot be evaluated (missing
  * data, evaluator error), the engine BLOCKS the command rather than
  * allowing it through. Never fail open on safety checks.
+ *
+ * Every BLOCKED decision is written to SafetyLog (append-only, mirrors
+ * the AuditLog pattern in audit.log.ts) so the Safety/Audit views have
+ * a durable record of what was stopped and why — not just a counter.
  */
 
-import { SafetyRule } from "../../infrastructure/database/models";
+import { SafetyRule, SafetyLog, Device } from "../../infrastructure/database/models.ts";
 
 // ============================================================
 // Types
@@ -76,7 +80,6 @@ const evaluateVehicleGeoFence: RuleEvaluator = (ctx, rule) => {
   }
 
   if (ctx.signals?.isInsideGeoFence === undefined) {
-    // Fail-safe: unknown location for a movement command → block.
     return {
       decision: "BLOCKED",
       reason: "Vehicle location unknown — cannot confirm geo-fence status.",
@@ -157,9 +160,6 @@ const evaluatePressEStop: RuleEvaluator = (ctx, rule) => {
   }
 
   if (ctx.deviceType === "industrial" && ctx.signals?.tamperDetected) {
-    // Reusing tamperDetected as a generic "unsafe condition active" signal
-    // for press lines; rename/extend CommandContext.signals if a more
-    // specific field is needed later.
     return {
       decision: "BLOCKED",
       reason: "E-Stop is active — only RESET is permitted until cleared.",
@@ -174,6 +174,14 @@ const evaluatePressEStop: RuleEvaluator = (ctx, rule) => {
 // Maps a SafetyRule.name (as seen in the dashboard's Safety Rules list)
 // to the evaluator that handles it. Keep this table as the single place
 // that connects data-driven rules to code.
+//
+// NOTE: 4 of the 8 mock rules in src/data/domain.ts don't have an
+// evaluator yet (SAFE-005 Cold Storage, SAFE-006 Duress Code,
+// SAFE-007 Ignition Lock After Hours, SAFE-008 HVAC Emergency
+// Shutdown). They will simply be skipped (never block) until an
+// evaluator is added for them — same as any DB rule with no match
+// here. Add them incrementally the same way as the four below, one
+// at a time, rather than all at once.
 const RULE_EVALUATORS: Record<string, RuleEvaluator> = {
   "Vehicle Immobilize Outside Geo-Fence": evaluateVehicleGeoFence,
   "Robot Speed Limit in Human Zone": evaluateRobotHumanZone,
@@ -190,6 +198,10 @@ const RULE_EVALUATORS: Record<string, RuleEvaluator> = {
  * command's organization. Returns the FIRST blocking result found;
  * if no rule blocks it, the command is ALLOWED.
  *
+ * On BLOCKED: increments the rule's triggerCount AND writes a
+ * SafetyLog entry (deviceId, eventType, severity, message) so the
+ * block is reviewable later — not just reflected in a counter.
+ *
  * Call this AFTER authenticate + requirePermission, and BEFORE
  * Command.create() / dispatching to the device.
  */
@@ -203,8 +215,6 @@ export async function evaluateSafety(
       isEnabled: true,
     }).lean();
   } catch (err) {
-    // Fail-safe: if we can't even load the rules, block rather than
-    // silently allowing an unchecked command through.
     // eslint-disable-next-line no-console
     console.error("[SAFETY] Failed to load safety rules:", err);
     return {
@@ -225,19 +235,61 @@ export async function evaluateSafety(
     });
 
     if (result.decision === "BLOCKED") {
-      // Increment the rule's trigger count for visibility on the dashboard.
+      // Neither failure here should change the BLOCKED decision itself —
+      // the command is already stopped; these are just record-keeping.
       try {
-        await SafetyRule.updateOne(
-          { _id: rule._id },
-          { $inc: { triggerCount: 1 } }
-        );
-      } catch {
-        // Non-fatal: counting failures should not change the safety
-        // decision itself.
+        await Promise.all([
+          SafetyRule.updateOne({ _id: rule._id }, { $inc: { triggerCount: 1 } }),
+          SafetyLog.create({
+            deviceId: ctx.deviceId,
+            eventType: `SAFETY_BLOCKED:${ctx.commandType}`,
+            severity: rule.severity,
+            message: result.reason ?? `Blocked by rule "${rule.name}".`,
+          }),
+        ]);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("[SAFETY] Failed to record trigger/log for rule", rule.name, err);
       }
       return result;
     }
   }
 
   return { decision: "ALLOWED" };
+}
+
+// ============================================================
+// Convenience wrapper for controllers
+// ============================================================
+
+/**
+ * Loads the Device first so command routes only need to pass
+ * deviceId + commandType + payload/signals, not the raw device type
+ * string. Fails closed (BLOCKED) if the device can't be found —
+ * a command engine should never reach here without a valid device,
+ * but this file never assumes that holds.
+ */
+export async function evaluateSafetyForDevice(
+  deviceId: string,
+  organizationId: string,
+  commandType: string,
+  options?: {
+    payload?: Record<string, unknown>;
+    signals?: CommandContext["signals"];
+  }
+): Promise<SafetyCheckResult> {
+  const device = await Device.findById(deviceId).lean();
+
+  if (!device) {
+    return { decision: "BLOCKED", reason: "Device not found." };
+  }
+
+  return evaluateSafety({
+    deviceId,
+    deviceType: device.type,
+    organizationId,
+    commandType,
+    payload: options?.payload,
+    signals: options?.signals,
+  });
 }
