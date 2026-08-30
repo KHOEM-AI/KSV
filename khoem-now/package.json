@@ -5,15 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node --env-file=.env --experimental-strip-types src/server.ts",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node --env-file=.env --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.446.0",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react": "^18.3.5",
@@ -37,6 +39,7 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2"

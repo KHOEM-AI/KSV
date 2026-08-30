@@ -11,7 +11,8 @@
  * stay easy to cross-reference.
  */
 
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
+const { models } = mongoose;
 
 const { ObjectId } = Schema.Types;
 
@@ -257,3 +258,23 @@ export const Event = models.Event || model("Event", eventSchema);
 export const AuditLog = models.AuditLog || model("AuditLog", auditLogSchema);
 export const Country = models.Country || model("Country", countrySchema);
 export const Language = models.Language || model("Language", languageSchema);
+
+// ============================================================
+// CERTIFICATES (Personal / Organization achievements)
+// ============================================================
+
+const certificateSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    issuer: { type: String, required: true },
+    holderUserId: { type: ObjectId, ref: "User", required: true },
+    issuedAt: { type: Date, required: true },
+    expiresAt: Date, // null/undefined = never expires
+    category: String,
+    verified: { type: Boolean, default: false },
+    sourceUrl: String, // link to original certificate image/page
+  },
+  { timestamps: true }
+);
+
+export const Certificate = models.Certificate || model("Certificate", certificateSchema);
