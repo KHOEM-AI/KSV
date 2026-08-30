@@ -1,860 +1,786 @@
-### 🌐 KSV
+### ** 🌐 KHOEM-AI **
 
-# KSV — Universal Secure Control Platform
-### Master Architecture & Specification (Pre-Code Blueprint)
+### KSV API — ឯកសារពណ៌នា 18 Domains ពេញលេញ
 
-> **KSV/khoem-now/** គឺជា Project Root តែមួយគត់សម្រាប់ប្រព័ន្ធទាំងមូល។
-> មិនបង្កើត Root ច្រើន (project1, backend2, frontend2 ។ល។) ទេ — គ្រប់ domain ត្រូវរស់នៅជា subfolder ក្នុង `khoem-now/`។
-
----
-
-## តារាងមាតិកា (Table of Contents)
-
-- [0. Mission & Core Principles](#0-mission--core-principles)
-- [1. Global Platform](#1-global-platform)
-- [2. Identity System](#2-identity-system)
-- [3. Authentication System](#3-authentication-system)
-- [4. Account Recovery](#4-account-recovery)
-- [5. Authorization System](#5-authorization-system)
-- [6. Organization System](#6-organization-system)
-- [7. Device Identity](#7-device-identity)
-- [8. Device Capability System](#8-device-capability-system)
-- [9. Device Discovery](#9-device-discovery)
-- [10. Device Pairing](#10-device-pairing)
-- [11. Device Ownership](#11-device-ownership)
-- [12. Universal Protocol Layer](#12-universal-protocol-layer)
-- [13. KSV Gateway / Edge System](#13-ksv-gateway--edge-system)
-- [14. Command Engine](#14-command-engine)
-- [15. AI Command Layer](#15-ai-command-layer)
-- [16. Safety Engine](#16-safety-engine)
-- [17. Security Core](#17-security-core)
-- [18. Key & Secret Management](#18-key--secret-management)
-- [19. Security Monitoring](#19-security-monitoring)
-- [20. Audit System](#20-audit-system)
-- [21. Incident Response](#21-incident-response)
-- [22. Offline & Local Operation](#22-offline--local-operation)
-- [23. Device Lifecycle](#23-device-lifecycle)
-- [24. Firmware & Software Updates](#24-firmware--software-updates)
-- [25. Device Categories](#25-device-categories)
-- [26. International System](#26-international-system)
-- [27. Privacy & Data Governance](#27-privacy--data-governance)
-- [28. Legal & Compliance Layer](#28-legal--compliance-layer)
-- [29. Notification System](#29-notification-system)
-- [30. Dashboard / User Interface](#30-dashboard--user-interface)
-- [31. Administration Console](#31-administration-console)
-- [32. API Architecture](#32-api-architecture)
-- [33. Automation Engine](#33-automation-engine)
-- [34. Data & Database Architecture](#34-data--database-architecture)
-- [35. Reliability & Scalability](#35-reliability--scalability)
-- [36. Backup & Disaster Recovery](#36-backup--disaster-recovery)
-- [37. Testing](#37-testing)
-- [38. Security Testing](#38-security-testing)
-- [39. Developer / Engineering Governance](#39-developer--engineering-governance)
-- [40. Emergency Architecture](#40-emergency-architecture)
-- [41. The Most Important Security Rule](#41-the-most-important-security-rule)
-- [42. Final Architecture Diagram](#42-final-architecture-diagram)
-- [Project Folder Structure](#project-folder-structure)
-- [Password & Secret Ownership Model](#password--secret-ownership-model)
-- [Certificates](#certificates)
+> **ទីតាំង**: `khoem-now/API/`
+> **ភាសា**: TypeScript
+> **ស្តង់ដារ**: REST API · OAuth 2.0 / OIDC · TLS · Zero-Trust Security
 
 ---
 
-## 0. Mission & Core Principles
+## គោលការណ៍ស្នូល (Core Principles)
 
-ច្បាប់មូលដ្ឋានរបស់ប្រព័ន្ធ៖
-
-- Security First
-- Privacy First
-- Safety First
-- Authorization First
-- Device Ownership
-- Least Privilege
-- No Unauthorized Control
-- Every Important Action Is Auditable
-- Fail Securely
-- International by Design
-
-> **គោលការណ៍ស្នូល៖** A user may discover a device, but discovery never means authorization.
-
----
-
-## 1. Global Platform
-
-ស្រទាប់ខាងលើបំផុត ត្រូវគ្រប់គ្រង៖
-
-- Global platform identity & configuration
-- Countries / Regions / Languages / Time zones / Currencies
-- Regional settings
-- Service availability
-- Global policies
-- Platform status
-
----
-
-## 2. Identity System
-
-*"អ្នកណា?"* — ត្រូវមាន៖
-
-- KSV Account / User ID
-- Email, Phone, Google, Facebook, TikTok, និង identity providers ផ្សេងទៀត
-- Account linking / unlinking
-- Identity verification
-- Account status, suspension, deletion
-
-> **គោលការណ៍៖** One KSV Account → Multiple Verified Identities
-
----
-
-## 3. Authentication System
-
-*"តើអ្នកណាកំពុង Login?"* — ត្រូវមាន៖
-
-- Password authentication + secure hashing
-- MFA, Email/Phone verification, OTP
-- Session management, refresh tokens
-- Login history
-- Failed-login & brute-force protection
-- Suspicious-login detection
-- Device/session revocation
-
----
-
-## 4. Account Recovery
-
-- Forgot password → Email / Phone / Identity-provider recovery
-- Six-digit OTP (expires quickly, single-use, limited attempts, brute-force protected)
-- New password creation (មិនបង្ហាញ password ចាស់ឡើយ)
-- Session revocation after recovery
-- High-risk recovery verification
-
----
-
-## 5. Authorization System
-
-កំណត់ថា៖ **Who can do what, to which device, where, when, and under what conditions?**
-
-កម្រិតសិទ្ធិដែលអាចមាន៖
-
-Owner → Super Administrator → Organization Administrator → Manager → Operator → Controller → Viewer → Guest → Temporary Permission
-
-បន្ថែម៖ permission expiration, revocation, approval workflow។
-
-**Policy-Based Access Control** ឧទាហរណ៍៖ *"Operator អាចបើកម៉ាស៊ីន A បានតែម៉ោង 8AM–5PM និងតែនៅ Factory A"*.
-
----
-
-## 6. Organization System
-
-```
-Organization
- ├── Users
- ├── Roles
- ├── Sites
- │    ├── Buildings
- │    ├── Rooms
- │    └── Devices
- ├── Policies
- └── Audit
-```
-
-ត្រូវមាន Organization / Company / Department / Site / Building / Room-Zone / Team / Employee / Organization roles & policies.
-
----
-
-## 7. Device Identity
-
-- Device ID, Manufacturer, Brand, Model, Serial number
-- Device type, Firmware/Hardware version
-- Device owner / Organization owner
-- Device status, capabilities, security state
-
----
-
-## 8. Device Capability System
-
-KSV មិនគួរដឹងតែថា *"នេះជា TV"* — ត្រូវដឹងថា *"TV នេះអាចធ្វើអ្វីខ្លះ"*៖
-
-```
-TV
- ├── Power
- ├── Volume
- ├── Channel
- ├── Input
- ├── Display
- └── Network
-```
-
----
-
-## 9. Device Discovery
-
-រកឧបករណ៍តាម Bluetooth / Wi-Fi / Local network / QR / NFC / Manufacturer / Cloud / Gateway។
-
-> **Discovery ≠ Permission**
-
----
-
-## 10. Device Pairing
-
-```
-SCAN → DEVICE FOUND → IDENTITY VERIFIED → OWNER VERIFIED
-     → PAIRING → PERMISSION → SECURE CONNECTION → READY
-```
-
-វិធីផ្ទៀងផ្ទាត់: device codes, QR, PIN, secure pairing, manufacturer credentials, certificates/keys, owner approval.
-
----
-
-## 11. Device Ownership
-
-ម្ចាស់អាចជា Individual / Family / Company / Building / Warehouse / Factory / Organization ផ្សេងទៀត។
-
-ត្រូវមាន: ownership transfer, permission delegation & revocation។
-
----
-
-## 12. Universal Protocol Layer
-
-```
-KSV Command → Protocol Adapter → Bluetooth / Wi-Fi / API / MQTT / IR → Manufacturer Device
-```
-
-Flow ស្តង់ដារ៖ **Device Type → Manufacturer → Protocol → Authentication → Authorization → Command**
-
----
-
-## 13. KSV Gateway / Edge System
-
-```
-KSV Cloud
-    ↓
-KSV Gateway
- ├── Bluetooth
- ├── Wi-Fi
- ├── IR
- ├── MQTT
- └── Local Devices
-```
-
-Gateway ជាស្ពាន មិនមែនជា Security bypass ទេ។
-
----
-
-## 14. Command Engine
-
-```
-User Command → Authentication → Authorization
-             → Device Capability → Safety Policy
-             → Execute → Result → Audit
-```
-
----
-
-## 15. AI Command Layer
-
-```
-Natural Language → AI Interpretation → Structured Command
-                 → Authorization → Safety → Execution
-```
-
-> AI មានតួនាទីបកស្រាយ (interpret) មិនមែនជាអ្នករំលង Security ទេ។
-
----
-
-## 16. Safety Engine
-
-Security ≠ Safety។ សម្រាប់ Door, Machine, Vehicle, Industrial Equipment៖
-
-```
-User Authorized ✓ → Security Check ✓ → Safety Check ✗ → COMMAND BLOCKED
-```
-
-ត្រូវមាន: operating limits, interlocks, emergency stop, approval requirements, conflict detection។
-
----
-
-## 17. Security Core
-
-Encryption, TLS, secrets management, key/certificate management, token & session security, API security, rate limiting, abuse prevention, zero-trust, device trust។
-
----
-
-## 18. Key & Secret Management
-
-គ្រប់គ្រង API keys, device keys, certificates, encryption keys, OAuth secrets — ជាមួយ key rotation, expiration, revocation។
-
-> Password និង Secret មិនគួរបង្ហាញក្នុង Admin Dashboard ឬ Logs ឡើយ។
-
----
-
-## 19. Security Monitoring
-
-```
-Detect → Alert → Block → Investigate → Recover
-```
-
-រកឃើញ: suspicious login, repeated failed login, abnormal commands, permission abuse, account/device compromise indicators។
-
----
-
-## 20. Audit System
-
-កត់ត្រា: User, Device, Action, Time, Authorization, Result, Security Event។
-
-> **Password មិនត្រូវរក្សាទុកក្នុង Audit Log ជាដាច់ខាត។**
-
----
-
-## 21. Incident Response
-
-Disable account → Revoke session/device/permission → Rotate keys → Block activity → Isolate device/gateway → Alert admins → Preserve evidence → Recover service។
-
----
-
-## 22. Offline & Local Operation
-
-Cloud failure មិនគួរធ្វើឱ្យប្រព័ន្ធសុវត្ថិភាពក្លាយជាគ្រោះថ្នាក់ ជាពិសេសសម្រាប់ Door និង Industrial។ ត្រូវមាន local control, offline authorization, safe fallback, reconnection sync។
-
----
-
-## 23. Device Lifecycle
-
-```
-Discovered → Verified → Paired → Active → Updated → Suspended → Revoked → Removed
-```
-
----
-
-## 24. Firmware & Software Updates
-
-Version management, compatibility check, signed updates, authorization, rollback, failed-update recovery, update history។
-
----
-
-## 25. Device Categories
-
-| ប្រភេទ | ឧទាហរណ៍ |
+| # | គោលការណ៍ |
 |---|---|
-| Home | Light, Fan, AC, TV, Speaker, Fridge, Washing machine, Smart lock |
-| Building | Door, Gate, Elevator, Access control, Parking, HVAC, Lighting, Security |
-| Vehicle | Car, EV, Fleet, Authorized vehicle systems |
-| Industrial | Machine, Motor, Pump, Sensor, Controller, Robot, PLC, Conveyor |
-| Warehouse | Door, Scanner, Conveyor, Sensors, Automation equipment |
-| Energy | Solar, Inverter, Battery, Meter, Energy controller |
+| 1 | **Identity First** — ស្គាល់អ្នកប្រើប្រាស់ជាមុន |
+| 2 | **Authorization First** — ពិនិត្យការអនុញ្ញាតមុនគ្រប់ Action |
+| 3 | **Security First** — ការពារគ្រប់ស្រទាប់ |
+| 4 | **Safety First** — Safety Engine ដាច់ដោយឡែកពី Security |
+| 5 | **Privacy First** — Password/Secret មិនត្រូវបង្ហាញ |
+| 6 | **Control Only With Permission** — Discover ≠ Authorized |
 
 ---
 
-## 26. International System
+## ឯកសារទី 1 — `identity.ts`
+### Identity API — "អ្នកណា?"
 
-Country registry, country codes, languages, time zones, date/number formats, measurement units, localization, translation management។
+**ស្នូល**: គ្រប់គ្រង KSV Account + Identity Provider ដែលភ្ជាប់ (Google, Facebook, TikTok...)
 
-> **Country ≠ Language ≠ Time Zone** (ប្រទេសមួយអាចមានភាសា និង timezone ច្រើន)
-
----
-
-## 27. Privacy & Data Governance
-
-កំណត់: what data collected, why, retention period, who can access, consent, data deletion/export, regional data requirements។
-
-195 countries = 195 regulatory environments — មិនមែនគ្រាន់តែជា 195 ប៊ូតុងភាសាទេ។
-
----
-
-## 28. Legal & Compliance Layer
-
-Terms of Service, Privacy Policy, Acceptable Use Policy, Device Authorization Agreement, regional compliance — ត្រូវឱ្យអ្នកជំនាញច្បាប់ពិនិត្យតាមប្រទេស/ទីផ្សារ។
-
----
-
-## 29. Notification System
-
-Security alerts, login alerts, device alerts, permission changes, emergency alerts — តាម App / Email / SMS / Push។
-
----
-
-## 30. Dashboard / User Interface
-
-Home, Devices, Rooms, Scenes, Automation, Security, Permissions, Activity, Notifications, Account, Language, Country, Time Zone។
-
----
-
-## 31. Administration Console
-
-Admin គ្រប់គ្រង Platform ប៉ុន្តែ **មិនមានសិទ្ធិមើល User Password**៖ user/organization/device/permission management, security monitoring, audit, system health, configuration។
-
----
-
-## 32. API Architecture
-
-API បែងជា Domain មិនមែន file ធំតែមួយ៖
-
-```
-API
-├── Identity        ├── Command
-├── Authentication   ├── Automation
-├── Account          ├── Safety
-├── Authorization     ├── Security
-├── Organization      ├── Audit
-├── Device            ├── Notification
-├── Discovery         ├── International
-├── Pairing           └── Administration
-├── Protocol
-└── Gateway
-```
-
----
-
-## 33. Automation Engine
-
-```
-IF condition THEN action
-```
-
-(Time-based, Sensor-based, Location-based, Device-state-based, Schedule, Event-based) — Automation ត្រូវឆ្លង Permission + Safety Policy ដូចគ្នា។
-
----
-
-## 34. Data & Database Architecture
-
-បែងទិន្នន័យតាម domain: Users, Identities, Organizations, Devices, Capabilities, Permissions, Policies, Commands, Events, Audit logs, Security events, Notifications, Countries, Languages, Time zones — កុំដាក់អ្វីៗទាំងអស់ក្នុង table មួយ។
-
----
-
-## 35. Reliability & Scalability
-
-Load balancing, horizontal scaling, queue systems, caching, database scaling, redundancy, health checks, failover, regional infrastructure។
-
----
-
-## 36. Backup & Disaster Recovery
-
-Encrypted backups, backup verification, recovery testing, RPO/RTO, multi-region strategy (level Enterprise)។
-
----
-
-## 37. Testing
-
-Unit, integration, API, device compatibility, authentication, authorization, security, load, failure, recovery, international-settings testing។
-
----
-
-## 38. Security Testing
-
-Vulnerability scanning, dependency scanning, secure code review, penetration testing, threat modeling, incident simulation, continuous monitoring។
-
-> គោលដៅ: **"Assume breach, minimize impact, detect quickly, recover safely."**
-
----
-
-## 39. Developer / Engineering Governance
-
-Source-code repository, branch protection, code review, CI/CD, secrets protection, dependency management, release management, versioning, change approval, production access control។
-
----
-
-## 40. Emergency Architecture
-
-Emergency Control Plane អាច៖ Suspend dangerous commands, revoke compromised credentials, disable compromised devices, lock down organization, require re-auth, trigger alerts, preserve logs, restore trusted config។
-
----
-
-## 41. The Most Important Security Rule
-
-> **No single credential, account, API, administrator, device, or security layer should automatically have unlimited control over the entire platform.**
-
-មានន័យថា បើចំណុចមួយត្រូវបាន compromise វាមិនគួរបើកផ្លូវទៅគ្រប់អ្វីទាំងអស់។
-
----
-
-## 42. Final Architecture Diagram
-
-```
-                         KSV
-                          │
-        ┌─────────────────┴─────────────────┐
-        │                                   │
-   INTERNATIONAL                       GOVERNANCE
-        │                                   │
- Country / Language / Timezone       Legal / Privacy / Compliance
-        │
-        ▼
-   IDENTITY & ACCOUNT
-        │
-        ▼
-   AUTHENTICATION
-        │
-        ▼
-   AUTHORIZATION
-        │
-        ▼
-   ORGANIZATION / OWNERSHIP
-        │
-        ▼
-   DEVICE IDENTITY
-        │
-        ▼
-   DEVICE DISCOVERY / PAIRING
-        │
-        ▼
-   PROTOCOL / GATEWAY LAYER
-        │
-        ▼
-   COMMAND ENGINE
-        │
-        ├──────────────┐
-        ▼              ▼
-     SAFETY         AUTOMATION
-        │              │
-        └──────┬───────┘
-               ▼
-          DEVICE CONTROL
-               │
-               ▼
-        AUDIT / MONITORING
-               │
-               ▼
-       INCIDENT / RECOVERY
-```
-
-### 12 Master Domains (សរុប)
-
-1. Global & International
-2. Identity & Account
-3. Authentication & Recovery
-4. Authorization & Ownership
-5. Organization & Enterprise
-6. Device Intelligence
-7. Connectivity & Protocols
-8. Command & Automation
-9. Security & Key Management
-10. Safety & Emergency
-11. Monitoring, Audit & Recovery
-12. Infrastructure, Compliance & Scalability
-
-> **កំណត់សម្គាល់៖** កុំចាប់ផ្តើមដោយបង្កើត API រាប់រយ Endpoint មុន។ គួរកំណត់ Security Model + Identity + Permission + Device Model + Protocol Model ជាមុន ព្រោះ ៥ ផ្នែកនេះជាគ្រឹះដែល API ទាំងមូលនឹងពឹងផ្អែក។
-
----
-
-## Project Folder Structure
-
-`KSV/khoem-now/` ជា Project Root តែមួយ — មិនបង្កើត Root ផ្សេងទៀត។
-
-```
-KSV/
-└── khoem-now/
-    ├── API              ← បែងតាម Domain (Identity, Device, Command, Safety...)
-    ├── APP              ← Presentation Layer (UI screens) ប៉ុណ្ណោះ
-    ├── AUTH              ← Registration, Login, MFA, OTP, Session, Recovery
-    ├── SECURITY          ← Encryption, Session Security, Rate Limit, Audit
-    ├── DEVICES           ← Device Identity, Capability, Status
-    ├── GATEWAY           ← Edge Controller / Local Network Bridge
-    ├── PROTOCOLS         ← Bluetooth, Wi-Fi, MQTT, IR Adapters
-    ├── COMMAND           ← Command Engine (parse → validate → execute)
-    ├── AUTOMATION        ← IF/THEN rules engine
-    ├── SAFETY            ← Safety Engine (independent from Security)
-    ├── USERS             ← User accounts & profiles
-    ├── ORGANIZATION       ← Company → Site → Building → Device hierarchy
-    ├── INTERNATIONAL      ← Country / Language / Timezone data & config
-    ├── AUDIT              ← Immutable event logging
-    ├── NOTIFICATION       ← Email / SMS / Push alerts
-    ├── DATABASE           ← Schema, migrations
-    ├── CONFIG             ← Environment & platform configuration
-    ├── TESTS              ← Unit / integration / security tests
-    └── DOCUMENTATION      ← Architecture, API spec, security & permission models
-```
-
-**APP** — ជា Presentation Layer ប៉ុណ្ណោះ (UI មិនត្រូវទៅបញ្ជា Device ដោយរំលង Security/API ទេ)៖ Home, Login, Register, Account, Dashboard, Devices, Device Pairing/Scanner, Permissions, Organizations, Automation, Security, Activity, Notifications, Settings, Language/Country/Timezone, Help, Emergency។
-
----
-
-## Password & Secret Ownership Model
-
-*"ខ្ញុំជាម្ចាស់ Project ប៉ុន្តែមិនមានសិទ្ធិមើល Password អតិថិជន"* — គោលការណ៍នេះបែងចែកជា ៣ ប្រភេទច្បាស់លាស់៖
-
-| ថ្នាក់ | ទទួលខុសត្រូវ |
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
 |---|---|
-| **Platform Owner** | ≠ System Administrator ≠ User |
-| **User Password** | → User-controlled secret (Admin មិនអាចមើលបានឡើយ) |
-| **Platform secrets** | → KSV-controlled secrets (key/certificate management ដាច់ដោយឡែក) |
-| **Device credentials** | → Device/owner-controlled credentials |
+| `KSVAccount` | គណនីស្នូល — displayName, status, identities |
+| `KSVIdentity` | Identity Provider link — provider, email/phone, verificationStatus |
+| `IdentityProvider` | email, phone, google, facebook, tiktok, apple, microsoft |
+| `AccountStatus` | active, suspended, deleted, pending_verification |
 
-```
-User → Password → Authentication Service → KSV
-```
+### API Routes (8 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| GET | `/api/v1/identity/account` | ទាញ Account ខ្លួនឯង |
+| PUT | `/api/v1/identity/account` | កែ displayName, language, timezone |
+| DELETE | `/api/v1/identity/account` | លុប Account (grace period 30 ថ្ងៃ) |
+| POST | `/api/v1/identity/identities/link` | ភ្ជាប់ Provider ថ្មី (OAuth token) |
+| DELETE | `/api/v1/identity/identities/:id` | លុប Provider link |
+| POST | `/api/v1/identity/identities/:id/verify` | Verify email/phone |
+| GET | `/api/v1/identity/lookup/email/:email` | Admin: ស្វែងរកតាម email |
+| POST | `/api/v1/identity/account/suspend` | Admin: Suspend account |
 
-KSV មិនរក្សា ឬបង្ហាញ password ដើមរបស់អតិថិជនឡើយ សូម្បីតែ Administrator។ Forgot Password ត្រូវប្រើ OTP/Recovery Flow ដើម្បីបង្កើត password ថ្មី មិនមែនបង្ហាញ password ចាស់ទេ។
+### Security Rules
+- **KSV មិនរក្សាទុក external password ឡើយ** — ប្រើ OAuth 2.0 / OpenID Connect
+- Admin មិនអាចមើល password ឬ OAuth token របស់ User
+- Account ត្រូវការ verified identity ≥ 1 — មិនអាចលុប identity ចុងក្រោយ
+- Account deletion: grace period **30 ថ្ងៃ** មុនលុបពិតប្រាកដ
 
-សម្រាប់ Identity Provider ខាងក្រៅ (Google, Apple, Microsoft ។ល។)៖
-
-```
-KSV
- │
- ├── Device Control
- ├── Authorization
- ├── Audit
- │
- └── Identity Provider
-       └── Authentication
-```
-
-KSV ទទួលតែ identity/token ចាំបាច់តាម OAuth 2.0 / OpenID Connect — មិនប្រមូល external password ទេ។ ការទទួលខុសត្រូវផ្លូវច្បាប់កំណត់តាម Terms of Service, Privacy Policy, កិច្ចសន្យា និងច្បាប់ប្រទេស។
+### Audit Events (9 events)
+`account.viewed`, `account.updated`, `account.suspended`, `account.deletion_scheduled`, `provider.linked`, `provider.unlinked`, `provider.verified`, `provider.verification_failed` ។ល។
 
 ---
 
-## Certificates
+## ឯកសារទី 2 — `authentication.ts`
+### Authentication API — "ពិតជាអ្នកណានោះឬ?"
 
-📜 [មើលវិញ្ញាបនបត្រ Sololearn ទាំងអស់](#) — សរុប **47 certificates**។
+**ស្នូល**: Login, Session, MFA, Token, Brute-Force Protection
 
-<details>
-<summary>បញ្ជីវិញ្ញាបនបត្រទាំងអស់ (ចុចដើម្បីពង្រីក)</summary>
-
-| # | Link |
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
 |---|---|
-| 1 | https://api2.sololearn.com/v2/certificates/CC-4WMNT8MZ/image/png |
-| 2 | https://api2.sololearn.com/v2/certificates/CC-FQXPSLUW/image/png |
-| 3 | https://api2.sololearn.com/v2/certificates/CC-T1WYSOHU/image/png |
-| 4 | https://api2.sololearn.com/v2/certificates/CC-I6OFSBAU/image/png |
-| 5 | https://api2.sololearn.com/v2/certificates/CC-IXX7OEVL/image/png |
-| 6 | https://api2.sololearn.com/v2/certificates/CC-AYYCWFZD/image/png |
-| 7 | https://api2.sololearn.com/v2/certificates/CC-3LIHOX01/image/png |
-| 8 | https://api2.sololearn.com/v2/certificates/CC-HAW7ZIH5/image/png |
-| 9 | https://api2.sololearn.com/v2/certificates/CC-U8DL49ZZ/image/png |
-| 10 | https://api2.sololearn.com/v2/certificates/CC-SI2WZX43/image/png |
-| 11 | https://api2.sololearn.com/v2/certificates/CC-SUOWGF8T/image/png |
-| 12 | https://api2.sololearn.com/v2/certificates/CC-I4TIACOI/image/png |
-| 13 | https://api2.sololearn.com/v2/certificates/CC-GT2PAJTL/image/png |
-| 14 | https://api2.sololearn.com/v2/certificates/CC-CCYNOT2R/image/png |
-| 15 | https://api2.sololearn.com/v2/certificates/CC-ZYSDAZM8/image/png |
-| 16 | https://api2.sololearn.com/v2/certificates/CC-7ABADG4R/image/png |
-| 17 | https://api2.sololearn.com/v2/certificates/CC-DBRL4YLD/image/png |
-| 18 | https://api2.sololearn.com/v2/certificates/CC-033EXHKA/image/png |
-| 19 | https://api2.sololearn.com/v2/certificates/CC-UYFGANZQ/image/png |
-| 20 | https://api2.sololearn.com/v2/certificates/CC-2M47YBCR/image/png |
-| 21 | https://api2.sololearn.com/v2/certificates/CC-WKCFVLYI/image/png |
-| 22 | https://api2.sololearn.com/v2/certificates/CC-CRBRNFSO/image/png |
-| 23 | https://api2.sololearn.com/v2/certificates/CC-SUEHSLUF/image/png |
-| 24 | https://api2.sololearn.com/v2/certificates/CC-SI4N5SIB/image/png |
-| 25 | https://api2.sololearn.com/v2/certificates/CC-ZTIH8SKI/image/png |
-| 26 | https://api2.sololearn.com/v2/certificates/CC-OFASKCAF/image/png |
-| 27 | https://api2.sololearn.com/v2/certificates/CC-SCJHQBG0/image/png |
-| 28 | https://api2.sololearn.com/v2/certificates/CC-JAJVCQCJ/image/png |
-| 29 | https://api2.sololearn.com/v2/certificates/CC-DJ9YJOG5/image/png |
-| 30 | https://api2.sololearn.com/v2/certificates/CC-FYISPG0F/image/png |
-| 31 | https://api2.sololearn.com/v2/certificates/CC-AXMQ8X3Q/image/png |
-| 32 | https://api2.sololearn.com/v2/certificates/CC-OU33MLMF/image/png |
-| 33 | https://api2.sololearn.com/v2/certificates/CC-K47BIVEI/image/png |
-| 34 | https://api2.sololearn.com/v2/certificates/CC-AREK9EJE/image/png |
-| 35 | https://api2.sololearn.com/v2/certificates/CC-6ZXHTBFA/image/png |
-| 36 | https://api2.sololearn.com/v2/certificates/CC-ZDBUNAIR/image/png |
-| 37 | https://api2.sololearn.com/v2/certificates/CC-2SCXNBZ6/image/png |
-| 38 | https://api2.sololearn.com/v2/certificates/CC-CAZPORAO/image/png |
-| 39 | https://api2.sololearn.com/v2/certificates/CC-S072WEWW/image/png |
-| 40 | https://api2.sololearn.com/v2/certificates/CC-OP1HINXS/image/png |
-| 41 | https://api2.sololearn.com/v2/certificates/CC-GPX6LLCC/image/png |
-| 42 | https://api2.sololearn.com/v2/certificates/CC-8VRSVYY8/image/png |
-| 43 | https://api2.sololearn.com/v2/certificates/CC-IGJZ5ICG/image/png |
-| 44 | https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png |
-| 45 | https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png |
-| 46 | https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png |
-| 47 | https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png |
+| `KSVSession` | sessionId, accountId, ipAddress, userAgent, status |
+| `KSVToken` | accessToken (15min), refreshToken (7 days) |
+| `MFAChallenge` | challengeId, method, maskedDestination |
+| `MFAMethod` | totp, sms_otp, email_otp, hardware_key |
+| `LoginResult` | success, mfa_required, failed, account_suspended |
 
-</details>
+### API Routes (14 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/auth/login/password` | Login ដោយ email+password |
+| POST | `/api/v1/auth/login/oauth` | Login ដោយ OAuth provider |
+| POST | `/api/v1/auth/mfa/verify` | ផ្ទៀងផ្ទាត់ MFA code |
+| POST | `/api/v1/auth/mfa/enroll` | ចុះឈ្មោះ MFA method ថ្មី |
+| POST | `/api/v1/auth/token/refresh` | បន្ត access token |
+| GET | `/api/v1/auth/sessions` | មើល session ទាំងអស់ |
+| DELETE | `/api/v1/auth/sessions/:id` | Revoke session ជាក់លាក់ |
+| POST | `/api/v1/auth/logout` | Logout (ឬ revoke sessions ទាំងអស់) |
+| POST | `/api/v1/auth/password/change` | ផ្លាស់ password |
+| POST | `/api/v1/auth/admin/revoke-all/:id` | Admin: Revoke sessions ទាំងអស់ |
+
+### Security Rules
+- Password: **hash ជា bcrypt/argon2** — មិនរក្សាទុក plain text
+- OTP: **expire 10 នាទី**, single-use, max attempts 5
+- Access token: **15 នាទី** | Refresh token: **7 ថ្ងៃ**
+- Failed login: **5 ครั้ง → lock 15 នាទី**
+- Password change: **revoke sessions ផ្សេងទាំងអស់** ភ្លាម
+
+### Audit Events (16 events)
+`login.success`, `login.failed`, `mfa.verified`, `mfa.failed`, `session.revoked`, `password.changed`, `account.locked` ។ល។
 
 ---
 
-*ឯកសារនេះជា Blueprint/Specification ដំណាក់កាល "មុនសរសេរកូដ" — គោលដៅគឺបញ្ចប់ Architecture & Requirements ជាមុនសិន មុននឹងចាប់ផ្តើមសាងសង់ API និង Database ជាក់ស្តែង។*
+## ឯកសារទី 3 — `account-recovery.ts`
+### Account Recovery API — "ភ្លេច Password?"
 
-khoem-now/
-│
-├── .bolt/
-│   ├── config.json
-│   └── prompt
-│
-├── API/
-│   ├── README.md
-│   ├── account-recovery.ts
-│   ├── authentication.ts
-│   ├── authorization.ts
-│   ├── automation.ts
-│   ├── command.ts
-│   ├── device.ts
-│   ├── discovery.ts
-│   ├── gateway.ts
-│   ├── identity.ts
-│   ├── international.ts
-│   ├── organization.ts
-│   ├── package-lock.json
-│   ├── protocol.ts
-│   └── safety.ts
-│
-├── DOCUMENTATION/
-│   ├── account-recovery.md
-│   ├── administration.md
-│   ├── audit.md
-│   ├── authentication.md
-│   ├── authorization.md
-│   ├── command-automation.md
-│   ├── device.md
-│   ├── discovery-pairing.md
-│   ├── identity.md
-│   ├── international.md
-│   ├── notification.md
-│   ├── organization.md
-│   ├── protocol-gateway.md
-│   ├── safety.md
-│   └── security.md
-│
-├── archive/
-│   └── package-lock.json.backup
-│
-├── data/
-│   └── countries.json
-│
-├── scripts/
-│   ├── run-migrations.mjs
-│   ├── seed-countries.mjs
-│   └── seed-languages.mjs
-│
-├── src/
-│   ├── components/
-│   │   ├── LanguageSelector.tsx
-│   │   ├── nav.tsx
-│   │   └── ui.tsx
-│   │
-│   ├── data/
-│   │   ├── countries.ts
-│   │   └── domain.ts
-│   │
-│   ├── i18n/
-│   │   ├── LanguageContext.tsx
-│   │   └── translations.ts
-│   │
-│   ├── views/
-│   │   ├── AuditView.tsx
-│   │   ├── CertificatesView.tsx
-│   │   ├── ControlsView.tsx
-│   │   ├── DashboardView.tsx
-│   │   ├── DevicesView.tsx
-│   │   ├── GatewayView.tsx
-│   │   ├── InternationalView.tsx
-│   │   ├── OrganizationView.tsx
-│   │   ├── ProtocolsView.tsx
-│   │   ├── SafetyView.tsx
-│   │   ├── SecurityView.tsx
-│   │   └── SettingsView.tsx
-│   │
-│   ├── App.tsx
-│   ├── App_1.tsx
-│   ├── index.css
-│   ├── main.tsx
-│   └── vite-env.d.ts
-│   └── KSV.ts
-├── .gitignore
-├── AI_INSTRUCTIONS.md
-├── README.md
-├── eslint.config.js
-├── index.html
-├── ksv.sh
-├── package-lock.json
-├── package.json
-├── postcss.config.cjs
-├── setup_ksv.sh
-├── sync.sh
-├── tailwind.config.cjs
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-└── vite.config.ts
+**ស្នូល**: Recovery flow ដែលបង្កើត password ថ្មី — **មិនបង្ហាញ password ចាស់ឡើយ**
+
+### Recovery Flow
+```
+Initiate → OTP Sent (masked) → Verify OTP → Recovery Token → Reset Password → Revoke All Sessions
+```
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `RecoverySession` | sessionId, method, status, maskedDestination, attemptsUsed |
+| `RecoveryMethod` | email, phone, identity_provider, backup_code |
+| `RecoveryStatus` | pending, otp_sent, otp_verified, completed, expired |
+| `BackupCode` | codeIndex, isUsed, usedAt |
+
+### API Routes (11 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/recovery/initiate` | ចាប់ផ្តើម recovery |
+| POST | `/api/v1/recovery/otp/resend` | ផ្ញើ OTP ម្តងទៀត |
+| POST | `/api/v1/recovery/otp/verify` | ផ្ទៀងផ្ទាត់ OTP |
+| POST | `/api/v1/recovery/provider/verify` | Recovery ដោយ OAuth |
+| POST | `/api/v1/recovery/backup-code/verify` | Recovery ដោយ Backup Code |
+| POST | `/api/v1/recovery/password/reset` | Reset password ថ្មី |
+| POST | `/api/v1/recovery/cancel` | លុបចោល recovery session |
+| POST | `/api/v1/recovery/backup-codes/generate` | បង្កើត Backup Codes ថ្មី |
+| GET | `/api/v1/recovery/backup-codes/status` | ពិនិត្យ Backup Code នៅសល់ |
+
+### Security Rules
+- OTP: **10 នាទី**, single-use, max 5 attempts
+- Rate limit: **3 recovery/IP/hour** — ការពារ brute-force
+- Recovery token (ក្រោយ OTP verified): **15 នាទី**
+- **Account enumeration prevented** — response ដូចគ្នា ទោះ email មាន ឬមិនមាន
+- Backup codes: **hash ជា secure format** — plain text seen once only
+- **Password ចាស់ មិនបង្ហាញ ជាដាច់ខាត**
+
+### Audit Events (13 events)
+`recovery.initiated`, `otp_verified`, `otp_failed`, `password_reset`, `sessions_revoked`, `backup_codes_generated` ។ល។
 
 ---
 
-## 📋 Progress Log — Language & i18n System
+## ឯកសារទី 4 — `authorization.ts`
+### Authorization API — "អ្នកមានសិទ្ធិធ្វើអ្វី?"
 
-> កំណត់ត្រានេះសម្រាប់ជួយ AI/Developer ជំនួយការនាពេលអនាគត ឲ្យដឹងថាអ្វីខ្លះបានធ្វើរួច ជៀសវាងកែខុសពីប្រព័ន្ធដែលមានស្រាប់។
+**ស្នូល**: Policy-Based Access Control — WHO + WHAT + WHICH device + WHERE + WHEN + CONDITIONS
 
-### ✅ ថ្ងៃទី 29 សីហា 2026 — Bug Fixes & i18n Verification
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVPermission` | permissionId, accountId, resourceType, actions, level, conditions |
+| `PermissionLevel` | owner, super_admin, org_admin, manager, operator, controller, viewer, guest, temporary |
+| `PermissionConditions` | timeFrom, timeTo, daysOfWeek, locationRestriction, requiresApproval |
+| `ResourceType` | device, device_group, organization, site, building, room, gateway |
+| `ActionType` | read, write, control, pair, unpair, manage_permissions, delete, emergency_stop |
 
-**បញ្ហារកឃើញ និងដោះស្រាយ:**
-1. Merge conflict រវាង `khoem-now/src/App.tsx` និង `ksv.ts` — ដោះស្រាយដោយ `git pull --no-rebase` + resolve conflict
-2. បន្ថែម `CountryClock` component (`src/components/CountryClock.tsx`) — ជ្រើសរើសប្រទេស + បង្ហាញម៉ោងតាម timezone ក្នុង header
-3. តភ្ជាប់ Sidebar labels (`nav.tsx`) ចូល `t()` translation system ក្នុង `App.tsx` — កែ `.label`/`.title`/`.subtitle` → `t(.labelKey)`/`t(.titleKey)`/`t(.subtitleKey)`
-4. **DevicesView.tsx bug**: Key mismatch រវាងកូដ (`devices.registry.title`) និង `translations.ts` (`view.devices.registryTitle`) — កូដប្រើ dot-notation ខុសពី camelCase ដែលមានស្រាប់។ បានកែ key ឲ្យត្រូវគ្នា + បន្ថែម `view.devices.status.*` (online/warning/offline/maintenance) ដែលខ្វះទាំងស្រុងក្នុង `translations.ts`
+### API Routes (12 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/authz/check` | ពិនិត្យ permission (internal) |
+| POST | `/api/v1/authz/check/batch` | ពិនិត្យ permissions ច្រើន |
+| POST | `/api/v1/authz/permissions` | Grant permission |
+| DELETE | `/api/v1/authz/permissions/:id` | Revoke permission |
+| GET | `/api/v1/authz/my-permissions` | permission ខ្លួនឯង |
+| GET | `/api/v1/authz/approvals/pending` | Action ដែលរង់ចាំ Approve |
+| POST | `/api/v1/authz/approvals/:id` | Approve/Reject action |
+| POST | `/api/v1/authz/owner/:type/:id/transfer` | ផ្ទេរ ownership |
 
-**ការផ្ទៀងផ្ទាត់ (Verified 100% correct, no changes needed):**
-- ✅ DashboardView.tsx
-- ✅ ControlsView.tsx
-- ✅ ProtocolsView.tsx
-- ✅ GatewayView.tsx
-- ✅ SecurityView.tsx
-- ✅ OrganizationView.tsx
-- ✅ CertificatesView.tsx
-- ✅ SettingsView.tsx
-- ✅ AuditView.tsx
-- ✅ SafetyView.tsx
-- ✅ InternationalView.tsx (គាំទ្រ 11 ភាសា: km, en, ja, zh, th, ko, fr, es, vi, ar)
+### Security Rules
+- **គ្មាន Implicit Permission** — Login ≠ Permission
+- User GrantPermission ≤ ระดับ ខ្លួនឯង — Operator មិនអាច Grant Owner
+- **GPS គ្រាន់តែជា secondary context** — មិនមែន primary security control
+- Revoked permissions effective **ភ្លាម** — cached result ត្រូវ invalidate
+- Permission expiry: **auto-rejected** ពេល expires
 
-**គោលការណ៍សំខាន់សម្រាប់ការងារបន្ត:**
-- Key naming convention **មិនស្មើគ្នា** រវាង view — មួយចំនួនប្រើ `view.xxx.yyy` (dot), មួយចំនួនប្រើ `view.xxx.yyyKey` (camelCase)។ **តែងឆែក `translations.ts` ជាមុន** មុននឹងសន្មតទម្រង់ key ណាមួយ
-- មុននឹងកែ view ណាមួយ ប្រើ `grep -o "t('[^']*')" <file> | sort -u` ដើម្បីទាញ key ទាំងអស់ រួច `grep` ប្រៀបធៀបជាមួយ `translations.ts`
-- ឈ្មោះឧបករណ៍ (device names), rule names, event codes (UNLOCK, LOGIN_ATTEMPT ។ល។) **មិនត្រូវបកប្រែ** ព្រោះជាទិន្នន័យ មិនមែនអត្ថបទ UI
-
-**Commits ថ្ងៃនេះ:**
-- `feat: add country/timezone clock selector to header`
-- `feat: connect sidebar/header labels to translation system`
-- `fix: correct devices view translation key mismatches`
-
----
-
-cd ~/KSV/khoem-now
-cat >> README.md << 'MDEOF'
+### Audit Events (10 events)
+`permission.check.allowed`, `permission.check.denied`, `permission.granted`, `permission.revoked`, `approval.approved`, `ownership.transferred` ។ល។
 
 ---
 
-### ✅ ថ្ងៃទី 29 សីហា 2026 (យប់) — Root Cause Fix, API Domain Audit, Git Safety Incident
+## ឯកសារទី 5 — `organization.ts`
+### Organization API — "ក្រុមហ៊ុន + Structure"
 
-**បញ្ហាធំបំផុតដែលរកឃើញ — Root Cause នៃ "ចុចទំព័រខុស" / build ខូច:**
-ថត (folder) ត្រួតគ្នាច្រើនស្រទាប់ ដែលកើតឡើងពី AI ផ្សេងៗ (Termux, bolt.new) កែក្នុងពេលដំណាលគ្នាដោយមិន sync៖
-- `khoem-now/khoem-now/` (i18n/components ត្រូវការស្រាប់ ជាប់ក្នុង folder ត្រួតគ្នា)
-- `App.tsx` ត្រួតគ្នា ៣ file (`App.tsx`, `App_ksv.tsx`, `App_1.tsx`)
-- `nav.tsx` ដាក់ខុសទីតាំង (root ជំនួស `src/components/`)
+**ស្នូល**: Company → Site → Building → Room → Devices → Users → Roles
 
-**ការកែសម្រួលរចនាសម្ព័ន្ធ (Cleanup):**
-1. រួម i18n/components/data/views ដែលជាប់ក្នុង folder ត្រួតគ្នា ចូល `src/` ត្រឹមត្រូវ
-2. ជំនួស `src/App.tsx` (កំណែខុស/template) ដោយកំណែពិត (191 lines មាន i18n ពេញលេញ)
-3. លុប `App_ksv.tsx`, `nav.tsx` (root), `src/package.json` ស្ទួន
-4. កែ `main.tsx` ឱ្យ wrap `<App />` ដោយ `<LanguageProvider>` (កាលពីមុនខ្វះ → app crash ពេល load)
-5. កែ `InternationalView.tsx`: `export default` → named export (`export function InternationalView`) ឱ្យស៊ីគ្នានឹង views ១១ ទៀត
-6. Rename `DOCUMENTATION/authorization.md` → `authentication.md` (ខ្លឹមសារពិតជា Authentication តែដាក់ខុសឈ្មោះ) + ផ្លាស់ទី `authorization.md` (root) ចូល `DOCUMENTATION/`
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVOrganization` | orgId, name, type, countryCode, timezone, memberCount, deviceCount |
+| `KSVSite` | siteId, orgId, name, type (factory/office/warehouse...) |
+| `KSVBuilding` | buildingId, siteId, floorCount, roomCount |
+| `KSVRoom` | roomId, buildingId, floor, deviceCount |
+| `KSVOrgMember` | memberId, accountId, role, joinedAt |
+| `OrgType` | personal, family, company, government, ngo |
+| `MemberRole` | owner, admin, manager, operator, viewer, guest |
 
-**API/ Domain Audit (ឆែកទាំង 13 file ម្តងមួយៗ):**
-account-recovery, authentication, authorization, automation, command, device, discovery, gateway, identity, protocol, safety — ✅ ស្អាតទាំងអស់, logic/security rules ត្រឹមត្រូវ។
-- `international.ts` — ខ្វះ `ROUTES`/`Handlers`/`SecurityRules`/`AuditEvent` (មានតែ types+functions) → **បានបន្ថែមរួច**
-- `organization.ts` — ខ្វះ `ORGANIZATION_SECURITY_RULES` ទាំងស្រុង → **បានបន្ថែមរួច** (ONLY_OWNER_CAN_DELETE_ORG, MINIMUM_ONE_OWNER_REQUIRED, CANNOT_ASSIGN_ROLE_ABOVE_OWN ។ល។)
-- កត់ចំណាំ: `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` (មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import ជាមួយគ្នា — ប្រយ័ត្នពេលបង្កើត file ថ្មីត្រូវការទាំងពីរ)
+### API Routes (26 endpoints)
+- **Organizations**: Create, List, Get, Update, Delete (5)
+- **Sites**: CRUD operations (5)
+- **Buildings**: CRUD operations (5)
+- **Rooms**: CRUD operations (5)
+- **Members**: Invite, List, Get, UpdateRole, Remove (5)
+- **Policies**: Create, List, Get, Update, Delete (5)
 
-**⚠️ Git Safety Incident — មេរៀនសំខាន់សម្រាប់ AI/Developer ក្រោយ:**
-- ពាក្យបញ្ជា `cp -r khoem-now khoem-now-backup-...` ដែលរត់ពី **ខាងក្នុង** `khoem-now/` ខ្លួនឯង បង្កើត backup folder ដែលមាន `node_modules` ពេញ **នៅខាងក្នុង git repo** → `git add -A` ចាប់យកចូល commit ដោយចៃដន្យ (រាប់ពាន់ file!)
-- **មេរៀន**: កុំដែល `cp -r` project folder ទៅជា backup **នៅខាងក្នុងខ្លួនឯង**។ បើត្រូវការ backup សូមធ្វើនៅ **ក្រៅ** project root ទាំងស្រុង (ឧ. `~/backups/`) ឬប្រើ `git stash`/`git branch` ជំនួស
-- **មេរៀនទី ២**: `git status` ត្រូវពិនិត្យជានិច្ចមុន `git add -A` — កុំទុកចិត្តលើ `-A` ដោយងងឹតងងុល
-- **មេរៀនទី ៣**: AI ២-៣ កន្លែងកែក្នុងពេលដំណាលគ្នា (Termux + bolt.new) នាំឱ្យ `git push` ត្រូវ `rejected` ជានិច្ច — ត្រូវ `git pull --no-rebase` ជានិច្ចមុន push
+### ឧទាហរណ៍ Structure
+```
+Company A
+ ├── Phnom Penh Factory (Site)
+ │    ├── Main Building
+ │    │    ├── Machine Room (Room) → Devices
+ │    │    └── Control Room (Room) → Devices
+ │    └── Warehouse
+ └── Bangkok Branch (Site)
+```
 
-**ឧបករណ៍ថ្មី — `ksv.sh` (shortcut script):**
-បង្កើតទុកនៅ `~/KSV/khoem-now/ksv.sh` ជាមួយ alias `ksv` ក្នុង `~/.bashrc`៖
-- `ksv pull` — ទាញកូដចុងក្រោយ
-- `ksv build` — `npm install && npm run build`
-- `ksv dev` — `npm install && npm run dev`
-- `ksv push` — add + commit (សួរសារ) + push
-- `ksv status` — `git status` + `git log --oneline -5`
+### Audit Events (17 events)
+`org.created`, `site.created`, `building.created`, `member.invited`, `member.role_changed`, `policy.updated` ។ល។
 
-**Commits ថ្ងៃនេះ:**
-- `docs: complete API domain audit, add missing security rules and route definitions to organization.ts and international.ts`
-- Merge commit ជាមួយ `khoem-now/API/README.md` (ពី AI ផ្សេង) — គ្មាន conflict
+---
 
-**ស្ថានភាពចុងក្រោយ:** GitHub `KHOEM-AI/KSV` main branch sync ១០០%, build ជោគជ័យ (1589 modules, 0 error), `node_modules` មិនជាប់ក្នុង repo ទៀត។
-MDEOF
+## ឯកសារទី 6 — `device.ts`
+### Device API — "ឧបករណ៍ + Capability"
 
-git add README.md
-git commit -m "docs: log session summary — root cause fix, API audit, git safety lessons"
-git pull origin main --no-rebase
-git push origin main
-[![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-s6rw1asx)
+**ស្នូល**: Device Identity, Capability, Ownership, Lifecycle — KSV ដឹងថា Device អាចធ្វើអ្វី
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVDevice` | deviceId, name, manufacturer, model, protocol[], status, capabilities[] |
+| `DeviceCapability` | name, type (toggle/range/enum), minValue, maxValue, isSafetyRelevant |
+| `DeviceCategory` | home, building, vehicle, industrial, warehouse, energy |
+| `DeviceType` | light, fan, ac, tv, door, elevator, motor, pump, robot, solar... (25+) |
+| `DeviceProtocol` | bluetooth, wifi, mqtt, http_api, infrared, zigbee, lorawan, modbus |
+| `DeviceLifecycleStage` | discovered, verified, paired, active, updated, suspended, revoked, removed |
+
+### API Routes (14 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/devices` | Register device |
+| GET | `/api/v1/devices` | List devices (filter by org/site/type) |
+| GET | `/api/v1/devices/:id/state` | State ពិតប្រាកដ |
+| GET | `/api/v1/devices/:id/capabilities` | Capability list |
+| POST | `/api/v1/devices/:id/firmware/update` | Update firmware (signed) |
+| POST | `/api/v1/devices/:id/quarantine` | Quarantine (Admin) |
+| POST | `/api/v1/devices/:id/decommission` | Retire device |
+
+### Device Categories
+```
+Home:       Light, Fan, AC, TV, Speaker, Smart Lock, Gate
+Building:   Door, Elevator, Camera, Access Control, HVAC
+Vehicle:    Car, EV, Fleet, Bus
+Industrial: Motor, Pump, PLC, Robot, Conveyor
+Warehouse:  Scanner, Shelf Sensor, Automation
+Energy:     Solar Inverter, Battery, Meter
+```
+
+### Security Rules
+- Firmware: **cryptographically signed** — unsigned update rejected
+- Quarantined device: **zero commands** until admin releases
+- Safety-relevant capability → **Safety Engine must also approve**
+
+---
+
+## ឯកសារទី 7 — `discovery.ts` (includes Pairing)
+### Discovery & Pairing API — "ស្វែងរក + តភ្ជាប់"
+
+**ស្នូល**: Scan → Verify → Pair → Secure Connection
+
+> **ច្បាប់ចំបង**: Discovery ≠ Permission. Found ≠ Authorized.
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `DiscoveredDevice` | discoveryId, method, protocol, status (unverified) |
+| `PairingSession` | pairingSessionId, method, status, verificationData |
+| `DiscoveryMethod` | bluetooth, wifi, local_network, qr, nfc, gateway, cloud_api |
+| `PairingMethod` | pin, qr, nfc, push_button, certificate, owner_approval |
+| `PairingStatus` | pending, owner_verifying, pairing, paired, failed, expired |
+
+### Pairing Flow
+```
+SCAN → DEVICE FOUND → IDENTITY VERIFIED → OWNER VERIFIED →
+PAIRING → PERMISSION → SECURE CONNECTION → READY
+```
+
+### API Routes (11 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/discovery/start` | ចាប់ផ្តើម scan |
+| GET | `/api/v1/discovery/devices` | List found devices (unverified) |
+| POST | `/api/v1/discovery/devices/:id/verify` | Verify device identity |
+| POST | `/api/v1/pairing/initiate` | ចាប់ផ្តើម pairing |
+| POST | `/api/v1/pairing/:id/complete` | Complete pairing |
+| POST | `/api/v1/pairing/:id/cancel` | លុបចោល pairing |
+| POST | `/api/v1/devices/:id/unpair` | Unpair device |
+
+### Security Rules
+- Advertised device name: **NOT trusted** — may be spoofed
+- Discovery session: **expire 300 seconds**
+- Pairing session: **expire 120 seconds**
+- **Cryptographic verification required** before accepting any pairing
+
+---
+
+## ឯកសារទី 8 — `command.ts`
+### Command API — "ចេញ Command ដល់ Device"
+
+**ស្នូល**: Command Pipeline ពេញលេញ — **គ្មាន shortcut**
+
+### Command Pipeline (9 ជំហាន)
+```
+1. PARSE         → Validate structure
+2. AUTHENTICATE  → Verify session valid
+3. AUTHORIZE     → Check permission
+4. CAPABILITY    → Device supports this?
+5. SAFETY        → Safety Engine approval
+6. CONFIRM       → Human confirmation (high-risk)
+7. EXECUTE       → Send to device
+8. COLLECT RESULT → Device feedback
+9. AUDIT         → Log everything
+```
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVCommand` | commandId, deviceId, capability, value, status, source |
+| `CommandStatus` | pending, executing, success, rejected_auth, rejected_safety, timeout |
+| `CommandSource` | user_app, automation, ai_layer, api, gateway_local, admin |
+| `CommandResult` | success, returnedValue, errorCode |
+
+### API Routes (6 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/commands` | ចេញ command |
+| POST | `/api/v1/commands/batch` | ចេញ commands ច្រើន |
+| GET | `/api/v1/commands/:id` | Command status |
+| POST | `/api/v1/commands/:id/cancel` | Cancel command |
+| GET | `/api/v1/commands/history` | Command history |
+| POST | `/api/v1/commands/emergency-stop` | Emergency stop |
+
+### Security Rules
+- AI-layer commands: **same pipeline** — not trusted more than user
+- Emergency Stop: **cannot be blocked** by automation
+- All commands: **audited** including rejected ones
+- Timeout default: **30 seconds**
+
+---
+
+## ឯកសារទី 9 — `gateway.ts`
+### Gateway API — "Edge Controller"
+
+**ស្នូល**: KSV Cloud ↔ Gateway ↔ Local Devices — Bridge (NOT security bypass)
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVGateway` | gatewayId, name, type, status, supportedProtocols[], connectedDeviceCount |
+| `GatewayMode` | cloud_connected, local_only, hybrid |
+| `GatewayType` | home, building, industrial, vehicle, portable |
+| `GatewayHeartbeat` | timestamp, cpuUsage, memUsage, connectedDeviceCount |
+| `OfflinePolicyConfig` | allowLocalControl, allowedCapabilities, syncOnReconnect |
+
+### API Routes (14 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/gateways` | Register gateway |
+| GET | `/api/v1/gateways/:id/status` | Status + connected devices |
+| POST | `/api/v1/gateways/:id/heartbeat` | Gateway → Cloud heartbeat |
+| POST | `/api/v1/gateways/:id/sync` | Sync on reconnect |
+| GET | `/api/v1/gateways/:id/sync/queue` | Pending commands |
+| PUT | `/api/v1/gateways/:id/offline-policy` | Offline behavior config |
+
+### Offline Architecture
+```
+Cloud available: Cloud → Gateway → Device
+Cloud down:      Gateway (offline policy) → Device
+Reconnect:       Gateway sync → Cloud (state reconciliation)
+```
+
+### Security Rules
+- Provisioning token: **single-use**, expire 30 minutes
+- Firmware: **must be signed** before applying
+- Cloud down → **offline policy** applies (not open access)
+- Gateway: **cannot override** cloud permissions
+
+---
+
+## ឯកសារទី 10 — `protocol.ts`
+### Protocol API — "Universal Protocol Layer"
+
+**ស្នូល**: Protocol Abstraction — Device Type → Manufacturer → Protocol → Command
+
+### Supported Protocols
+| Protocol | ប្រើសម្រាប់ |
+|---|---|
+| Bluetooth / BLE | Smart Home, Wearables |
+| Wi-Fi / HTTPS | Most smart devices |
+| MQTT | IoT sensors, Industrial |
+| Infrared | TV, AC, Legacy devices |
+| Zigbee / Z-Wave | Smart Home mesh |
+| LoRaWAN | Long-range IoT |
+| Modbus | Industrial machines |
+| BACnet | Building automation |
+| CAN Bus | Vehicle systems |
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `ProtocolAdapter` | adapterId, protocol, supportedManufacturers, isSecureChannel |
+| `ProtocolConnection` | connectionId, deviceId, state, latencyMs, encryptionEnabled |
+| `ManufacturerProfile` | name, protocols[], authType, requiresCloudAccount |
+
+### Protocol Abstraction Flow
+```
+KSV Command → Protocol Adapter → Bluetooth/Wi-Fi/MQTT/IR → Device
+```
+
+### API Routes (8 endpoints)
+`LIST_ADAPTERS`, `GET_ADAPTER`, `LIST_CONNECTIONS`, `TEST_CONNECTION`, `DISCONNECT`, `RECONNECT`, `LIST_MANUFACTURERS`, `UPDATE_PROTOCOL_CONFIG`
+
+---
+
+## ឯកសារទី 11 — `safety.ts`
+### Safety API — "Safety Engine (ដាច់ចាក Security)"
+
+**ស្នូល**: Safety ≠ Security — Permission ✓ + Security ✓ + Safety ✗ = COMMAND BLOCKED
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `SafetyRule` | ruleId, type, severity, conditions, action, deviceIds |
+| `SafetyRuleType` | operating_hours, interlock, rate_limit, value_range, emergency_override |
+| `SafetyRuleSeverity` | critical, high, medium, low |
+| `SafetyState` | normal, warning, alert, emergency, lockdown |
+| `SafetyCondition` | timeFrom, timeTo, interlockDeviceId, maxValue, temperatureMax |
+| `SafetyAction` | block, warn, require_confirmation, emergency_stop, alert_admin |
+
+### ឧទាហរណ៍ Safety Rules
+```
+Rule: Motor A can only run 8AM-5PM weekdays
+Rule: Gate cannot open if Fire Alarm is active (interlock)
+Rule: Temperature > 80°C → block all heating commands
+Rule: Max 10 commands/minute per device
+Rule: Robot must E-Stop if human detected in zone
+```
+
+### API Routes (11 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/safety/check` | Safety check (internal) |
+| POST | `/api/v1/safety/rules` | Create safety rule |
+| GET | `/api/v1/safety/devices/:id` | Device safety status |
+| POST | `/api/v1/safety/emergency-stop` | Emergency stop |
+| POST | `/api/v1/safety/emergency-stop/release` | Release (requires verification) |
+| GET | `/api/v1/safety/events` | Safety events |
+
+### Security Rules
+- Safety Engine: **independent from Security** — authorization alone is insufficient
+- Emergency Stop: **cannot be overridden** by automation or AI
+- Industrial rules: **require manager permission** to modify
+- Emergency release: **requires explicit safety verification** checklist
+
+---
+
+## ឯកសារទី 12 — `automation.ts`
+### Automation API — "IF Condition THEN Action"
+
+**ស្នូល**: Rules + Scenes — **ឆ្លងតាម Permission + Safety pipeline ដូចគ្នា**
+
+### Trigger Types
+| Trigger | ឧទាហរណ៍ |
+|---|---|
+| `schedule` | ចាំពេល 6:00AM ជារៀងរាល់ថ្ងៃ |
+| `device_state` | TV ដើរ → បើ AC |
+| `sensor_value` | Temperature > 30°C → Fan ON |
+| `time_of_day` | 10PM → Lock all doors |
+| `sunrise_sunset` | Sunrise + 30min → Open blinds |
+| `device_offline` | Camera offline → Alert admin |
+| `safety_event` | E-Stop → Notify all managers |
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `AutomationRule` | ruleId, trigger, conditions[], conditionLogic, actions[] |
+| `AutomationScene` | sceneId, name, actions[] (ចុចតែ​ម្តង → ស្រែក actions ច្រើន) |
+| `AutomationLog` | logId, conditionsMet, actionsExecuted, actionsFailed |
+| `ConditionOperator` | eq, ne, gt, gte, lt, lte, between, in |
+
+### API Routes (14 endpoints)
+Rules: Create, List, Get, Update, Delete, Enable, Disable, Test (8)
+Scenes: Create, List, Get, Update, Delete, Activate (6)
+
+### Security Rules
+- `bypassSafety` field is **always forced to false** — cannot be set true
+- Automation **inherits owner's permissions** — cannot exceed creator's level
+- Automation rules: **same command pipeline** as manual commands
+
+---
+
+## ឯកសារទី 13 — `security.ts`
+### Security API — "Key Management + Threat Detection"
+
+**ស្នូល**: Encrypt, Key/Secret lifecycle, Monitoring, Incident Response
+
+> **ច្បាប់ចំបង**: "No single credential/account/API/admin/device has unlimited platform control"
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `ManagedKey` | keyId, type, status, expiresAt, rotationIntervalDays (metadata only) |
+| `KeyType` | api_key, device_key, certificate, oauth_secret, encryption_key |
+| `ThreatDetection` | detectionId, type, severity, accountId, autoActionTaken |
+| `ThreatType` | brute_force, suspicious_login, abnormal_command, account_takeover |
+| `SecurityIncident` | incidentId, status, affectedAccountIds, affectedDeviceIds |
+| `IncidentAction` | type (disable_account, revoke_session, rotate_key, isolate_device...) |
+
+### API Routes (13 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/security/keys` | Create key (secret shown ONCE) |
+| POST | `/api/v1/security/keys/:id/rotate` | Rotate key |
+| POST | `/api/v1/security/keys/:id/revoke` | Revoke key |
+| POST | `/api/v1/security/encrypt` | Encrypt data |
+| POST | `/api/v1/security/decrypt` | Decrypt data |
+| GET | `/api/v1/security/threats` | Threat list |
+| POST | `/api/v1/security/incidents` | Create incident |
+| POST | `/api/v1/security/incidents/:id/actions` | Take incident action |
+
+### Security Rules
+- **Raw secret shown EXACTLY ONCE at creation** — never retrievable again
+- Encryption at rest for all secrets
+- Minimum TLS 1.2 for all traffic
+- Critical incident: **auto alert** admins
+- Threat review SLA: **4 hours**
+
+---
+
+## ឯកសារទី 14 — `audit.ts`
+### Audit API — "Who did What, When, Authorized?"
+
+**ស្នូល**: Activity logging, Compliance records — **Password/Secret NEVER in logs**
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `AuditRecord` | auditId, category, eventType, actorId, targetId, result, ipAddress |
+| `AuditCategory` | identity, auth, authorization, device, command, safety, security... |
+| `AuditResult` | success, failure, denied, error, pending |
+| `ComplianceReport` | period, eventsByCategory, securityIncidentCount, deniedAccessCount |
+
+### AuditRecord Structure
+```
+WHO:        actorAccountId + actorType
+WHAT:       eventType + action (human-readable)
+WHICH:      targetType + targetId
+WHEN:       occurredAt (ISO 8601 UTC)
+WHERE:      ipAddress + sessionId + orgId
+AUTHORIZED: result (success/denied/failure)
+CONTEXT:    metadata (NO passwords, NO tokens, NO secrets)
+```
+
+### API Routes (10 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/audit/events` | Record event (internal only) |
+| GET | `/api/v1/audit/events` | Query log |
+| POST | `/api/v1/audit/export` | Export (CSV/JSON/PDF) |
+| POST | `/api/v1/audit/compliance-report` | Compliance report |
+| GET | `/api/v1/audit/devices/:id` | Device audit trail |
+| GET | `/api/v1/audit/accounts/:id` | Account audit trail |
+
+### Security Rules
+- **Passwords/tokens NEVER in audit log** — handler strips/rejects secret fields
+- **Immutable** — no update or delete endpoint exists
+- Retention: minimum **365 ថ្ងៃ**
+- Every export is **self-audited** (who exported, why)
+
+---
+
+## ឯកសារទី 15 — `notification.ts`
+### Notification API — "App / Email / SMS / Push"
+
+**ស្នូល**: Alerts ប្រភេទទាំងអស់ + User Preferences + Push Token management
+
+### Notification Categories
+| Category | ត្រូវ Alert |
+|---|---|
+| `security_alert` | Suspicious login, key compromised |
+| `login_alert` | New login from new device/location |
+| `device_alert` | Device error, unauthorized access |
+| `permission_change` | Someone changed your permission |
+| `device_offline` | Device went offline |
+| `emergency_alert` | Emergency stop activated |
+| `safety_event` | Safety rule triggered |
+| `account_recovery` | Password reset attempted |
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `KSVNotification` | notificationId, category, priority, title, body, status per channel |
+| `NotificationPreferences` | categoryPreferences, quietHours |
+| `PushDeviceToken` | tokenId, platform (ios/android/web), token |
+
+### API Routes (11 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/notifications/send` | Send notification |
+| POST | `/api/v1/notifications/send-bulk` | Bulk send |
+| GET | `/api/v1/notifications` | Inbox |
+| POST | `/api/v1/notifications/read-all` | Mark all read |
+| PUT | `/api/v1/notifications/preferences` | Update preferences |
+| POST | `/api/v1/notifications/push-tokens` | Register push token |
+
+### Rules
+- **Critical alerts bypass quiet hours and user opt-outs**
+- **Security alerts cannot be fully disabled**
+- Default expiry: **90 ថ្ងៃ** (auto-clean)
+- Bulk rate limit: **1,000/minute**
+
+---
+
+## ឯកសារទី 16 — `international.ts`
+### International API — "195 ប្រទេស + ភាសា + Timezone"
+
+**ស្នូល**: Country ≠ Language ≠ Timezone — independent dimensions
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `Country` | countryCode (ISO 3166), name, callingCode, supportedLanguages[], supportedTimezones[] |
+| `Language` | languageCode (ISO 639-1), nativeName, isRTL, translationCoveragePercent |
+| `TimeZone` | timezoneId (IANA), utcOffsetMinutes, observesDST |
+| `RegionalSettings` | countryCode, languageCode, timezoneId, dateFormat, measurementSystem |
+
+### Selection Flow
+```
+User selects:
+  Language 🌐 (km, en, th, zh, ja, ko...)
+      ↓
+  Country 🌍 (KH, TH, JP, US... 195 total)
+      ↓
+  Time Zone 🕐 (Asia/Phnom_Penh, Asia/Bangkok...)
+```
+
+### API Routes (7 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| GET | `/api/v1/international/countries` | List 195 countries |
+| GET | `/api/v1/international/languages` | List supported languages |
+| GET | `/api/v1/international/timezones` | List timezones (filter by country) |
+| GET | `/api/v1/international/my-settings` | User regional settings |
+| PUT | `/api/v1/international/my-settings` | Update settings |
+| GET | `/api/v1/international/translations/:lang` | UI translations |
+| POST | `/api/v1/international/convert-time` | UTC ↔ local time |
+
+### Design Rules
+- **Country ≠ Language ≠ Timezone** — never conflate
+- All internal timestamps: **UTC only** — local time is display-only
+- Translation system: **separated from code** — adding language ≠ redeployment
+- Fallback language: **"en"** when translation key missing
+
+---
+
+## ឯកសារទី 17 — `administration.ts`
+### Administration API — "Admin Console (Least Privilege)"
+
+**ស្នូល**: Admin manages State + Operations — **Admin NEVER sees user secrets**
+
+### Admin Roles (Scoped — not unlimited)
+| Role | អ្វីដែលអាចធ្វើ |
+|---|---|
+| `super_admin` | Grant/Revoke admin roles, platform config |
+| `security_admin` | Threats, incidents, key management |
+| `support_admin` | Account lookup, impersonation (limited) |
+| `billing_admin` | Subscription, billing data |
+| `compliance_admin` | Audit export, compliance reports |
+
+### Types សំខាន់ៗ
+| Type | ពណ៌នា |
+|---|---|
+| `AdminUser` | adminId, accountId, roles[], mfaRequired: true |
+| `SystemHealthReport` | status, services[], activeIncidentCount |
+| `PlatformStatistics` | totalAccounts, totalDevices, commandsLast24h... |
+| `FeatureFlag` | flagKey, isEnabled, rolloutPercent, targetOrgIds |
+
+### API Routes (11 endpoints)
+| Method | Path | មុខងារ |
+|---|---|---|
+| POST | `/api/v1/admin/roles/grant` | Grant admin role (super_admin only) |
+| GET | `/api/v1/admin/accounts/search` | Search accounts |
+| POST | `/api/v1/admin/accounts/:id/suspend` | Suspend account |
+| POST | `/api/v1/admin/accounts/:id/impersonate` | Support impersonation (limited) |
+| GET | `/api/v1/admin/system/health` | System health |
+| GET | `/api/v1/admin/system/stats` | Platform statistics |
+| PUT | `/api/v1/admin/feature-flags/:key` | Feature flag toggle |
+
+### Security Rules
+- **Admin NEVER sees user passwords, MFA secrets, OAuth tokens**
+- **MFA mandatory** for all admin accounts — no exceptions
+- Only `super_admin` manages admin roles
+- Impersonation: **time-limited (30 min), fully audited, disclosed to user afterward**
+- Roles are **scoped** — security_admin ≠ access to billing data
+
+---
+
+## ឯកសារទី 18 — `index.ts`
+### API Index — "ផ្ចង់ Domains ទាំង 18 ចូលគ្នា"
+
+**ស្នូល**: Central export + Route Registry + Domain File Map
+
+### ខ្លឹមសារ
+```typescript
+// re-exports all 17 domain files
+export * from './identity';
+export * from './authentication';
+// ... (17 files)
+
+// Combined route registry
+export const KSV_API_ROUTE_REGISTRY = {
+  identity: IDENTITY_ROUTES,
+  authentication: AUTHENTICATION_ROUTES,
+  // ... (17 domains)
+}
+
+// Domain file map (18 domains → 17 files, pairing merged into discovery)
+export const KSV_API_DOMAIN_FILES = [...]
+```
+
+### ការ​បញ្ចូល​​​​​​​​ Pairing ក្នុង discovery.ts
+Discovery + Pairing ជាដំណើរការបន្ត (Scan → Verify → Pair → Ready) — ខ្ញុំបញ្ចូលពីររួមមួយ ដើម្បីកុំ split flow ដូចគ្នាចេញជា 2 files ផ្សេក។
+
+---
+
+## ផ្ទាំងសង្ខេប — Routes ទាំងអស់
+
+| Domain | Endpoints |
+|---|---|
+| Identity | 8 |
+| Authentication | 14 |
+| Account Recovery | 11 |
+| Authorization | 12 |
+| Organization | 26 |
+| Device | 14 |
+| Discovery + Pairing | 11 |
+| Protocol | 8 |
+| Gateway | 14 |
+| Command | 6 |
+| Safety | 11 |
+| Automation | 14 |
+| Security | 13 |
+| Audit | 10 |
+| Notification | 11 |
+| International | 7 |
+| Administration | 11 |
+| **សរុប** | **≈ 191 REST Endpoints** |
+
+---
+
+## Audit Events ទាំងអស់
+
+ឯកសារ | Audit Events
+---|---
+identity | 9
+authentication | 16
+account-recovery | 13
+authorization | 10
+organization | 17
+device | 14
+discovery | 13
+protocol | 6
+gateway | 13
+command | 13
+safety | 14
+automation | 13
+security | 12
+audit | 4
+notification | 7
+international | 3
+administration | 9
+**សរុប** | **≈ 196 Audit Events**
+
+---
+
+*ឯកសារនេះបញ្ចប់ ការពណ៌នា API 18 Domains នៃ KSV Universal Secure Control Platform*
+*ទីតាំង: `khoem-now/API/` — ភ្ជាប់ Central export ដោយ `index.ts`*
