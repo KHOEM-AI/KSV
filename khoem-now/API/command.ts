@@ -2,6 +2,11 @@
 // KSV — Command API
 // Domain: User Command → Auth → AuthZ → Capability → Safety → Execute → Audit
 // RULE: Every command passes through ALL layers. No shortcuts.
+//
+// Field names below are kept in sync with the Mongoose schema
+// (src/infrastructure/database/models.ts, commandSchema) — that file
+// is the single source of truth. If this file and models.ts ever
+// disagree again, fix THIS file, not the schema.
 // =============================================================
 
 export type CommandStatus =
@@ -19,23 +24,18 @@ export type CommandStatus =
 
 export type CommandSource = 'user_app' | 'automation' | 'ai_layer' | 'api' | 'gateway_local' | 'admin';
 
-// ---------------------------------------------------------------
-// Core Types
-// ---------------------------------------------------------------
-
 export interface KSVCommand {
   commandId: string;
   deviceId: string;
-  capability: string;
-  value: unknown;
+  type: string;
+  payload: unknown;
   source: CommandSource;
-  issuedBy: string;               // accountId
+  userId?: string;
   sessionId?: string;
   status: CommandStatus;
-  issuedAt: string;
-  executedAt?: string;
+  sentAt?: string;
   completedAt?: string;
-  result?: CommandResult;
+  response?: CommandResult;
   safetyCheckResult?: SafetyCheckResult;
   authCheckResult?: AuthCheckResult;
 }
@@ -61,15 +61,11 @@ export interface SafetyCheckResult {
   requiresConfirmation?: boolean;
 }
 
-// ---------------------------------------------------------------
-// Request / Response Shapes
-// ---------------------------------------------------------------
-
 export interface IssueCommandRequest {
   deviceId: string;
-  capability: string;
-  value: unknown;
-  confirmationToken?: string;     // Required for high-risk commands
+  type: string;
+  payload: unknown;
+  confirmationToken?: string;
   context?: CommandContext;
 }
 
@@ -96,10 +92,10 @@ export interface GetCommandStatusResponse {
 export interface IssueBatchCommandRequest {
   commands: Array<{
     deviceId: string;
-    capability: string;
-    value: unknown;
+    type: string;
+    payload: unknown;
   }>;
-  failFast?: boolean;            // Stop on first failure
+  failFast?: boolean;
   confirmationToken?: string;
 }
 
@@ -149,10 +145,6 @@ export interface EmergencyStopResponse {
   message: string;
 }
 
-// ---------------------------------------------------------------
-// API Route Definitions
-// ---------------------------------------------------------------
-
 export const COMMAND_ROUTES = {
   ISSUE_COMMAND:           'POST /api/v1/commands',
   ISSUE_BATCH_COMMAND:     'POST /api/v1/commands/batch',
@@ -162,24 +154,6 @@ export const COMMAND_ROUTES = {
   EMERGENCY_STOP:          'POST /api/v1/commands/emergency-stop',
 } as const;
 
-// ---------------------------------------------------------------
-// Command Execution Pipeline
-// ---------------------------------------------------------------
-
-/**
- * Every command passes through this pipeline in strict order.
- * No step can be skipped. Failure at any step rejects the command.
- *
- * 1. PARSE       — Validate command structure and capability name
- * 2. AUTHENTICATE — Verify the session is valid and not expired
- * 3. AUTHORIZE   — Check permission for this device + capability + action
- * 4. CAPABILITY  — Verify the device supports this capability
- * 5. SAFETY      — Check Safety Engine (especially for high-risk devices)
- * 6. CONFIRM     — If high-risk, require explicit human confirmation
- * 7. EXECUTE     — Send command to device via appropriate protocol
- * 8. RESULT      — Collect device feedback
- * 9. AUDIT       — Record all of the above (not the user's password/secrets)
- */
 export const COMMAND_PIPELINE_STAGES = [
   'parse',
   'authenticate',
@@ -192,80 +166,25 @@ export const COMMAND_PIPELINE_STAGES = [
   'audit',
 ] as const;
 
-// ---------------------------------------------------------------
-// Handler Interfaces
-// ---------------------------------------------------------------
-
 export interface CommandAPIHandlers {
-  /**
-   * Issue a single command to a device.
-   * Runs through the full pipeline: Auth → AuthZ → Capability → Safety → Execute.
-   */
   issueCommand(accountId: string, sessionId: string, req: IssueCommandRequest): Promise<IssueCommandResponse>;
-
-  /**
-   * Issue commands to multiple devices at once.
-   */
   issueBatchCommand(accountId: string, sessionId: string, req: IssueBatchCommandRequest): Promise<IssueBatchCommandResponse>;
-
-  /**
-   * Poll the status of a command (for async commands).
-   */
   getCommandStatus(commandId: string, accountId: string): Promise<GetCommandStatusResponse>;
-
-  /**
-   * Cancel a pending or executing command (if possible).
-   */
   cancelCommand(accountId: string, req: CancelCommandRequest): Promise<{ success: boolean }>;
-
-  /**
-   * List command history with filters.
-   */
   listCommandHistory(accountId: string, req: ListCommandHistoryRequest): Promise<ListCommandHistoryResponse>;
-
-  /**
-   * Immediately stop all commands for a scope (device/room/building/site/org).
-   * Used in emergencies. Requires confirmation token.
-   */
   emergencyStop(accountId: string, req: EmergencyStopRequest): Promise<EmergencyStopResponse>;
 }
 
-// ---------------------------------------------------------------
-// Security Rules
-// ---------------------------------------------------------------
-
 export const COMMAND_SECURITY_RULES = {
-  /** Every command must pass authentication before anything else. */
   AUTHENTICATION_REQUIRED: true,
-
-  /** Every command must pass authorization (explicit permission). */
   AUTHORIZATION_REQUIRED: true,
-
-  /** Safety-relevant capabilities must pass the Safety Engine. */
   SAFETY_CHECK_FOR_HIGH_RISK: true,
-
-  /** High-risk commands require a human confirmation token. */
   HIGH_RISK_REQUIRES_CONFIRMATION: true,
-
-  /** Commands time out if not completed within this many seconds. */
   DEFAULT_TIMEOUT_SECONDS: 30,
-
-  /** Emergency stop is always honored regardless of automation state. */
   EMERGENCY_STOP_CANNOT_BE_BLOCKED: true,
-
-  /** All commands are audited — including rejected ones. */
   ALL_COMMANDS_AUDITED: true,
-
-  /**
-   * AI-layer commands are NOT trusted more than user commands.
-   * They go through the same pipeline.
-   */
   AI_COMMANDS_SAME_PIPELINE: true,
 } as const;
-
-// ---------------------------------------------------------------
-// Audit Events
-// ---------------------------------------------------------------
 
 export type CommandAuditEvent =
   | 'command.issued'
