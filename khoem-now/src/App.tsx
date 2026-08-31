@@ -39,6 +39,7 @@ export default function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   // t() is the ONLY source of on-screen text below. Switching language
   // in <LanguageSelector /> updates this same t(), so every string in
+              <ProjectSwitcher current="KSV" />
   // this file — sidebar, header, buttons — updates in the same render.
   const { t } = useLanguage();
 
@@ -155,6 +156,7 @@ export default function App() {
               {/* Language — 3D flip selector; changing it retranslates
                   every t() call on this page immediately */}
               <LanguageSelector />
+              <ProjectSwitcher current="KSV" />
               <CountryClock />
 
               {/* Notifications */}
@@ -188,7 +190,6 @@ export default function App() {
             <ActiveView />
           </div>
         </main>
-      <ProjectSwitcher current="KSV" />
       </div>
     </div>
   );
