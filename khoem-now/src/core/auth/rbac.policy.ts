@@ -13,7 +13,7 @@
  *   Owner > SuperAdmin > OrgAdmin > Manager > Operator > Controller > Viewer > Guest
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 // ---- Role hierarchy -----------------------------------------------------
 // Higher number = more privilege. Used for "at least this role" checks.

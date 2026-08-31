@@ -11,8 +11,9 @@
  * only answers "who is making this request?".
  */
 
-import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 
 // ---- Config -----------------------------------------------------------
 // NEVER hardcode secrets. Load from environment (.env, not committed to git).

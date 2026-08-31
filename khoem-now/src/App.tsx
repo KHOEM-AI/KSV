@@ -17,6 +17,7 @@ import { OrganizationView } from '@/views/OrganizationView';
 import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
+import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -187,6 +188,7 @@ export default function App() {
             <ActiveView />
           </div>
         </main>
+      <ProjectSwitcher current="KSV" />
       </div>
     </div>
   );

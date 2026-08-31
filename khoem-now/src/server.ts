@@ -10,11 +10,13 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device } from "./infrastructure/database/models.ts";
+import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
-import { requirePermission } from "./core/auth/rbac.policy.ts";
+import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter } from "./core/security/rate-limiter.ts";
 import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
+import bcrypt from "bcryptjs";
 
 const PORT = process.env.PORT || 3000;
 
@@ -44,6 +46,34 @@ async function main() {
       res.status(400).json({ error: "Failed to create certificate" });
     }
   });
+
+  // POST /api/users — create one (Owner only, password hashed, no mass-assignment)
+  app.post(
+    "/api/users",
+    authenticate,
+    requireMinRole("Owner"),
+    async (req, res) => {
+      try {
+        const { email, password, role, firstName, lastName, organizationId } = req.body ?? {};
+
+        if (!email || !password || !role) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "email, password, and role are required." });
+          return;
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        const user = await User.create({ email, passwordHash, role, firstName, lastName, organizationId });
+
+        const safeUser = user.toObject();
+        delete safeUser.passwordHash;
+
+        res.status(201).json({ user: safeUser });
+      } catch (err) {
+        res.status(400).json({ error: "Failed to create user", details: String(err) });
+      }
+    }
+  );
 
   // ============================================================
   // POST /api/devices/:id/commands
