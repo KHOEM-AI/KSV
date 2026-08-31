@@ -9,7 +9,7 @@ interface ProjectInfo {
 }
 
 const PROJECTS: Record<ProjectKey, ProjectInfo> = {
-  AI: { label: "AI", url: "http://localhost:3000" },
+  AI: { label: "AI", url: "http://localhost:5177" },
   KI: { label: "KI", url: "http://localhost:4000" },
   CAI: { label: "CAI", url: "http://localhost:5174" },
   KSV: { label: "KSV", url: "http://localhost:5173" },
