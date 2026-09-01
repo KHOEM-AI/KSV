@@ -1,3 +1,4 @@
+import ProjectSwitcher from './components/ProjectSwitcher';
 import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
 import { Menu, X, Search, Bell, ChevronDown, Shield } from 'lucide-react';
@@ -17,7 +18,6 @@ import { OrganizationView } from '@/views/OrganizationView';
 import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
-import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -39,7 +39,6 @@ export default function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   // t() is the ONLY source of on-screen text below. Switching language
   // in <LanguageSelector /> updates this same t(), so every string in
-              <ProjectSwitcher current="KSV" />
   // this file — sidebar, header, buttons — updates in the same render.
   const { t } = useLanguage();
 
@@ -47,8 +46,9 @@ export default function App() {
   const meta = viewMeta[active];
 
   return (
-    <div className="min-h-screen bg-ink-950">
+     <div className="min-h-screen bg-ink-950">
       {/* Mobile overlay */}
+     <ProjectSwitcher current="KSV"/>
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
