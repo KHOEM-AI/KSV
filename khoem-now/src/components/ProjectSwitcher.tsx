@@ -13,7 +13,7 @@ export default function ProjectSwitcher({ activeProject, current }: ProjectSwitc
   
   // កំណត់ Link គោលដៅ
   const targetUrl = isKSV ? 'http://localhost:5174' : 'http://localhost:5173';
-  const buttonLabel = isKSV ? '👉 ចូលទៅកាន់ CAI Pro' : '👈 ត្រឡប់ទៅ KSV System';
+  const buttonLabel = isKSV ? '👉 ចូលទៅកាន់ CAI ' : '👈 ត្រឡប់ទៅ KSV ';
   const buttonColor = isKSV ? '#2563eb' : '#16a34a';
 
   return (
