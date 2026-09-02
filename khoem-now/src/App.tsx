@@ -10,6 +10,7 @@ import { DashboardView } from '@/views/DashboardView';
 import { DevicesView } from '@/views/DevicesView';
 import { ControlsView } from '@/views/ControlsView';
 import { ProtocolsView } from '@/views/ProtocolsView';
+import ProjectSwitcher from "./components/ProjectSwitcher";
 import { GatewayView } from '@/views/GatewayView';
 import { SecurityView } from '@/views/SecurityView';
 import { SafetyView } from '@/views/SafetyView';
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
      <div className="min-h-screen bg-ink-950">
+      <ProjectSwitcher current="KSV" />
       {/* Mobile overlay */}
      <ProjectSwitcher current="KSV"/>
       {mobileOpen && (
