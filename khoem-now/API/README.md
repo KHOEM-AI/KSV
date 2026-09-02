@@ -1180,3 +1180,138 @@ administration | 9
 
 *ឯកសារនេះបញ្ចប់ ការពណ៌នា API 18 Domains នៃ KSV Universal Secure Control Platform*
 *ទីតាំង: `khoem-now/API/` — ភ្ជាប់ Central export ដោយ `index.ts`*
+
+
+# 🌐 KHOEM-AI — KSV API
+
+## KSV Universal Secure Control Platform — API Layer ពេញលេញ
+
+> **ទីតាំង**: `khoem-now/API/`
+> **ភាសា**: TypeScript
+> **ស្តង់ដារ**: REST API · OAuth 2.0 / OIDC · TLS · Zero-Trust Security
+> **គោលការណ៍ស្នូល**: Identity First · Authorization First · Security First · Safety First (ដាច់ដោយឡែកពី Security) · Privacy First · Discovery ≠ Authorized
+
+---
+
+## 📊 សរុបចំនួន
+
+| | ចំនួន |
+|---|---|
+| **Domain files សរុប** | 27 (18 ដើម + 9 ថ្មី) |
+| **REST Endpoints សរុប** | ≈ 279 |
+| **Audit Events សរុប** | ≈ 250 |
+| **Command Pipeline steps** | 9 (Parse → Audit) |
+
+---
+
+## 📁 បញ្ជីឯកសារទាំង 27 (តាមលំដាប់ភ្ជាប់ប្រព័ន្ធ)
+
+### ក្រុមទី 1 — Identity & Access (5 files)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 1 | `identity.ts` | 8 | KSV Account + Identity Provider linking |
+| 2 | `authentication.ts` | 14 | Login, Session, MFA, Token |
+| 3 | `account-recovery.ts` | 11 | Forgot password → OTP → New password |
+| 4 | `authorization.ts` | 12 | Policy-Based Access Control (Who+What+Where+When) |
+| 5 | `pairing.ts`* | 8 | Device pairing → Ownership creation (*ឆែកភាពស្ទួនជាមួយ discovery.ts*) |
+
+### ក្រុមទី 2 — Organization & Device (4 files)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 6 | `organization.ts` | 26 | Company → Site → Building → Room → Device |
+| 7 | `device.ts` | 14 | Device Identity + Capability + Lifecycle |
+| 8 | `discovery.ts` | 11 | Scan/Find device (Discovery ≠ Permission) |
+| 9 | `protocol.ts` | 8 | Bluetooth/Wi-Fi/MQTT/IR/Zigbee/CAN adapter layer |
+
+### ក្រុមទី 3 — Command & Control (4 files)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 10 | `gateway.ts` | 14 | Cloud ↔ Edge Gateway ↔ Local Device bridge |
+| 11 | `command.ts` | 6 | Command Pipeline ពេញលេញ (9 ជំហាន) |
+| 12 | `safety.ts` | 11 | Safety Engine ដាច់ដោយឡែកពី Security |
+| 13 | `automation.ts` | 14 | IF-THEN Rules + Scenes |
+
+### ក្រុមទី 4 — Security & Compliance (4 files)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 14 | `security.ts` | 13 | Key/Secret Management + Threat Detection |
+| 15 | `audit.ts` | 10 | Immutable Who/What/When log |
+| 16 | `notification.ts` | 11 | Alert category & preference management |
+| 17 | `international.ts` | 7 | 195 Country + Language + Timezone |
+
+### ក្រុមទី 5 — Administration (1 file)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 18 | `administration.ts` | 11 | Admin Console (Least Privilege, no user-secret access) |
+
+### ក្រុមទី 6 — Extension Domains ថ្មី (9 files)
+| # | ឯកសារ | Endpoints | ស្នូល |
+|---|---|---|---|
+| 19 | `ai-orchestration.ts` | 8 | Natural Language → Structured Command (AI = interpreter ប៉ុណ្ណោះ) |
+| 20 | `billing-subscription.ts` | 12 | Plan + Invoice + Payment (ដាច់ពី Security Core) |
+| 21 | `analytics-telemetry.ts` | 9 | Device/Platform operational metrics |
+| 22 | `notification-push.ts` | 7 | Push delivery layer (FCM/APNs/Web Push) |
+| 23 | `file-storage.ts` | 10 | Firmware/Report/Evidence file management |
+| 24 | `reporting-export.ts` | 9 | Scheduled business reports + bulk export |
+| 25 | `integration-webhook.ts` | 11 | Outbound webhook + inbound integration receiver |
+| 26 | `geolocation-map.ts` | 10 | Site map + Geo-fence (GPS = context signal only) |
+| 27 | `maintenance-ticketing.ts` | 12 | Work order / field-service tickets |
+
+---
+
+## 🔗 របៀបភ្ជាប់គ្នារវាង Domain (Dependency Map)
+
+```
+identity.ts ──┬─→ authentication.ts ──→ authorization.ts
+              └─→ account-recovery.ts
+
+organization.ts ──→ device.ts ──┬─→ discovery.ts ──→ pairing.ts
+                                 ├─→ protocol.ts ──→ gateway.ts
+                                 └─→ command.ts ──┬─→ safety.ts
+                                                   ├─→ automation.ts
+                                                   └─→ audit.ts
+
+security.ts ──→ (key management ប្រើដោយ auth.ts, file-storage.ts, notification-push.ts, integration-webhook.ts)
+
+ai-orchestration.ts ──→ command.ts (AI output ចូល pipeline ដដែល)
+geolocation-map.ts ──→ safety.ts (geo-fence event ត្រូវការវាយតម្លៃ safety)
+maintenance-ticketing.ts ──→ device.ts + notification.ts + file-storage.ts
+reporting-export.ts ──→ file-storage.ts (report ត្រូវរក្សាទុកជា file)
+billing-subscription.ts ──→ (ឯករាជ្យ — មិនប៉ះ Security Core)
+analytics-telemetry.ts ──→ (ឯករាជ្យពី audit.ts — operational មិនមែន security log)
+```
+
+**គោលការណ៍សំខាន់មួយដដែលៗ**៖ គ្រប់ domain ដែលអាចប៉ះពាល់ device ណាមួយ (command, automation, ai-orchestration, integration-webhook, maintenance-ticketing) **សុទ្ធតែត្រូវឆ្លងកាត់ Command Pipeline ដដែល** —
+```
+Authenticate → Authorize → Device Capability → Safety → Execute → Audit
+```
+គ្មាន domain ណាមួយមានផ្លូវកាត់ (shortcut) ទេ។
+
+---
+
+## 🛠️ ការប្រើប្រាស់ជាក់ស្តែង (Real Implementation Status)
+
+| ស្រទាប់ | ស្ថានភាព |
+|---|---|
+| **Types + Route definitions** (27 files ខាងលើ) | ✅ សរសេររួច — ជា spec/reference layer |
+| **Security core ជាក់ស្តែង** (`src/core/`) | ✅ auth.middleware.ts, rbac.policy.ts, encryption.util.ts, audit.log.ts, rate-limiter.ts |
+| **Safety Engine ជាក់ស្តែង** (`src/core/safety/`) | ✅ safety.engine.ts (4 rule evaluators built-in) |
+| **Database models** (`src/infrastructure/database/`) | ✅ models.ts (Mongoose — User, Device, Command, Organization ។ល។) |
+| **Command route ជាក់ស្តែង** (`src/modules/command/`) | ✅ command.routes.ts (ភ្ជាប់ auth+rbac+safety+audit ចូលគ្នា) |
+| **Route ជាក់ស្តែងសម្រាប់ 26 domain ដទៃ** | ⏳ មិនទាន់ — មានតែ Types/spec, មិនទាន់មាន Express route ពិតប្រាកដ |
+| **Frontend API client** (`src/lib/api.ts`) | ⏳ មិនទាន់ — `ControlsView.tsx` មិនទាន់ហៅ endpoint ពិត |
+
+**សេចក្តីសង្ខេប**៖ ២៧ ឯកសារខាងលើគឺជា **ផែនទី/blueprint ពេញលេញ** នៃ API ទាំងមូល។ ក្នុងចំណោមនោះ មានតែ **Security core + Safety Engine + Command route** ប៉ុណ្ណោះដែលក្លាយជាកូដ **ដំណើរការពិតប្រាកដ** រួចហើយ។ ២៦ domain ដទៃទៀត (Identity, Device, Organization ។ល។) នៅសល់ជាជំហានបន្ទាប់ត្រូវប្តូរពី "Types spec" ទៅជា "Express route ពិត" ដូច `command.routes.ts`។
+
+---
+
+## 📌 ចំណុចត្រូវប្រយ័ត្ន (Known Issues)
+
+- **`pairing.ts` vs `discovery.ts`**: ឯកសារ blueprint ចាស់ចែងថា pairing merge ចូល discovery — ត្រូវផ្ទៀងផ្ទាត់ថាតើ `pairing.ts` ជា file ស្ទួន ឬការសម្រេចចិត្តថ្មីញែកចេញ
+- **`ActionType`** ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` — មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import រួមគ្នា ប៉ុន្តែត្រូវប្រយ័ត្នពេលភ្ជាប់
+- Command Pipeline ជាក់ស្តែងឥឡូវអនុវត្តតែ 6 ជំហាន (Authenticate→Authorize→RateLimit→Safety→Execute→Audit) — ខ្វះ **Capability check** (ជំហានទី 4 ក្នុង spec 9-ជំហាន) និង **Human Confirmation** (ជំហានទី 6 សម្រាប់ high-risk commands)
+
+---
+
+*ឯកសារនេះជា Master Index នៃ KSV API — ត្រូវធ្វើបច្ចុប្បន្នភាពរាល់ពេលមាន domain ថ្មី ឬផ្លាស់ប្តូររចនាសម្ព័ន្ធ*
+*ទីតាំង: `khoem-now/API/README.md`*
