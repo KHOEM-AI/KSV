@@ -10,7 +10,6 @@ import { DashboardView } from '@/views/DashboardView';
 import { DevicesView } from '@/views/DevicesView';
 import { ControlsView } from '@/views/ControlsView';
 import { ProtocolsView } from '@/views/ProtocolsView';
-import ProjectSwitcher from "./components/ProjectSwitcher";
 import { GatewayView } from '@/views/GatewayView';
 import { SecurityView } from '@/views/SecurityView';
 import { SafetyView } from '@/views/SafetyView';
@@ -48,9 +47,7 @@ export default function App() {
 
   return (
      <div className="min-h-screen bg-ink-950">
-      <ProjectSwitcher current="KSV" />
       {/* Mobile overlay */}
-     <ProjectSwitcher current="KSV"/>
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
@@ -80,6 +77,7 @@ export default function App() {
           </button>
         </div>
 
+        <div className="px-5 pb-3"><ProjectSwitcher current="KSV" /></div>
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
           {navGroups.map((group) => (
@@ -158,7 +156,6 @@ export default function App() {
               {/* Language — 3D flip selector; changing it retranslates
                   every t() call on this page immediately */}
               <LanguageSelector />
-              <ProjectSwitcher current="KSV" />
               <CountryClock />
 
               {/* Notifications */}

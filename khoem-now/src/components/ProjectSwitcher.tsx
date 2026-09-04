@@ -7,7 +7,7 @@ interface ProjectSwitcherProps {
 const LINKS: Record<'KSV' | 'AI' | 'CAI', { url: string; label: string }> = {
   KSV: { url: 'http://localhost:5173', label: 'KSV' },
   AI:  { url: 'http://localhost:5175', label: 'TV AI KHOEM-AI' },
-  CAI: { url: 'http://localhost:5176', label: 'CAI · ស្គេនទូទៅ & វិភាគ' },
+  CAI: { url: 'http://localhost:5176', label: 'KSV · ស្គេនទូទៅ & វិភាគ' },
 };
 
 export default function ProjectSwitcher({ current = 'KSV' }: ProjectSwitcherProps) {
