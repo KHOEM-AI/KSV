@@ -831,6 +831,7 @@ const ja: Dict = {
   'app.title': 'KSV ユニバーサル・セキュア・コントロール',
   'nav.dashboard': 'ダッシュボード',
   'nav.devices': 'デバイス',
+  'nav.map': 'マップ',
   'nav.controls': 'コントロール',
   'nav.protocols': 'プロトコル',
   'nav.gateway': 'ゲートウェイ',
@@ -1151,6 +1152,19 @@ const ja: Dict = {
   'view.settings.twoFactor.label': '全管理者に2FAを要求',
   'view.settings.zeroPlaintext.desc': 'パスワードは平文で保存されません',
   'view.settings.zeroPlaintext.label': 'ゼロ平文パスワードポリシー',
+  'view.map.title': 'インタラクティブマップ',
+  'view.map.subtitle': 'すべてのデバイスの位置をリアルタイムで表示',
+  'view.map.filter.all': 'すべて',
+  'view.map.filter.online': 'オンライン',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.maintenance': 'メンテナンス',
+  'view.map.filter.offline': 'オフライン',
+  'view.map.detail.category': 'カテゴリ',
+  'view.map.detail.protocol': 'プロトコル',
+  'view.map.detail.status': 'ステータス',
+  'view.map.detail.coords': '座標',
+  'view.map.detail.controlNote': '操作はデバイス詳細画面から行ってください — マップは認証と安全確認を回避しません。'
+
 };
 
 const zh: Dict = {
