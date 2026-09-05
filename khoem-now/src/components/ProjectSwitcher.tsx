@@ -1,32 +1,29 @@
 import React from 'react';
 
-interface ProjectSwitcherProps {
-  current?: 'KSV' | 'AI' | 'CAI';
-}
+const LINKS = [
+  { url: 'http://localhost:5176', text: 'TV AI KHOEM-AI' },
+  { url: 'http://localhost:5174', text: 'Scan Overview & Count', sub: 'CAI' },
+];
 
-const LINKS: Record<'KSV' | 'AI' | 'CAI', { url: string; label: string }> = {
-  KSV: { url: 'http://localhost:5173', label: 'KSV' },
-  AI:  { url: 'http://localhost:5175', label: 'TV AI KHOEM-AI' },
-  CAI: { url: 'http://localhost:5176', label: 'KSV · ស្គេនទូទៅ & វិភាគ' },
-};
-
-export default function ProjectSwitcher({ current = 'KSV' }: ProjectSwitcherProps) {
-  const others = (Object.keys(LINKS) as (keyof typeof LINKS)[]).filter((key) => key !== current);
+export default function ProjectSwitcher() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
-      {others.map((key) => (
+    <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {LINKS.map((l) => (
         <a
-          key={key}
-          href={LINKS[key].url}
+          key={l.url}
+          href={l.url}
           style={{
-            width: '100%', padding: '10px 12px', borderRadius: 10, textAlign: 'center',
-            textDecoration: 'none', fontWeight: 600, fontSize: 13, color: '#94a3b8',
-            background: '#111827',
-            border: '1px solid rgba(56,189,248,0.35)',
-            boxSizing: 'border-box',
+            display: 'block',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 6,
+            padding: '10px 14px',
+            textAlign: 'center',
+            color: '#e8f0ff',
+            textDecoration: 'none',
           }}
         >
-          {LINKS[key].label}
+          <div style={{ fontWeight: 700 }}>{l.text}</div>
+          {l.sub && <div style={{ fontSize: 12, opacity: 0.8 }}>{l.sub}</div>}
         </a>
       ))}
     </div>

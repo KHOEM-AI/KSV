@@ -431,6 +431,19 @@ const en: Dict = {
   'view.settings.backupInterval': 'Auto · {hours}h interval',
   'view.settings.saveBar.note': 'Changes apply across all sites and gateways.',
   'view.settings.saveBar.save': 'Save changes',
+  'view.map.title': 'Device Map',
+  'view.map.subtitle': 'Geographic overview of all connected devices',
+  'view.map.filter.all': 'all',
+  'view.map.filter.online': 'online',
+  'view.map.filter.warning': 'warning',
+  'view.map.filter.maintenance': 'maintenance',
+  'view.map.filter.offline': 'offline',
+  'view.map.detail.category': 'Category',
+  'view.map.detail.protocol': 'Protocol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coordinates',
+  'view.map.detail.controlNote': 'Full controls are available from the Devices view.'
+
 };
 
 const km: Dict = {
@@ -791,7 +804,21 @@ const km: Dict = {
   'view.settings.backupInterval': 'ស្វ័យប្រវត្តិ · រៀងរាល់ {hours}ម៉ោង',
   'view.settings.saveBar.note': 'ការផ្លាស់ប្តូរនឹងអនុវត្តលើគ្រប់ទីតាំង និងច្រកបញ្ជូនទាំងអស់។',
   'view.settings.saveBar.save': 'រក្សាទុកការផ្លាស់ប្តូរ',
+  'view.map.title': 'ផែនទីឧបករណ៍',
+  'view.map.subtitle': 'ទិដ្ឋភាពទូទៅភូមិសាស្ត្រនៃឧបករណ៍ដែលភ្ជាប់ទាំងអស់',
+  'view.map.filter.all': 'ទាំងអស់',
+  'view.map.filter.online': 'អនឡាញ',
+  'view.map.filter.warning': 'ព្រមាន',
+  'view.map.filter.maintenance': 'ថែទាំ',
+  'view.map.filter.offline': 'គ្មានអនឡាញ',
+  'view.map.detail.category': 'ប្រភេទ',
+  'view.map.detail.protocol': 'ពិធីការ',
+  'view.map.detail.status': 'ស្ថានភាព',
+  'view.map.detail.coords': 'កូអរដោនេ',
+  'view.map.detail.controlNote': 'ការគ្រប់គ្រងពេញលេញអាចរកបាននៅផ្នែកឧបករណ៍។'
+
 };
+
 
 const ja: Dict = {
   'dashboard.stat.connectedDevices': '接続デバイス',
