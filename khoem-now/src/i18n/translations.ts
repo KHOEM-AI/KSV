@@ -68,6 +68,7 @@ const en: Dict = {
   'app.title': 'KSV Universal Secure Control',
   'nav.dashboard': 'Dashboard',
   'nav.devices': 'Devices',
+  'nav.map': 'Map',
   'nav.controls': 'Controls',
   'nav.protocols': 'Protocols',
   'nav.gateway': 'Gateway',
@@ -450,6 +451,7 @@ const km: Dict = {
   'app.title': 'KSV ប្រព័ន្ធបញ្ជាសុវត្ថិភាពសកល',
   'nav.dashboard': 'ផ្ទាំងគ្រប់គ្រង',
   'nav.devices': 'ឧបករណ៍',
+  'nav.map': 'ផែនទី',
   'nav.controls': 'ការគ្រប់គ្រង',
   'nav.protocols': 'ពិធីការ',
   'nav.gateway': 'ច្រកបញ្ជូន',
@@ -1160,6 +1162,7 @@ const zh: Dict = {
   'app.title': 'KSV 通用安全控制平台',
   'nav.dashboard': '仪表盘',
   'nav.devices': '设备',
+  'nav.map': '地图',
   'nav.controls': '控制',
   'nav.protocols': '协议',
   'nav.gateway': '网关',
@@ -1192,6 +1195,19 @@ const zh: Dict = {
   'intl.chooseLanguage': '请选择您的语言',
   'intl.daytime': '白天',
   'intl.nighttime': '夜晚',
+  'view.map.title': '交互式地图',
+  'view.map.subtitle': '实时查看整个车队设备的地理位置',
+  'view.map.filter.all': '全部',
+  'view.map.filter.online': '在线',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.maintenance': '维护中',
+  'view.map.filter.offline': '离线',
+  'view.map.detail.category': '类别',
+  'view.map.detail.protocol': '协议',
+  'view.map.detail.status': '状态',
+  'view.map.detail.coords': '坐标',
+  'view.map.detail.controlNote': '请打开设备详情发送指令 — 地图不会绕过授权与安全检查。'
+
 };
 
 const th: Dict = {
