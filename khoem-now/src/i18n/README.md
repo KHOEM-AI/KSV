@@ -14,7 +14,8 @@ Key ទាំងអស់ត្រូវការសម្រាប់ទំព�
 5. ត្រួតពិនិត្យ: `npx tsc --noEmit --skipLibCheck 2>&1 | grep -i translations` (ត្រូវទទេ = ជោគជ័យ)
 6. `git add -A && git commit -m "..." && git push origin main`
 
-## Key ទាំង 13 ដែលត្រូវបញ្ចូលរាល់ភាសា## ភាសាដែលធ្វើរួចហើយ ✅ (19/29)
+## Key ទាំង 13 ដែលត្រូវបញ្ចូលរាល់ភាសា
+## ភាសាដែលធ្វើរួចហើយ ✅ (19/29)
 - [x] en — English
 - [x] km — Khmer (ភាសាខ្មែរ)
 - [x] zh — Chinese (中文)
