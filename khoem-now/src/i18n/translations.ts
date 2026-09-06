@@ -2542,6 +2542,7 @@ const my: Dict = {
   'app.title': 'KSV အပြည်ပြည်ဆိုင်ရာ လုံခြုံသောထိန်းချုပ်မှု',
   'nav.dashboard': 'ဒက်ရှ်ဘုတ်',
   'nav.devices': 'စက်ပစ္စည်းများ',
+  'nav.map': 'မြေပုံ',
   'nav.controls': 'ထိန်းချုပ်မှုများ',
   'nav.protocols': 'ပရိုတိုကောများ',
   'nav.gateway': 'ဂိတ်ဝေး',
@@ -2574,6 +2575,19 @@ const my: Dict = {
   'intl.chooseLanguage': 'သင်၏ဘာသာစကားကို ရွေးချယ်ပါ',
   'intl.daytime': 'နေ့',
   'intl.nighttime': 'ညဉ့်',
+  'view.map.title': 'အပြန်အလှန်တုံ့ပြန်သော မြေပုံ',
+  'view.map.subtitle': 'သင့်ယာဉ်အုပ်စုရှိ ချိတ်ဆက်ထားသော စက်ပစ္စည်းအားလုံး၏ အချိန်နှင့်တပြေးညီ တည်နေရာ',
+  'view.map.filter.all': 'အားလုံး',
+  'view.map.filter.online': 'အွန်လိုင်း',
+  'view.map.filter.warning': 'သတိပေးချက်',
+  'view.map.filter.maintenance': 'ပြုပြင်ထိန်းသိမ်းမှု',
+  'view.map.filter.offline': 'အော့ဖ်လိုင်း',
+  'view.map.detail.category': 'အမျိုးအစား',
+  'view.map.detail.protocol': 'ပရိုတိုကော',
+  'view.map.detail.status': 'အခြေအနေ',
+  'view.map.detail.coords': 'ကိုသြဒိနိတ်',
+  'view.map.detail.controlNote': 'အမိန့်ပေးရန် စက်ပစ္စည်းအသေးစိတ်ကို ဖွင့်ပါ — မြေပုံသည် အထောက်အထားစိစစ်ခြင်းနှင့် လုံခြုံရေးစစ်ဆေးမှုများကို ဘယ်တော့မှ ကျော်လွှားခြင်းမပြုပါ။'
+
 };
 
 const lo: Dict = {
