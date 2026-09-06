@@ -2324,6 +2324,7 @@ const sv: Dict = {
   'app.title': 'KSV Universell Säker Styrning',
   'nav.dashboard': 'Instrumentpanel',
   'nav.devices': 'Enheter',
+  'nav.map': 'Karta',
   'nav.controls': 'Kontroller',
   'nav.protocols': 'Protokoll',
   'nav.gateway': 'Gateway',
@@ -2356,6 +2357,19 @@ const sv: Dict = {
   'intl.chooseLanguage': 'Välj ditt språk',
   'intl.daytime': 'Dag',
   'intl.nighttime': 'Natt',
+  'view.map.title': 'Interaktiv karta',
+  'view.map.subtitle': 'Realtidsplats för alla anslutna enheter i din flotta',
+  'view.map.filter.all': 'Alla',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Varning',
+  'view.map.filter.maintenance': 'Underhåll',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategori',
+  'view.map.detail.protocol': 'Protokoll',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Koordinater',
+  'view.map.detail.controlNote': 'Öppna enhetsdetaljer för att skicka kommandon — kartan kringgår aldrig autentisering eller säkerhetskontroller.'
+
 };
 
 const bn: Dict = {
