@@ -7,6 +7,7 @@ import {
 import { Panel, SectionHeader, Toggle, Badge, ProgressBar, StatusDot } from '@/components/ui';
 import { devices } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { dispatchCommand } from '@/lib/api';
 
 interface ControlState {
   [key: string]: { on: boolean; value?: number };
@@ -23,7 +24,24 @@ export function ControlsView() {
     'cold-storage': { on: true, value: -22 },
   });
 
-  const toggle = (key: string) => setControls((c) => ({ ...c, [key]: { ...c[key], on: !c[key].on } }));
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+
+  const toggle = async (key: string) => {
+    if (key === 'vault-lock') {
+      const nextOn = !controls['vault-lock'].on;
+      setPending((p) => ({ ...p, [key]: true }));
+      try {
+        await dispatchCommand({ deviceId: 'DEV-04821', type: nextOn ? 'LOCK' : 'UNLOCK' });
+        setControls((c) => ({ ...c, [key]: { ...c[key], on: nextOn } }));
+      } catch (err) {
+        console.error('Failed to toggle vault lock:', err);
+      } finally {
+        setPending((p) => ({ ...p, [key]: false }));
+      }
+      return;
+    }
+    setControls((c) => ({ ...c, [key]: { ...c[key], on: !c[key].on } }));
+  };
   const setValue = (key: string, value: number) => setControls((c) => ({ ...c, [key]: { ...c[key], value } }));
 
   const controlLog = [
