@@ -1894,6 +1894,7 @@ const de: Dict = {
   'app.title': 'KSV Universelle Sichere Steuerung',
   'nav.dashboard': 'Übersicht',
   'nav.devices': 'Geräte',
+  'nav.map': 'Karte',
   'nav.controls': 'Steuerung',
   'nav.protocols': 'Protokolle',
   'nav.gateway': 'Gateway',
@@ -1926,6 +1927,19 @@ const de: Dict = {
   'intl.chooseLanguage': 'Wählen Sie Ihre Sprache',
   'intl.daytime': 'Tag',
   'intl.nighttime': 'Nacht',
+  'view.map.title': 'Interaktive Karte',
+  'view.map.subtitle': 'Standort aller verbundenen Geräte in Echtzeit',
+  'view.map.filter.all': 'Alle',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Warnung',
+  'view.map.filter.maintenance': 'Wartung',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategorie',
+  'view.map.detail.protocol': 'Protokoll',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Koordinaten',
+  'view.map.detail.controlNote': 'Öffnen Sie die Gerätedetails, um Befehle zu senden — die Karte umgeht niemals Authentifizierung und Sicherheitsprüfungen.'
+
 };
 
 const pt: Dict = {
