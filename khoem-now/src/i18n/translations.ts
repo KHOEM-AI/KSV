@@ -1233,6 +1233,7 @@ const th: Dict = {
   'app.title': 'KSV แพลตฟอร์มควบคุมความปลอดภัยสากล',
   'nav.dashboard': 'แดชบอร์ด',
   'nav.devices': 'อุปกรณ์',
+  'nav.map': 'แผนที่',
   'nav.controls': 'การควบคุม',
   'nav.protocols': 'โปรโตคอล',
   'nav.gateway': 'เกตเวย์',
@@ -1551,6 +1552,19 @@ const th: Dict = {
   'view.settings.twoFactor.label': 'กำหนดให้ผู้ดูแลระบบทั้งหมดใช้ 2FA',
   'view.settings.zeroPlaintext.desc': 'รหัสผ่านจะไม่ถูกจัดเก็บในรูปแบบข้อความธรรมดา',
   'view.settings.zeroPlaintext.label': 'นโยบายรหัสผ่านแบบไม่มีข้อความธรรมดา',
+  'view.map.title': 'แผนที่แบบอินเทอร์แอกทีฟ',
+  'view.map.subtitle': 'ดูตำแหน่งอุปกรณ์ทั้งหมดแบบเรียลไทม์',
+  'view.map.filter.all': 'ทั้งหมด',
+  'view.map.filter.online': 'ออนไลน์',
+  'view.map.filter.warning': 'คำเตือน',
+  'view.map.filter.maintenance': 'ซ่อมบำรุง',
+  'view.map.filter.offline': 'ออฟไลน์',
+  'view.map.detail.category': 'หมวดหมู่',
+  'view.map.detail.protocol': 'โปรโตคอล',
+  'view.map.detail.status': 'สถานะ',
+  'view.map.detail.coords': 'พิกัด',
+  'view.map.detail.controlNote': 'เปิดรายละเอียดอุปกรณ์เพื่อส่งคำสั่ง — แผนที่จะไม่ข้ามการตรวจสอบสิทธิ์และความปลอดภัย'
+
 };
 
 const ko: Dict = {
