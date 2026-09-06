@@ -2452,6 +2452,7 @@ const ms: Dict = {
   'app.title': 'KSV Kawalan Selamat Universal',
   'nav.dashboard': 'Papan Pemuka',
   'nav.devices': 'Peranti',
+  'nav.map': 'Peta',
   'nav.controls': 'Kawalan',
   'nav.protocols': 'Protokol',
   'nav.gateway': 'Gerbang',
@@ -2484,6 +2485,19 @@ const ms: Dict = {
   'intl.chooseLanguage': 'Pilih bahasa anda',
   'intl.daytime': 'Siang',
   'intl.nighttime': 'Malam',
+  'view.map.title': 'Peta Interaktif',
+  'view.map.subtitle': 'Lokasi masa nyata semua peranti yang disambungkan dalam armada anda',
+  'view.map.filter.all': 'Semua',
+  'view.map.filter.online': 'Dalam talian',
+  'view.map.filter.warning': 'Amaran',
+  'view.map.filter.maintenance': 'Penyelenggaraan',
+  'view.map.filter.offline': 'Luar talian',
+  'view.map.detail.category': 'Kategori',
+  'view.map.detail.protocol': 'Protokol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Koordinat',
+  'view.map.detail.controlNote': 'Buka butiran peranti untuk menghantar arahan — peta tidak sekali-kali memintas pengesahan dan pemeriksaan keselamatan.'
+
 };
 
 const tl: Dict = {
