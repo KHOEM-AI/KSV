@@ -838,3 +838,116 @@ export async function updateProtocolConfig(protocol: DeviceProtocol, deviceId: s
     body: JSON.stringify(config),
   });
 }
+
+// ============================================================
+// Organization endpoints — mirrors API/organization.ts exactly
+// ============================================================
+
+import type {
+  CreateOrgRequest,
+  UpdateOrgRequest,
+  CreateSiteRequest,
+  CreateBuildingRequest,
+  CreateRoomRequest,
+  InviteMemberRequest,
+  InviteMemberResponse,
+  UpdateMemberRoleRequest,
+  RemoveMemberRequest,
+  KSVOrganization,
+  KSVSite,
+  KSVBuilding,
+  KSVRoom,
+  KSVOrgMember,
+} from "../../API/organization";
+
+export async function createOrg(req: CreateOrgRequest): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listMyOrgs(): Promise<KSVOrganization[]> {
+  return apiFetch<KSVOrganization[]>(`/orgs`);
+}
+
+export async function getOrg(orgId: string): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs/${orgId}`);
+}
+
+export async function updateOrg(orgId: string, req: UpdateOrgRequest): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs/${orgId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteOrg(orgId: string, confirmPhrase: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}`, { method: "DELETE", body: JSON.stringify({ confirmPhrase }) });
+}
+
+export async function createSite(orgId: string, req: CreateSiteRequest): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listSites(orgId: string): Promise<KSVSite[]> {
+  return apiFetch<KSVSite[]>(`/orgs/${orgId}/sites`);
+}
+
+export async function getSite(orgId: string, siteId: string): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites/${siteId}`);
+}
+
+export async function updateSite(orgId: string, siteId: string, req: CreateSiteRequest): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites/${siteId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteSite(orgId: string, siteId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}`, { method: "DELETE" });
+}
+
+export async function createBuilding(orgId: string, siteId: string, req: CreateBuildingRequest): Promise<KSVBuilding> {
+  return apiFetch<KSVBuilding>(`/orgs/${orgId}/sites/${siteId}/buildings`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listBuildings(orgId: string, siteId: string): Promise<KSVBuilding[]> {
+  return apiFetch<KSVBuilding[]>(`/orgs/${orgId}/sites/${siteId}/buildings`);
+}
+
+export async function updateBuilding(orgId: string, siteId: string, buildingId: string, req: CreateBuildingRequest): Promise<KSVBuilding> {
+  return apiFetch<KSVBuilding>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteBuilding(orgId: string, siteId: string, buildingId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}`, { method: "DELETE" });
+}
+
+export async function createRoom(orgId: string, siteId: string, buildingId: string, req: CreateRoomRequest): Promise<KSVRoom> {
+  return apiFetch<KSVRoom>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listRooms(orgId: string, siteId: string, buildingId: string): Promise<KSVRoom[]> {
+  return apiFetch<KSVRoom[]>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms`);
+}
+
+export async function updateRoom(orgId: string, siteId: string, buildingId: string, roomId: string, req: CreateRoomRequest): Promise<KSVRoom> {
+  return apiFetch<KSVRoom>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms/${roomId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteRoom(orgId: string, siteId: string, buildingId: string, roomId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms/${roomId}`, { method: "DELETE" });
+}
+
+export async function inviteMember(orgId: string, req: InviteMemberRequest): Promise<InviteMemberResponse> {
+  return apiFetch<InviteMemberResponse>(`/orgs/${orgId}/members/invite`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listMembers(orgId: string): Promise<KSVOrgMember[]> {
+  return apiFetch<KSVOrgMember[]>(`/orgs/${orgId}/members`);
+}
+
+export async function getMember(orgId: string, memberId: string): Promise<KSVOrgMember> {
+  return apiFetch<KSVOrgMember>(`/orgs/${orgId}/members/${memberId}`);
+}
+
+export async function updateMemberRole(orgId: string, req: UpdateMemberRoleRequest): Promise<KSVOrgMember> {
+  return apiFetch<KSVOrgMember>(`/orgs/${orgId}/members/${req.memberId}/role`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function removeMember(orgId: string, req: RemoveMemberRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/members/${req.memberId}`, { method: "DELETE", body: JSON.stringify(req) });
+}
