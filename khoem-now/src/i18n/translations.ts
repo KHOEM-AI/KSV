@@ -1747,6 +1747,7 @@ const vi: Dict = {
   'app.title': 'KSV Nền Tảng Kiểm Soát An Toàn Toàn Cầu',
   'nav.dashboard': 'Bảng điều khiển',
   'nav.devices': 'Thiết bị',
+  'nav.map': 'Bản đồ',
   'nav.controls': 'Điều khiển',
   'nav.protocols': 'Giao thức',
   'nav.gateway': 'Cổng kết nối',
@@ -1779,6 +1780,19 @@ const vi: Dict = {
   'intl.chooseLanguage': 'Chọn ngôn ngữ của bạn',
   'intl.daytime': 'Ban ngày',
   'intl.nighttime': 'Ban đêm',
+  'view.map.title': 'Bản đồ tương tác',
+  'view.map.subtitle': 'Vị trí thời gian thực của tất cả thiết bị trong đội của bạn',
+  'view.map.filter.all': 'Tất cả',
+  'view.map.filter.online': 'Trực tuyến',
+  'view.map.filter.warning': 'Cảnh báo',
+  'view.map.filter.maintenance': 'Bảo trì',
+  'view.map.filter.offline': 'Ngoại tuyến',
+  'view.map.detail.category': 'Danh mục',
+  'view.map.detail.protocol': 'Giao thức',
+  'view.map.detail.status': 'Trạng thái',
+  'view.map.detail.coords': 'Tọa độ',
+  'view.map.detail.controlNote': 'Mở chi tiết thiết bị để gửi lệnh — bản đồ không bao giờ bỏ qua việc xác thực và kiểm tra an toàn.'
+
 };
 
 const ar: Dict = {
