@@ -2792,6 +2792,7 @@ const uk: Dict = {
   'app.title': 'KSV Універсальне безпечне керування',
   'nav.dashboard': 'Панель керування',
   'nav.devices': 'Пристрої',
+  'nav.map': 'Карта',
   'nav.controls': 'Керування',
   'nav.protocols': 'Протоколи',
   'nav.gateway': 'Шлюз',
@@ -2824,6 +2825,19 @@ const uk: Dict = {
   'intl.chooseLanguage': 'Виберіть свою мову',
   'intl.daytime': 'День',
   'intl.nighttime': 'Ніч',
+  'view.map.title': 'Інтерактивна карта',
+  'view.map.subtitle': 'Розташування в реальному часі всіх підключених пристроїв вашого парку',
+  'view.map.filter.all': 'Усі',
+  'view.map.filter.online': 'Онлайн',
+  'view.map.filter.warning': 'Попередження',
+  'view.map.filter.maintenance': 'Обслуговування',
+  'view.map.filter.offline': 'Офлайн',
+  'view.map.detail.category': 'Категорія',
+  'view.map.detail.protocol': 'Протокол',
+  'view.map.detail.status': 'Статус',
+  'view.map.detail.coords': 'Координати',
+  'view.map.detail.controlNote': 'Відкрийте деталі пристрою для надсилання команд — карта ніколи не обходить автентифікацію та перевірки безпеки.'
+
 };
 
 const cs: Dict = {
