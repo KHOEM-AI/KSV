@@ -9,14 +9,15 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
-import { deviceCommandRateLimiter } from "./core/security/rate-limiter.ts";
+import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
 import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const PORT = process.env.PORT || 3000;
 
@@ -181,6 +182,122 @@ async function main() {
         });
 
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to process command." });
+      }
+    }
+  );
+
+  // POST /api/auth/login/password
+  app.post("/api/auth/login/password", authRateLimiter, async (req, res) => {
+    try {
+      const { email, password } = req.body ?? {};
+
+      if (!email || !password) {
+        res.status(400).json({
+          result: "failed",
+          message: "email and password are required.",
+        });
+        return;
+      }
+
+      const user = await User.findOne({ email });
+      if (!user || !user.isActive) {
+        res.status(401).json({
+          result: "failed",
+          message: "Email or password is incorrect.",
+        });
+        return;
+      }
+
+      const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+      if (!passwordMatches) {
+        res.status(401).json({
+          result: "failed",
+          message: "Email or password is incorrect.",
+        });
+        return;
+      }
+
+      const accessToken = jwt.sign(
+        {
+          sub: String(user._id),
+          role: user.role,
+          organizationId: user.organizationId ? String(user.organizationId) : undefined,
+        },
+        process.env.JWT_ACCESS_SECRET as string,
+        { expiresIn: "15m" }
+      );
+
+      const refreshToken = jwt.sign(
+        { sub: String(user._id) },
+        (process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET) as string,
+        { expiresIn: "7d" }
+      );
+
+      user.lastLoginAt = new Date();
+      await user.save();
+
+      res.json({
+        result: "success",
+        session: {
+          sessionId: String(user._id) + "-" + Date.now(),
+          accountId: String(user._id),
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+          createdAt: new Date().toISOString(),
+        },
+        token: {
+          accessToken,
+          refreshToken,
+          expiresIn: 900,
+          tokenType: "Bearer",
+        },
+        message: "Login successful.",
+      });
+    } catch (err) {
+      res.status(500).json({ result: "failed", message: "Login failed due to a server error." });
+    }
+  });
+
+  // GET /api/settings
+  app.get(
+    "/api/settings",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      let settings = await Settings.findOne({ organizationId: user.organizationId }).lean();
+      if (!settings) {
+        settings = await Settings.create({ organizationId: user.organizationId });
+      }
+      res.json({ settings });
+    }
+  );
+
+  // PUT /api/settings
+  app.put(
+    "/api/settings",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const updated = await Settings.findOneAndUpdate(
+          { organizationId: user.organizationId },
+          { $set: req.body },
+          { new: true, upsert: true }
+        );
+        await auditDeviceCommand(user.id, "settings", "UPDATE_SETTINGS", "SUCCESS");
+        res.json({ settings: updated });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to save settings." });
       }
     }
   );

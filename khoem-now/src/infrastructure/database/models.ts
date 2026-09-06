@@ -278,3 +278,23 @@ const certificateSchema = new Schema(
 );
 
 export const Certificate = models.Certificate || model("Certificate", certificateSchema);
+
+const settingsSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, required: true, unique: true },
+    autoUpdate: { type: Boolean, default: true },
+    offlineMode: { type: Boolean, default: true },
+    auditLog: { type: Boolean, default: true },
+    twoFactor: { type: Boolean, default: true },
+    zeroPlaintext: { type: Boolean, default: true },
+    safetyOverride: { type: Boolean, default: false },
+    emailAlerts: { type: Boolean, default: true },
+    smsAlerts: { type: Boolean, default: false },
+    defaultLanguage: { type: String, default: "en-US" },
+    defaultTimezone: { type: String, default: "Auto" },
+  },
+  { timestamps: true }
+);
+
+export const Settings = models.Settings || model("Settings", settingsSchema);
+
