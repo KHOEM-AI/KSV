@@ -770,3 +770,71 @@ export async function updateOfflinePolicy(gatewayId: string, req: OfflinePolicyC
 export async function listGatewayDevices(gatewayId: string): Promise<{ devices: unknown[] }> {
   return apiFetch(`/gateways/${gatewayId}/devices`);
 }
+
+// ============================================================
+// Protocol endpoints — mirrors API/protocol.ts exactly
+// ============================================================
+
+import type {
+  ListAdaptersResponse,
+  GetConnectionsRequest,
+  GetConnectionsResponse,
+  TestConnectionRequest,
+  TestConnectionResponse,
+  ListManufacturersResponse,
+  ProtocolAdapter,
+  ProtocolConnection,
+  ManufacturerProfile,
+  DeviceProtocol,
+} from "../../API/protocol";
+
+export async function listProtocolAdapters(): Promise<ListAdaptersResponse> {
+  return apiFetch<ListAdaptersResponse>(`/protocols/adapters`);
+}
+
+export async function getProtocolAdapter(adapterId: string): Promise<ProtocolAdapter> {
+  return apiFetch<ProtocolAdapter>(`/protocols/adapters/${adapterId}`);
+}
+
+export async function listProtocolConnections(req: GetConnectionsRequest = {}): Promise<GetConnectionsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<GetConnectionsResponse>(`/protocols/connections${params ? `?${params}` : ""}`);
+}
+
+export async function getProtocolConnection(connectionId: string): Promise<ProtocolConnection> {
+  return apiFetch<ProtocolConnection>(`/protocols/connections/${connectionId}`);
+}
+
+export async function testProtocolConnection(req: TestConnectionRequest): Promise<TestConnectionResponse> {
+  return apiFetch<TestConnectionResponse>(`/protocols/connections/test`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function disconnectProtocol(connectionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/protocols/connections/${connectionId}/disconnect`, { method: "POST" });
+}
+
+export async function reconnectProtocol(connectionId: string): Promise<{ success: boolean; connectionId: string }> {
+  return apiFetch(`/protocols/connections/${connectionId}/reconnect`, { method: "POST" });
+}
+
+export async function listManufacturers(): Promise<ListManufacturersResponse> {
+  return apiFetch<ListManufacturersResponse>(`/protocols/manufacturers`);
+}
+
+export async function getManufacturer(manufacturerId: string): Promise<ManufacturerProfile> {
+  return apiFetch<ManufacturerProfile>(`/protocols/manufacturers/${manufacturerId}`);
+}
+
+export async function getProtocolConfig(protocol: DeviceProtocol, deviceId: string): Promise<unknown> {
+  return apiFetch(`/protocols/${protocol}/config/${deviceId}`);
+}
+
+export async function updateProtocolConfig(protocol: DeviceProtocol, deviceId: string, config: unknown): Promise<{ success: boolean }> {
+  return apiFetch(`/protocols/${protocol}/config/${deviceId}`, {
+    method: "PUT",
+    body: JSON.stringify(config),
+  });
+}
