@@ -2220,6 +2220,7 @@ const nl: Dict = {
   'app.title': 'KSV Universele Veilige Besturing',
   'nav.dashboard': 'Dashboard',
   'nav.devices': 'Apparaten',
+  'nav.map': 'Kaart',
   'nav.controls': 'Bediening',
   'nav.protocols': 'Protocollen',
   'nav.gateway': 'Gateway',
@@ -2252,6 +2253,19 @@ const nl: Dict = {
   'intl.chooseLanguage': 'Kies uw taal',
   'intl.daytime': 'Dag',
   'intl.nighttime': 'Nacht',
+  'view.map.title': 'Interactieve kaart',
+  'view.map.subtitle': 'Realtime locatie van alle verbonden apparaten in uw wagenpark',
+  'view.map.filter.all': 'Alle',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Waarschuwing',
+  'view.map.filter.maintenance': 'Onderhoud',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Categorie',
+  'view.map.detail.protocol': 'Protocol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coördinaten',
+  'view.map.detail.controlNote': 'Open de apparaatdetails om opdrachten te verzenden — de kaart omzeilt nooit authenticatie of beveiligingscontroles.'
+
 };
 
 const pl: Dict = {
