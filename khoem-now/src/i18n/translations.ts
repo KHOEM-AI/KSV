@@ -2376,6 +2376,7 @@ const bn: Dict = {
   'app.title': 'KSV ইউনিভার্সাল সিকিউর কন্ট্রোল',
   'nav.dashboard': 'ড্যাশবোর্ড',
   'nav.devices': 'ডিভাইস',
+  'nav.map': 'মানচিত্র',
   'nav.controls': 'নিয়ন্ত্রণ',
   'nav.protocols': 'প্রোটোকল',
   'nav.gateway': 'গেটওয়ে',
@@ -2408,6 +2409,19 @@ const bn: Dict = {
   'intl.chooseLanguage': 'আপনার ভাষা নির্বাচন করুন',
   'intl.daytime': 'দিন',
   'intl.nighttime': 'রাত',
+  'view.map.title': 'ইন্টারঅ্যাক্টিভ মানচিত্র',
+  'view.map.subtitle': 'আপনার ফ্লিটের সমস্ত সংযুক্ত ডিভাইসের রিয়েল-টাইম অবস্থান',
+  'view.map.filter.all': 'সব',
+  'view.map.filter.online': 'অনলাইন',
+  'view.map.filter.warning': 'সতর্কতা',
+  'view.map.filter.maintenance': 'রক্ষণাবেক্ষণ',
+  'view.map.filter.offline': 'অফলাইন',
+  'view.map.detail.category': 'শ্রেণী',
+  'view.map.detail.protocol': 'প্রোটোকল',
+  'view.map.detail.status': 'অবস্থা',
+  'view.map.detail.coords': 'স্থানাঙ্ক',
+  'view.map.detail.controlNote': 'কমান্ড পাঠাতে ডিভাইসের বিবরণ খুলুন — মানচিত্র কখনও প্রমাণীকরণ এবং নিরাপত্তা যাচাই এড়িয়ে যায় না।'
+
 };
 
 const ur: Dict = {
