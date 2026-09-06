@@ -7,7 +7,7 @@
  * local useState toggles that don't persist or audit anything.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 function getAccessToken(): string | null {
   // Wherever the app stores the JWT after login — adjust if your
@@ -79,7 +79,7 @@ export interface DispatchCommandResult {
 export async function dispatchCommand(input: DispatchCommandInput): Promise<DispatchCommandResult> {
   return apiFetch<DispatchCommandResult>(`/devices/${input.deviceId}/commands`, {
     method: "POST",
-    body: JSON.stringify({ type: input.type, payload: input.payload, signals: input.signals }),
+    body: JSON.stringify({ commandType: input.type, payload: input.payload, signals: input.signals }),
   });
 }
 
