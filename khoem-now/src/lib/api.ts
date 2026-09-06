@@ -339,3 +339,205 @@ export async function transferOwnership(
     body: JSON.stringify({ newOwnerAccountId, confirmPhrase }),
   });
 }
+
+// ============================================================
+// Device endpoints — mirrors API/device.ts exactly
+// ============================================================
+
+import type {
+  RegisterDeviceRequest,
+  UpdateDeviceRequest,
+  ListDevicesRequest,
+  ListDevicesResponse,
+  GetDeviceStateResponse,
+  UpdateFirmwareRequest,
+  UpdateFirmwareResponse,
+  QuarantineDeviceRequest,
+  DecommissionDeviceRequest,
+  KSVDevice,
+  DeviceCapability,
+} from "../../API/device";
+
+export async function registerDevice(req: RegisterDeviceRequest): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listDevices(req: ListDevicesRequest = {}): Promise<ListDevicesResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListDevicesResponse>(`/devices${params ? `?${params}` : ""}`);
+}
+
+export async function getDevice(deviceId: string): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices/${deviceId}`);
+}
+
+export async function updateDevice(deviceId: string, req: UpdateDeviceRequest): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices/${deviceId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteDevice(deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}`, { method: "DELETE" });
+}
+
+export async function getDeviceState(deviceId: string): Promise<GetDeviceStateResponse> {
+  return apiFetch<GetDeviceStateResponse>(`/devices/${deviceId}/state`);
+}
+
+export async function listDeviceCapabilities(deviceId: string): Promise<DeviceCapability[]> {
+  return apiFetch<DeviceCapability[]>(`/devices/${deviceId}/capabilities`);
+}
+
+export async function updateFirmware(req: UpdateFirmwareRequest): Promise<UpdateFirmwareResponse> {
+  return apiFetch<UpdateFirmwareResponse>(`/devices/${req.deviceId}/firmware/update`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function rollbackFirmware(deviceId: string, targetVersion: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/firmware/rollback`, {
+    method: "POST",
+    body: JSON.stringify({ targetVersion }),
+  });
+}
+
+export async function quarantineDevice(req: QuarantineDeviceRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${req.deviceId}/quarantine`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function releaseQuarantine(deviceId: string, reason: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/quarantine/release`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function decommissionDevice(req: DecommissionDeviceRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${req.deviceId}/decommission`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listDeviceGroups(): Promise<{ groups: unknown[] }> {
+  return apiFetch(`/device-groups`);
+}
+
+export async function createDeviceGroup(name: string, deviceIds: string[] = []): Promise<{ groupId: string }> {
+  return apiFetch(`/device-groups`, {
+    method: "POST",
+    body: JSON.stringify({ name, deviceIds }),
+  });
+}
+
+export async function addToDeviceGroup(groupId: string, deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/device-groups/${groupId}/devices`, {
+    method: "POST",
+    body: JSON.stringify({ deviceId }),
+  });
+}
+
+export async function removeFromDeviceGroup(groupId: string, deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/device-groups/${groupId}/devices/${deviceId}`, { method: "DELETE" });
+}
+
+// ============================================================
+// Safety endpoints — mirrors API/safety.ts exactly
+// ============================================================
+
+import type {
+  SafetyCheckRequest,
+  SafetyCheckResponse,
+  CreateSafetyRuleRequest,
+  UpdateSafetyRuleRequest,
+  EmergencyStopRequest,
+  EmergencyStopResponse,
+  ReleaseEmergencyStopRequest,
+  ListSafetyEventsRequest,
+  SafetyRule,
+  SafetyEvent,
+  DeviceSafetyStatus,
+} from "../../API/safety";
+
+export async function checkSafety(req: SafetyCheckRequest): Promise<SafetyCheckResponse> {
+  return apiFetch<SafetyCheckResponse>(`/safety/check`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function createSafetyRule(req: CreateSafetyRuleRequest): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSafetyRules(orgId?: string): Promise<SafetyRule[]> {
+  return apiFetch<SafetyRule[]>(`/safety/rules${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getSafetyRule(ruleId: string): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules/${ruleId}`);
+}
+
+export async function updateSafetyRule(ruleId: string, req: UpdateSafetyRuleRequest): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules/${ruleId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}`, { method: "DELETE" });
+}
+
+export async function enableSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}/enable`, { method: "POST" });
+}
+
+export async function disableSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}/disable`, { method: "POST" });
+}
+
+export async function getDeviceSafetyStatus(deviceId: string): Promise<DeviceSafetyStatus> {
+  return apiFetch<DeviceSafetyStatus>(`/safety/devices/${deviceId}`);
+}
+
+export async function listDeviceSafetyStatuses(): Promise<DeviceSafetyStatus[]> {
+  return apiFetch<DeviceSafetyStatus[]>(`/safety/devices`);
+}
+
+export async function emergencyStop(req: EmergencyStopRequest): Promise<EmergencyStopResponse> {
+  return apiFetch<EmergencyStopResponse>(`/safety/emergency-stop`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function releaseEmergencyStop(
+  req: ReleaseEmergencyStopRequest
+): Promise<{ success: boolean; releasedDeviceCount: number }> {
+  return apiFetch(`/safety/emergency-stop/release`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSafetyEvents(req: ListSafetyEventsRequest = {}): Promise<{ events: SafetyEvent[]; total: number }> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch(`/safety/events${params ? `?${params}` : ""}`);
+}
+
+export async function getSafetyEvent(eventId: string): Promise<SafetyEvent> {
+  return apiFetch<SafetyEvent>(`/safety/events/${eventId}`);
+}
