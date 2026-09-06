@@ -682,3 +682,91 @@ export async function unpairDevice(req: UnpairDeviceRequest): Promise<UnpairDevi
 export async function repairDevice(deviceId: string): Promise<{ success: boolean }> {
   return apiFetch(`/devices/${deviceId}/repair`, { method: "POST" });
 }
+
+// ============================================================
+// Gateway endpoints — mirrors API/gateway.ts exactly
+// ============================================================
+
+import type {
+  RegisterGatewayRequest,
+  RegisterGatewayResponse,
+  UpdateGatewayRequest,
+  GatewayStatusResponse,
+  UpdateGatewayFirmwareRequest,
+  LocalCommandRequest,
+  SyncQueueResponse,
+  GatewaySyncRequest,
+  GatewaySyncResponse,
+  OfflinePolicyConfig,
+  KSVGateway,
+} from "../../API/gateway";
+
+export async function registerGateway(req: RegisterGatewayRequest): Promise<RegisterGatewayResponse> {
+  return apiFetch<RegisterGatewayResponse>(`/gateways`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listGateways(orgId?: string): Promise<KSVGateway[]> {
+  return apiFetch<KSVGateway[]>(`/gateways${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getGateway(gatewayId: string): Promise<KSVGateway> {
+  return apiFetch<KSVGateway>(`/gateways/${gatewayId}`);
+}
+
+export async function updateGateway(gatewayId: string, req: UpdateGatewayRequest): Promise<KSVGateway> {
+  return apiFetch<KSVGateway>(`/gateways/${gatewayId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteGateway(gatewayId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/gateways/${gatewayId}`, { method: "DELETE" });
+}
+
+export async function getGatewayStatus(gatewayId: string): Promise<GatewayStatusResponse> {
+  return apiFetch<GatewayStatusResponse>(`/gateways/${gatewayId}/status`);
+}
+
+export async function syncGateway(req: GatewaySyncRequest): Promise<GatewaySyncResponse> {
+  return apiFetch<GatewaySyncResponse>(`/gateways/${req.gatewayId}/sync`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getSyncQueue(gatewayId: string): Promise<SyncQueueResponse> {
+  return apiFetch<SyncQueueResponse>(`/gateways/${gatewayId}/sync/queue`);
+}
+
+export async function sendLocalCommand(req: LocalCommandRequest): Promise<{ commandId: string; queued: boolean }> {
+  return apiFetch(`/gateways/${req.gatewayId}/command`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function updateGatewayFirmware(req: UpdateGatewayFirmwareRequest): Promise<{ success: boolean; jobId: string }> {
+  return apiFetch(`/gateways/${req.gatewayId}/firmware/update`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getOfflinePolicy(gatewayId: string): Promise<OfflinePolicyConfig> {
+  return apiFetch<OfflinePolicyConfig>(`/gateways/${gatewayId}/offline-policy`);
+}
+
+export async function updateOfflinePolicy(gatewayId: string, req: OfflinePolicyConfig): Promise<{ success: boolean }> {
+  return apiFetch(`/gateways/${gatewayId}/offline-policy`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listGatewayDevices(gatewayId: string): Promise<{ devices: unknown[] }> {
+  return apiFetch(`/gateways/${gatewayId}/devices`);
+}
