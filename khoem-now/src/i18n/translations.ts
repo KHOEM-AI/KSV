@@ -2272,6 +2272,7 @@ const pl: Dict = {
   'app.title': 'KSV Uniwersalna Bezpieczna Kontrola',
   'nav.dashboard': 'Panel',
   'nav.devices': 'Urządzenia',
+  'nav.map': 'Mapa',
   'nav.controls': 'Sterowanie',
   'nav.protocols': 'Protokoły',
   'nav.gateway': 'Brama',
@@ -2304,6 +2305,19 @@ const pl: Dict = {
   'intl.chooseLanguage': 'Wybierz swój język',
   'intl.daytime': 'Dzień',
   'intl.nighttime': 'Noc',
+  'view.map.title': 'Mapa interaktywna',
+  'view.map.subtitle': 'Lokalizacja wszystkich podłączonych urządzeń w czasie rzeczywistym',
+  'view.map.filter.all': 'Wszystkie',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Ostrzeżenie',
+  'view.map.filter.maintenance': 'Konserwacja',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategoria',
+  'view.map.detail.protocol': 'Protokół',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Współrzędne',
+  'view.map.detail.controlNote': 'Otwórz szczegóły urządzenia, aby wysyłać polecenia — mapa nigdy nie omija uwierzytelniania ani kontroli bezpieczeństwa.'
+
 };
 
 const sv: Dict = {
