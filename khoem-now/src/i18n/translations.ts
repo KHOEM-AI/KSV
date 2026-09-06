@@ -2490,6 +2490,7 @@ const tl: Dict = {
   'app.title': 'KSV Unibersal na Ligtas na Kontrol',
   'nav.dashboard': 'Dashboard',
   'nav.devices': 'Mga Device',
+  'nav.map': 'Mapa',
   'nav.controls': 'Mga Kontrol',
   'nav.protocols': 'Mga Protocol',
   'nav.gateway': 'Gateway',
@@ -2522,6 +2523,19 @@ const tl: Dict = {
   'intl.chooseLanguage': 'Piliin ang iyong wika',
   'intl.daytime': 'Araw',
   'intl.nighttime': 'Gabi',
+  'view.map.title': 'Interactive Map',
+  'view.map.subtitle': 'Real-time na lokasyon ng lahat ng konektadong device sa iyong fleet',
+  'view.map.filter.all': 'Lahat',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Babala',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategorya',
+  'view.map.detail.protocol': 'Protocol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coordinates',
+  'view.map.detail.controlNote': 'Buksan ang detalye ng device para magpadala ng command — hindi nilalampasan ng mapa ang pagpapatunay at mga safety check.'
+
 };
 
 const my: Dict = {
