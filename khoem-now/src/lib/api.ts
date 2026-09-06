@@ -541,3 +541,60 @@ export async function listSafetyEvents(req: ListSafetyEventsRequest = {}): Promi
 export async function getSafetyEvent(eventId: string): Promise<SafetyEvent> {
   return apiFetch<SafetyEvent>(`/safety/events/${eventId}`);
 }
+
+// ============================================================
+// Audit endpoints — mirrors API/audit.ts exactly
+// ============================================================
+
+import type {
+  AuditQuery,
+  AuditQueryResponse,
+  AuditRecord,
+  AuditExportRequest,
+  AuditExportResponse,
+  ComplianceReportRequest,
+  ComplianceReport,
+} from "../../API/audit";
+
+export async function queryAuditLog(query: AuditQuery = {}): Promise<AuditQueryResponse> {
+  const params = new URLSearchParams(query as Record<string, string>).toString();
+  return apiFetch<AuditQueryResponse>(`/audit/events${params ? `?${params}` : ""}`);
+}
+
+export async function getAuditRecord(auditId: string): Promise<AuditRecord> {
+  return apiFetch<AuditRecord>(`/audit/events/${auditId}`);
+}
+
+export async function exportAuditLog(req: AuditExportRequest): Promise<AuditExportResponse> {
+  return apiFetch<AuditExportResponse>(`/audit/export`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getExportStatus(exportId: string): Promise<AuditExportResponse> {
+  return apiFetch<AuditExportResponse>(`/audit/export/${exportId}`);
+}
+
+export async function generateComplianceReport(req: ComplianceReportRequest): Promise<ComplianceReport> {
+  return apiFetch<ComplianceReport>(`/audit/compliance-report`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listComplianceReports(orgId?: string): Promise<ComplianceReport[]> {
+  return apiFetch<ComplianceReport[]>(`/audit/compliance-report${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getDeviceAuditTrail(deviceId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/devices/${deviceId}`);
+}
+
+export async function getAccountAuditTrail(accountId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/accounts/${accountId}`);
+}
+
+export async function getOrgAuditTrail(orgId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/orgs/${orgId}`);
+}
