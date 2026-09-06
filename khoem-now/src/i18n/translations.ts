@@ -2740,6 +2740,7 @@ const he: Dict = {
   'app.title': 'KSV בקרה מאובטחת אוניברסלית',
   'nav.dashboard': 'לוח בקרה',
   'nav.devices': 'מכשירים',
+  'nav.map': 'מפה',
   'nav.controls': 'בקרות',
   'nav.protocols': 'פרוטוקולים',
   'nav.gateway': 'שער',
@@ -2772,6 +2773,19 @@ const he: Dict = {
   'intl.chooseLanguage': 'בחר את השפה שלך',
   'intl.daytime': 'יום',
   'intl.nighttime': 'לילה',
+  'view.map.title': 'מפה אינטראקטיבית',
+  'view.map.subtitle': 'מיקום בזמן אמת של כל המכשירים המחוברים בצי שלך',
+  'view.map.filter.all': 'הכל',
+  'view.map.filter.online': 'מקוון',
+  'view.map.filter.warning': 'אזהרה',
+  'view.map.filter.maintenance': 'תחזוקה',
+  'view.map.filter.offline': 'לא מקוון',
+  'view.map.detail.category': 'קטגוריה',
+  'view.map.detail.protocol': 'פרוטוקול',
+  'view.map.detail.status': 'סטטוס',
+  'view.map.detail.coords': 'קואורדינטות',
+  'view.map.detail.controlNote': 'פתח את פרטי המכשיר כדי לשלוח פקודות — המפה לעולם אינה עוקפת אימות ובדיקות אבטחה.'
+
 };
 
 const uk: Dict = {
