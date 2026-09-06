@@ -1804,6 +1804,7 @@ const ar: Dict = {
   'app.title': 'KSV منصة التحكم الآمن الشامل',
   'nav.dashboard': 'لوحة التحكم',
   'nav.devices': 'الأجهزة',
+  'nav.map': 'الخريطة',
   'nav.controls': 'عناصر التحكم',
   'nav.protocols': 'البروتوكولات',
   'nav.gateway': 'البوابة',
@@ -1836,6 +1837,19 @@ const ar: Dict = {
   'intl.chooseLanguage': 'اختر لغتك',
   'intl.daytime': 'نهار',
   'intl.nighttime': 'ليل',
+  'view.map.title': 'خريطة تفاعلية',
+  'view.map.subtitle': 'الموقع الفعلي لجميع الأجهزة المتصلة في الوقت الفعلي',
+  'view.map.filter.all': 'الكل',
+  'view.map.filter.online': 'متصل',
+  'view.map.filter.warning': 'تحذير',
+  'view.map.filter.maintenance': 'صيانة',
+  'view.map.filter.offline': 'غير متصل',
+  'view.map.detail.category': 'الفئة',
+  'view.map.detail.protocol': 'البروتوكول',
+  'view.map.detail.status': 'الحالة',
+  'view.map.detail.coords': 'الإحداثيات',
+  'view.map.detail.controlNote': 'افتح تفاصيل الجهاز لإرسال الأوامر — لا تتجاوز الخريطة التحقق من الهوية والفحوصات الأمنية أبدًا.'
+
 };
 
 const it: Dict = {
