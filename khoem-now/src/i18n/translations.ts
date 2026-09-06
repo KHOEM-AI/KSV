@@ -2580,6 +2580,7 @@ const lo: Dict = {
   'app.title': 'KSV ການຄວບຄຸມທີ່ປອດໄພສາກົນ',
   'nav.dashboard': 'ແດັຊບອດ',
   'nav.devices': 'ອຸປະກອນ',
+  'nav.map': 'ແຜນທີ່',
   'nav.controls': 'ການຄວບຄຸມ',
   'nav.protocols': 'ໂປຣໂຕຄອນ',
   'nav.gateway': 'ເກດເວย์',
@@ -2612,6 +2613,19 @@ const lo: Dict = {
   'intl.chooseLanguage': 'ເລືອກພາສາຂອງທ່ານ',
   'intl.daytime': 'ກາງເວັນ',
   'intl.nighttime': 'ກາງຄືນ',
+  'view.map.title': 'ແຜນທີ່ແບບໂຕ້ຕອບ',
+  'view.map.subtitle': 'ຕຳແໜ່ງແບບເວລາຈິງຂອງອຸປະກອນທີ່ເຊື່ອມຕໍ່ທັງໝົດໃນກຸ່ມຂອງທ່ານ',
+  'view.map.filter.all': 'ທັງໝົດ',
+  'view.map.filter.online': 'ອອນລາຍ',
+  'view.map.filter.warning': 'ຄຳເຕືອນ',
+  'view.map.filter.maintenance': 'ການບຳລຸງຮັກສາ',
+  'view.map.filter.offline': 'ອອບລາຍ',
+  'view.map.detail.category': 'ໝວດໝູ່',
+  'view.map.detail.protocol': 'ໂປຣໂຕຄອນ',
+  'view.map.detail.status': 'ສະຖານະ',
+  'view.map.detail.coords': 'ພິກັດ',
+  'view.map.detail.controlNote': 'ເປີດລາຍລະອຽດອຸປະກອນເພື່ອສົ່ງຄຳສັ່ງ — ແຜນທີ່ບໍ່ເຄີຍຂ້າມການພິສູດຢືນຢັນຕົວຕົນ ແລະ ການກວດສອບຄວາມປອດໄພ.'
+
 };
 
 const el: Dict = {
