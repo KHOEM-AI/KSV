@@ -951,3 +951,94 @@ export async function updateMemberRole(orgId: string, req: UpdateMemberRoleReque
 export async function removeMember(orgId: string, req: RemoveMemberRequest): Promise<{ success: boolean }> {
   return apiFetch(`/orgs/${orgId}/members/${req.memberId}`, { method: "DELETE", body: JSON.stringify(req) });
 }
+
+// ============================================================
+// Security endpoints — mirrors API/security.ts exactly
+// ============================================================
+
+import type {
+  CreateKeyRequest,
+  CreateKeyResponse,
+  ListKeysRequest,
+  ListKeysResponse,
+  RotateKeyRequest,
+  RevokeKeyRequest,
+  EncryptDataRequest,
+  EncryptDataResponse,
+  DecryptDataRequest,
+  ListThreatsRequest,
+  MarkFalsePositiveRequest,
+  CreateIncidentRequest,
+  TakeIncidentActionRequest,
+  ManagedKey,
+  ThreatDetection,
+  SecurityIncident,
+  IncidentStatus,
+  IncidentAction,
+} from "../../API/security";
+
+export async function createSecurityKey(req: CreateKeyRequest): Promise<CreateKeyResponse> {
+  return apiFetch<CreateKeyResponse>(`/security/keys`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listSecurityKeys(req: ListKeysRequest = {}): Promise<ListKeysResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListKeysResponse>(`/security/keys${params ? `?${params}` : ""}`);
+}
+
+export async function getKeyMetadata(keyId: string): Promise<ManagedKey> {
+  return apiFetch<ManagedKey>(`/security/keys/${keyId}`);
+}
+
+export async function rotateKey(req: RotateKeyRequest): Promise<{ success: boolean; newKeyId: string }> {
+  return apiFetch(`/security/keys/${req.keyId}/rotate`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function revokeKey(req: RevokeKeyRequest): Promise<{ success: boolean; affectedCount: number }> {
+  return apiFetch(`/security/keys/${req.keyId}/revoke`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function encryptData(req: EncryptDataRequest): Promise<EncryptDataResponse> {
+  return apiFetch<EncryptDataResponse>(`/security/encrypt`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function decryptData(req: DecryptDataRequest): Promise<{ plaintext: string }> {
+  return apiFetch(`/security/decrypt`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listThreats(req: ListThreatsRequest = {}): Promise<{ threats: ThreatDetection[]; total: number }> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch(`/security/threats${params ? `?${params}` : ""}`);
+}
+
+export async function getThreat(detectionId: string): Promise<ThreatDetection> {
+  return apiFetch<ThreatDetection>(`/security/threats/${detectionId}`);
+}
+
+export async function markFalsePositive(req: MarkFalsePositiveRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/security/threats/${req.detectionId}/false-positive`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function createIncident(req: CreateIncidentRequest): Promise<SecurityIncident> {
+  return apiFetch<SecurityIncident>(`/security/incidents`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listIncidents(status?: IncidentStatus): Promise<SecurityIncident[]> {
+  return apiFetch<SecurityIncident[]>(`/security/incidents${status ? `?status=${status}` : ""}`);
+}
+
+export async function getIncident(incidentId: string): Promise<SecurityIncident> {
+  return apiFetch<SecurityIncident>(`/security/incidents/${incidentId}`);
+}
+
+export async function takeIncidentAction(req: TakeIncidentActionRequest): Promise<IncidentAction> {
+  return apiFetch<IncidentAction>(`/security/incidents/${req.incidentId}/actions`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function resolveIncident(incidentId: string, summary: string): Promise<{ success: boolean }> {
+  return apiFetch(`/security/incidents/${incidentId}/resolve`, { method: "POST", body: JSON.stringify({ summary }) });
+}
+
+export async function getRateLimitStatus(accountId: string): Promise<{ remaining: number; resetAt: string; limit: number }> {
+  return apiFetch(`/security/rate-limit/${accountId}`);
+}
