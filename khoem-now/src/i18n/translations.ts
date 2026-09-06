@@ -2116,6 +2116,7 @@ const id: Dict = {
   'app.title': 'KSV Kontrol Aman Universal',
   'nav.dashboard': 'Dasbor',
   'nav.devices': 'Perangkat',
+  'nav.map': 'Peta',
   'nav.controls': 'Kontrol',
   'nav.protocols': 'Protokol',
   'nav.gateway': 'Gateway',
@@ -2148,6 +2149,19 @@ const id: Dict = {
   'intl.chooseLanguage': 'Pilih bahasa Anda',
   'intl.daytime': 'Siang',
   'intl.nighttime': 'Malam',
+  'view.map.title': 'Peta interaktif',
+  'view.map.subtitle': 'Lokasi real-time semua perangkat yang terhubung dalam armada Anda',
+  'view.map.filter.all': 'Semua',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Peringatan',
+  'view.map.filter.maintenance': 'Perawatan',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategori',
+  'view.map.detail.protocol': 'Protokol',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Koordinat',
+  'view.map.detail.controlNote': 'Buka detail perangkat untuk mengirim perintah — peta tidak pernah melewati autentikasi dan pemeriksaan keamanan.'
+
 };
 
 const tr: Dict = {
