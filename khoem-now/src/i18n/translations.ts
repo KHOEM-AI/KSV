@@ -2844,6 +2844,7 @@ const cs: Dict = {
   'app.title': 'KSV Univerzální bezpečné ovládání',
   'nav.dashboard': 'Přehled',
   'nav.devices': 'Zařízení',
+  'nav.map': 'Mapa',
   'nav.controls': 'Ovládání',
   'nav.protocols': 'Protokoly',
   'nav.gateway': 'Brána',
@@ -2876,6 +2877,19 @@ const cs: Dict = {
   'intl.chooseLanguage': 'Vyberte svůj jazyk',
   'intl.daytime': 'Den',
   'intl.nighttime': 'Noc',
+  'view.map.title': 'Interaktivní mapa',
+  'view.map.subtitle': 'Poloha všech připojených zařízení ve vaší flotile v reálném čase',
+  'view.map.filter.all': 'Vše',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Varování',
+  'view.map.filter.maintenance': 'Údržba',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Kategorie',
+  'view.map.detail.protocol': 'Protokol',
+  'view.map.detail.status': 'Stav',
+  'view.map.detail.coords': 'Souřadnice',
+  'view.map.detail.controlNote': 'Otevřete podrobnosti zařízení pro odeslání příkazů — mapa nikdy neobchází ověřování a bezpečnostní kontroly.'
+
 };
 
 export const TRANSLATIONS: Record<LanguageCode, Dict> = {
