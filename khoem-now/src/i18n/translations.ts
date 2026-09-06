@@ -1960,6 +1960,7 @@ const pt: Dict = {
   'app.title': 'KSV Controle Seguro Universal',
   'nav.dashboard': 'Painel',
   'nav.devices': 'Dispositivos',
+  'nav.map': 'Mapa',
   'nav.controls': 'Controles',
   'nav.protocols': 'Protocolos',
   'nav.gateway': 'Gateway',
@@ -1992,6 +1993,19 @@ const pt: Dict = {
   'intl.chooseLanguage': 'Escolha seu idioma',
   'intl.daytime': 'Dia',
   'intl.nighttime': 'Noite',
+  'view.map.title': 'Mapa interativo',
+  'view.map.subtitle': 'Localização em tempo real de todos os dispositivos da sua frota',
+  'view.map.filter.all': 'Todos',
+  'view.map.filter.online': 'Online',
+  'view.map.filter.warning': 'Aviso',
+  'view.map.filter.maintenance': 'Manutenção',
+  'view.map.filter.offline': 'Offline',
+  'view.map.detail.category': 'Categoria',
+  'view.map.detail.protocol': 'Protocolo',
+  'view.map.detail.status': 'Status',
+  'view.map.detail.coords': 'Coordenadas',
+  'view.map.detail.controlNote': 'Abra os detalhes do dispositivo para enviar comandos — o mapa nunca ignora a autenticação nem as verificações de segurança.'
+
 };
 
 const ru: Dict = {
