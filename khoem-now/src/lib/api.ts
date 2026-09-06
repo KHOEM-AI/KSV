@@ -1042,3 +1042,71 @@ export async function resolveIncident(incidentId: string, summary: string): Prom
 export async function getRateLimitStatus(accountId: string): Promise<{ remaining: number; resetAt: string; limit: number }> {
   return apiFetch(`/security/rate-limit/${accountId}`);
 }
+
+// ============================================================
+// Notification endpoints — mirrors API/notification.ts exactly
+// ============================================================
+
+import type {
+  SendNotificationRequest,
+  SendBulkNotificationRequest,
+  SendBulkNotificationResponse,
+  ListNotificationsRequest,
+  ListNotificationsResponse,
+  MarkReadRequest,
+  MarkAllReadRequest,
+  UpdatePreferencesRequest,
+  RegisterPushTokenRequest,
+  KSVNotification,
+  NotificationPreferences,
+  PushDeviceToken,
+} from "../../API/notification";
+
+export async function sendNotification(req: SendNotificationRequest): Promise<{ notificationId: string; queued: boolean }> {
+  return apiFetch(`/notifications/send`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function sendBulkNotification(req: SendBulkNotificationRequest): Promise<SendBulkNotificationResponse> {
+  return apiFetch<SendBulkNotificationResponse>(`/notifications/send-bulk`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listNotifications(req: ListNotificationsRequest = {}): Promise<ListNotificationsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListNotificationsResponse>(`/notifications${params ? `?${params}` : ""}`);
+}
+
+export async function getNotification(notificationId: string): Promise<KSVNotification> {
+  return apiFetch<KSVNotification>(`/notifications/${notificationId}`);
+}
+
+export async function markNotificationRead(req: MarkReadRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/${req.notificationId}/read`, { method: "POST" });
+}
+
+export async function markAllNotificationsRead(req: MarkAllReadRequest = {}): Promise<{ success: boolean; markedCount: number }> {
+  return apiFetch(`/notifications/read-all`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function deleteNotification(notificationId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/${notificationId}`, { method: "DELETE" });
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>(`/notifications/preferences`);
+}
+
+export async function updateNotificationPreferences(req: UpdatePreferencesRequest): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>(`/notifications/preferences`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function registerPushToken(req: RegisterPushTokenRequest): Promise<PushDeviceToken> {
+  return apiFetch<PushDeviceToken>(`/notifications/push-tokens`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listPushTokens(): Promise<PushDeviceToken[]> {
+  return apiFetch<PushDeviceToken[]>(`/notifications/push-tokens`);
+}
+
+export async function removePushToken(tokenId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/push-tokens/${tokenId}`, { method: "DELETE" });
+}
