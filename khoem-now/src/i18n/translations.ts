@@ -2064,6 +2064,7 @@ const hi: Dict = {
   'app.title': 'KSV यूनिवर्सल सिक्योर कंट्रोल',
   'nav.dashboard': 'डैशबोर्ड',
   'nav.devices': 'डिवाइस',
+  'nav.map': 'मानचित्र',
   'nav.controls': 'नियंत्रण',
   'nav.protocols': 'प्रोटोकॉल',
   'nav.gateway': 'गेटवे',
@@ -2096,6 +2097,19 @@ const hi: Dict = {
   'intl.chooseLanguage': 'अपनी भाषा चुनें',
   'intl.daytime': 'दिन',
   'intl.nighttime': 'रात',
+  'view.map.title': 'इंटरैक्टिव मानचित्र',
+  'view.map.subtitle': 'आपके सभी कनेक्टेड डिवाइस का रीयल-टाइम स्थान',
+  'view.map.filter.all': 'सभी',
+  'view.map.filter.online': 'ऑनलाइन',
+  'view.map.filter.warning': 'चेतावनी',
+  'view.map.filter.maintenance': 'रखरखाव',
+  'view.map.filter.offline': 'ऑफ़लाइन',
+  'view.map.detail.category': 'श्रेणी',
+  'view.map.detail.protocol': 'प्रोटोकॉल',
+  'view.map.detail.status': 'स्थिति',
+  'view.map.detail.coords': 'निर्देशांक',
+  'view.map.detail.controlNote': 'कमांड भेजने के लिए डिवाइस विवरण खोलें — मानचित्र कभी भी प्रमाणीकरण और सुरक्षा जांच को नज़रअंदाज़ नहीं करता।'
+
 };
 
 const id: Dict = {
