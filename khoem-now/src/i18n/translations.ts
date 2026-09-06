@@ -2688,6 +2688,7 @@ const el: Dict = {
   'app.title': 'KSV Παγκόσμιος Ασφαλής Έλεγχος',
   'nav.dashboard': 'Πίνακας ελέγχου',
   'nav.devices': 'Συσκευές',
+  'nav.map': 'Χάρτης',
   'nav.controls': 'Χειριστήρια',
   'nav.protocols': 'Πρωτόκολλα',
   'nav.gateway': 'Πύλη',
@@ -2720,6 +2721,19 @@ const el: Dict = {
   'intl.chooseLanguage': 'Επιλέξτε τη γλώσσα σας',
   'intl.daytime': 'Ημέρα',
   'intl.nighttime': 'Νύχτα',
+  'view.map.title': 'Διαδραστικός χάρτης',
+  'view.map.subtitle': 'Θέση σε πραγματικό χρόνο όλων των συνδεδεμένων συσκευών του στόλου σας',
+  'view.map.filter.all': 'Όλα',
+  'view.map.filter.online': 'Σε σύνδεση',
+  'view.map.filter.warning': 'Προειδοποίηση',
+  'view.map.filter.maintenance': 'Συντήρηση',
+  'view.map.filter.offline': 'Εκτός σύνδεσης',
+  'view.map.detail.category': 'Κατηγορία',
+  'view.map.detail.protocol': 'Πρωτόκολλο',
+  'view.map.detail.status': 'Κατάσταση',
+  'view.map.detail.coords': 'Συντεταγμένες',
+  'view.map.detail.controlNote': 'Ανοίξτε τις λεπτομέρειες της συσκευής για να στείλετε εντολές — ο χάρτης δεν παρακάμπτει ποτέ τον έλεγχο ταυτότητας και τους ελέγχους ασφαλείας.'
+
 };
 
 const he: Dict = {
