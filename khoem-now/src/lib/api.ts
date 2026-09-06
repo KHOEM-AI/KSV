@@ -598,3 +598,87 @@ export async function getAccountAuditTrail(accountId: string): Promise<AuditReco
 export async function getOrgAuditTrail(orgId: string): Promise<AuditRecord[]> {
   return apiFetch<AuditRecord[]>(`/audit/orgs/${orgId}`);
 }
+
+// ============================================================
+// Discovery & Pairing endpoints — mirrors API/discovery.ts exactly
+// ============================================================
+
+import type {
+  StartDiscoveryRequest,
+  StartDiscoveryResponse,
+  ListDiscoveredDevicesRequest,
+  ListDiscoveredDevicesResponse,
+  VerifyDiscoveredDeviceRequest,
+  VerifyDiscoveredDeviceResponse,
+  InitiatePairingRequest,
+  InitiatePairingResponse,
+  CompletePairingRequest,
+  CompletePairingResponse,
+  UnpairDeviceRequest,
+  UnpairDeviceResponse,
+  PairingSession,
+} from "../../API/discovery";
+
+export async function startDiscovery(req: StartDiscoveryRequest): Promise<StartDiscoveryResponse> {
+  return apiFetch<StartDiscoveryResponse>(`/discovery/start`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function stopDiscovery(discoveryJobId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/discovery/${discoveryJobId}/stop`, { method: "POST" });
+}
+
+export async function listDiscoveredDevices(req: ListDiscoveredDevicesRequest = {}): Promise<ListDiscoveredDevicesResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListDiscoveredDevicesResponse>(`/discovery/devices${params ? `?${params}` : ""}`);
+}
+
+export async function getDiscoveredDevice(discoveryId: string): Promise<import("../../API/discovery").DiscoveredDevice> {
+  return apiFetch(`/discovery/devices/${discoveryId}`);
+}
+
+export async function verifyDiscoveredDevice(req: VerifyDiscoveredDeviceRequest): Promise<VerifyDiscoveredDeviceResponse> {
+  return apiFetch<VerifyDiscoveredDeviceResponse>(`/discovery/devices/${req.discoveryId}/verify`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function dismissDiscoveredDevice(discoveryId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/discovery/devices/${discoveryId}`, { method: "DELETE" });
+}
+
+export async function initiatePairing(req: InitiatePairingRequest): Promise<InitiatePairingResponse> {
+  return apiFetch<InitiatePairingResponse>(`/pairing/initiate`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getPairingStatus(pairingSessionId: string): Promise<PairingSession> {
+  return apiFetch<PairingSession>(`/pairing/${pairingSessionId}`);
+}
+
+export async function completePairing(req: CompletePairingRequest): Promise<CompletePairingResponse> {
+  return apiFetch<CompletePairingResponse>(`/pairing/${req.pairingSessionId}/complete`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function cancelPairing(pairingSessionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/pairing/${pairingSessionId}/cancel`, { method: "POST" });
+}
+
+export async function unpairDevice(req: UnpairDeviceRequest): Promise<UnpairDeviceResponse> {
+  return apiFetch<UnpairDeviceResponse>(`/devices/${req.deviceId}/unpair`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function repairDevice(deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/repair`, { method: "POST" });
+}
