@@ -1633,6 +1633,7 @@ const fr: Dict = {
   'app.title': 'KSV Contrôle Sécurisé Universel',
   'nav.dashboard': 'Tableau de bord',
   'nav.devices': 'Appareils',
+  'nav.map': 'Carte',
   'nav.controls': 'Commandes',
   'nav.protocols': 'Protocoles',
   'nav.gateway': 'Passerelle',
@@ -1665,6 +1666,19 @@ const fr: Dict = {
   'intl.chooseLanguage': 'Choisissez votre langue',
   'intl.daytime': 'Jour',
   'intl.nighttime': 'Nuit',
+  'view.map.title': 'Carte interactive',
+  'view.map.subtitle': 'Localisation en temps réel de tous les appareils de votre flotte',
+  'view.map.filter.all': 'Tous',
+  'view.map.filter.online': 'En ligne',
+  'view.map.filter.warning': 'Avertissement',
+  'view.map.filter.maintenance': 'Maintenance',
+  'view.map.filter.offline': 'Hors ligne',
+  'view.map.detail.category': 'Catégorie',
+  'view.map.detail.protocol': 'Protocole',
+  'view.map.detail.status': 'Statut',
+  'view.map.detail.coords': 'Coordonnées',
+  'view.map.detail.controlNote': 'Ouvrez la fiche de l'''appareil pour envoyer des commandes — la carte ne contourne jamais l'''authentification ni les contrôles de sécurité.'
+
 };
 
 const es: Dict = {
