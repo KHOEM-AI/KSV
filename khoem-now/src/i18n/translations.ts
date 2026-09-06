@@ -2168,6 +2168,7 @@ const tr: Dict = {
   'app.title': 'KSV Evrensel Güvenli Kontrol',
   'nav.dashboard': 'Kontrol Paneli',
   'nav.devices': 'Cihazlar',
+  'nav.map': 'Harita',
   'nav.controls': 'Kontroller',
   'nav.protocols': 'Protokoller',
   'nav.gateway': 'Ağ Geçidi',
@@ -2200,6 +2201,19 @@ const tr: Dict = {
   'intl.chooseLanguage': 'Dilinizi seçin',
   'intl.daytime': 'Gündüz',
   'intl.nighttime': 'Gece',
+  'view.map.title': 'Etkileşimli Harita',
+  'view.map.subtitle': 'Filonuzdaki tüm bağlı cihazların gerçek zamanlı konumu',
+  'view.map.filter.all': 'Tümü',
+  'view.map.filter.online': 'Çevrimiçi',
+  'view.map.filter.warning': 'Uyarı',
+  'view.map.filter.maintenance': 'Bakım',
+  'view.map.filter.offline': 'Çevrimdışı',
+  'view.map.detail.category': 'Kategori',
+  'view.map.detail.protocol': 'Protokol',
+  'view.map.detail.status': 'Durum',
+  'view.map.detail.coords': 'Koordinatlar',
+  'view.map.detail.controlNote': 'Komut göndermek için cihaz detaylarını açın — harita kimlik doğrulamayı ve güvenlik kontrollerini asla atlamaz.'
+
 };
 
 const nl: Dict = {
