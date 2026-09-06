@@ -1998,6 +1998,7 @@ const ru: Dict = {
   'app.title': 'KSV Универсальное безопасное управление',
   'nav.dashboard': 'Панель управления',
   'nav.devices': 'Устройства',
+  'nav.map': 'Карта',
   'nav.controls': 'Управление',
   'nav.protocols': 'Протоколы',
   'nav.gateway': 'Шлюз',
@@ -2030,6 +2031,19 @@ const ru: Dict = {
   'intl.chooseLanguage': 'Выберите язык',
   'intl.daytime': 'День',
   'intl.nighttime': 'Ночь',
+  'view.map.title': 'Интерактивная карта',
+  'view.map.subtitle': 'Местоположение всех подключённых устройств в реальном времени',
+  'view.map.filter.all': 'Все',
+  'view.map.filter.online': 'В сети',
+  'view.map.filter.warning': 'Предупреждение',
+  'view.map.filter.maintenance': 'Обслуживание',
+  'view.map.filter.offline': 'Не в сети',
+  'view.map.detail.category': 'Категория',
+  'view.map.detail.protocol': 'Протокол',
+  'view.map.detail.status': 'Статус',
+  'view.map.detail.coords': 'Координаты',
+  'view.map.detail.controlNote': 'Откройте детали устройства для отправки команд — карта никогда не обходит проверку подлинности и безопасности.'
+
 };
 
 const hi: Dict = {
