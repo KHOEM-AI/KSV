@@ -1576,6 +1576,7 @@ const ko: Dict = {
   'app.title': 'KSV 유니버설 보안 제어',
   'nav.dashboard': '대시보드',
   'nav.devices': '장치',
+  'nav.map': '지도',
   'nav.controls': '제어',
   'nav.protocols': '프로토콜',
   'nav.gateway': '게이트웨이',
@@ -1608,6 +1609,19 @@ const ko: Dict = {
   'intl.chooseLanguage': '언어를 선택하세요',
   'intl.daytime': '낮',
   'intl.nighttime': '밤',
+  'view.map.title': '인터랙티브 지도',
+  'view.map.subtitle': '전체 플릿 장치의 실시간 위치',
+  'view.map.filter.all': '전체',
+  'view.map.filter.online': '온라인',
+  'view.map.filter.warning': '경고',
+  'view.map.filter.maintenance': '유지보수',
+  'view.map.filter.offline': '오프라인',
+  'view.map.detail.category': '카테고리',
+  'view.map.detail.protocol': '프로토콜',
+  'view.map.detail.status': '상태',
+  'view.map.detail.coords': '좌표',
+  'view.map.detail.controlNote': '명령은 장치 상세 페이지에서 전송하세요 — 지도에서는 권한 및 안전 검사를 우회하지 않습니다.'
+
 };
 
 const fr: Dict = {
