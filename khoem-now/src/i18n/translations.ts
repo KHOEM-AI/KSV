@@ -2428,6 +2428,7 @@ const ur: Dict = {
   'app.title': 'KSV یونیورسل سیکیور کنٹرول',
   'nav.dashboard': 'ڈیش بورڈ',
   'nav.devices': 'آلات',
+  'nav.map': 'نقشہ',
   'nav.controls': 'کنٹرولز',
   'nav.protocols': 'پروٹوکولز',
   'nav.gateway': 'گیٹ وے',
@@ -2460,6 +2461,19 @@ const ur: Dict = {
   'intl.chooseLanguage': 'اپنی زبان منتخب کریں',
   'intl.daytime': 'دن',
   'intl.nighttime': 'رات',
+  'view.map.title': 'انٹرایکٹو نقشہ',
+  'view.map.subtitle': 'آپ کے بیڑے میں تمام منسلک آلات کا حقیقی وقت کا مقام',
+  'view.map.filter.all': 'تمام',
+  'view.map.filter.online': 'آن لائن',
+  'view.map.filter.warning': 'انتباہ',
+  'view.map.filter.maintenance': 'دیکھ بھال',
+  'view.map.filter.offline': 'آف لائن',
+  'view.map.detail.category': 'قسم',
+  'view.map.detail.protocol': 'پروٹوکول',
+  'view.map.detail.status': 'حیثیت',
+  'view.map.detail.coords': 'نقاط',
+  'view.map.detail.controlNote': 'کمانڈز بھیجنے کے لیے ڈیوائس کی تفصیلات کھولیں — نقشہ کبھی بھی تصدیق اور حفاظتی جانچ کو نظرانداز نہیں کرتا۔'
+
 };
 
 const ms: Dict = {
