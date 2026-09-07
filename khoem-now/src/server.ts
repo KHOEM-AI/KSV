@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -528,6 +528,25 @@ async function main() {
         res.json({ account });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load account." });
+      }
+    }
+  );
+
+  // GET /api/notifications — list notifications for the authenticated user
+  app.get(
+    "/api/notifications",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const notifications = await Notification.find({ accountId: user.id })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+        const unreadCount = await Notification.countDocuments({ accountId: user.id, isRead: false });
+        res.json({ notifications, unreadCount, total: notifications.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load notifications." });
       }
     }
   );

@@ -333,3 +333,22 @@ const settingsSchema = new Schema(
 
 export const Settings = models.Settings || model("Settings", settingsSchema);
 
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+const notificationSchema = new Schema(
+  {
+    accountId: { type: ObjectId, ref: "User", required: true },
+    category: { type: String, required: true },
+    priority: { type: String, default: "normal" },
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+    isRead: { type: Boolean, default: false },
+    readAt: Date,
+  },
+  { timestamps: true }
+);
+
+export const Notification = models.Notification || model("Notification", notificationSchema);
