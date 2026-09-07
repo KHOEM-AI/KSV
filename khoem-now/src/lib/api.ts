@@ -1868,3 +1868,54 @@ export async function createMaintenanceSchedule(deviceId: string, intervalDays: 
 export async function getSchedulesDue(): Promise<MaintenanceSchedule[]> {
   return apiFetch<MaintenanceSchedule[]>(`/maintenance/schedules/due`);
 }
+
+// ============================================================
+// Device Pairing (session-based) endpoints — mirrors API/pairing.ts exactly
+// Distinct from the pairing types inside discovery.ts (different route shape).
+// ============================================================
+
+import type {
+  DevicePairingRequest,
+  PairingSession as PairingSessionV2,
+  DevicePairingRecord,
+  OwnershipTransferRequest,
+  UnpairRequest,
+} from "../../API/pairing";
+
+export async function startPairingSession(req: DevicePairingRequest): Promise<PairingSessionV2> {
+  return apiFetch<PairingSessionV2>(`/pairing/sessions`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function getPairingSessionV2(sessionId: string): Promise<PairingSessionV2> {
+  return apiFetch<PairingSessionV2>(`/pairing/sessions/${sessionId}`);
+}
+
+export async function verifyPairingOwner(sessionId: string, proof: string): Promise<PairingSessionV2> {
+  return apiFetch<PairingSessionV2>(`/pairing/sessions/${sessionId}/verify-owner`, {
+    method: "POST",
+    body: JSON.stringify({ proof }),
+  });
+}
+
+export async function confirmPairingV2(sessionId: string): Promise<PairingSessionV2> {
+  return apiFetch<PairingSessionV2>(`/pairing/sessions/${sessionId}/confirm`, { method: "POST" });
+}
+
+export async function cancelPairingSession(sessionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/pairing/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export async function listPairedDevices(): Promise<DevicePairingRecord[]> {
+  return apiFetch<DevicePairingRecord[]>(`/pairing/devices`);
+}
+
+export async function unpairDeviceV2(req: UnpairRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/pairing/devices/${req.deviceId}/unpair`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function transferDeviceOwnership(deviceId: string, toAccountId: string): Promise<OwnershipTransferRequest> {
+  return apiFetch<OwnershipTransferRequest>(`/pairing/devices/${deviceId}/transfer`, {
+    method: "POST",
+    body: JSON.stringify({ toAccountId }),
+  });
+}
