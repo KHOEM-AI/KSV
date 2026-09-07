@@ -513,6 +513,25 @@ async function main() {
     }
   );
 
+  // GET /api/identity/account — returns the authenticated user's own account
+  app.get(
+    "/api/identity/account",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const account = await User.findById(user.id).select("-passwordHash").lean();
+        if (!account) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ account });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load account." });
+      }
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
