@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -494,6 +494,21 @@ async function main() {
         res.json({ logs, total: logs.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit logs." });
+      }
+    }
+  );
+
+  // GET /api/protocols — list all protocol adapters
+  app.get(
+    "/api/protocols",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const protocols = await Protocol.find().lean();
+        res.json({ protocols, total: protocols.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load protocols." });
       }
     }
   );
