@@ -1578,3 +1578,52 @@ export async function getTokenHealth(tokenId: string): Promise<DeviceTokenHealth
 export async function cleanupPushTokens(): Promise<{ success: boolean; removedCount: number }> {
   return apiFetch(`/push/tokens/cleanup`, { method: "POST" });
 }
+
+// ============================================================
+// File & Media Storage endpoints — mirrors API/file-storage.ts exactly
+// ============================================================
+
+import type {
+  StoredFile,
+  UploadSession,
+  FileAccessGrant,
+  StorageQuota,
+  FileCategory,
+} from "../../API/file-storage";
+
+export async function initiateUpload(category: FileCategory, sizeBytes: number, ownerType: StoredFile["ownerType"], ownerId: string): Promise<UploadSession> {
+  return apiFetch<UploadSession>(`/files/upload/initiate`, {
+    method: "POST",
+    body: JSON.stringify({ category, sizeBytes, ownerType, ownerId }),
+  });
+}
+
+export async function completeUpload(uploadId: string, checksum: string): Promise<StoredFile> {
+  return apiFetch<StoredFile>(`/files/upload/complete`, {
+    method: "POST",
+    body: JSON.stringify({ uploadId, checksum }),
+  });
+}
+
+export async function downloadFile(fileId: string): Promise<Blob> {
+  const token = localStorage.getItem("ksv_access_token");
+  const res = await fetch(`${API_BASE}/files/${fileId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.blob();
+}
+
+export async function deleteFile(fileId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/files/${fileId}`, { method: "DELETE" });
+}
+
+export async function shareFile(fileId: string, granteeAccountId: string, expiresAt: string): Promise<FileAccessGrant> {
+  return apiFetch<FileAccessGrant>(`/files/${fileId}/share`, {
+    method: "POST",
+    body: JSON.stringify({ granteeAccountId, expiresAt }),
+  });
+}
+
+export async function getStorageQuota(): Promise<StorageQuota> {
+  return apiFetch<StorageQuota>(`/files/storage/quota`);
+}
