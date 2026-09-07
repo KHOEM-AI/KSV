@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -435,6 +435,26 @@ async function main() {
         res.json({ organizations: [org] });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
+      }
+    }
+  );
+
+  // GET /api/safety/rules — list safety rules for the user's organization
+  app.get(
+    "/api/safety/rules",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const rules = await SafetyRule.find({ organizationId: user.organizationId }).lean();
+        res.json({ rules, total: rules.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety rules." });
       }
     }
   );
