@@ -1389,3 +1389,49 @@ export async function listAdminActions(fromTime?: string, toTime?: string): Prom
   const qs = params.toString();
   return apiFetch<AdminActionLog[]>(`/admin/actions${qs ? `?${qs}` : ""}`);
 }
+
+// ============================================================
+// AI Orchestration endpoints — mirrors API/ai-orchestration.ts exactly
+// ============================================================
+
+import type {
+  AIInterpretationRequest,
+  AIInterpretationResult,
+  AIConversationSession,
+  AIModelProfile,
+} from "../../API/ai-orchestration";
+
+export async function interpretCommand(req: AIInterpretationRequest): Promise<AIInterpretationResult> {
+  return apiFetch<AIInterpretationResult>(`/ai/interpret`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function confirmInterpretation(requestId: string, chosenIndex: number): Promise<AIInterpretationResult> {
+  return apiFetch<AIInterpretationResult>(`/ai/interpret/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ requestId, chosenIndex }),
+  });
+}
+
+export async function getAISession(sessionId: string): Promise<AIConversationSession> {
+  return apiFetch<AIConversationSession>(`/ai/sessions/${sessionId}`);
+}
+
+export async function deleteAISession(sessionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/ai/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export async function listAIModels(): Promise<AIModelProfile[]> {
+  return apiFetch<AIModelProfile[]>(`/ai/models`);
+}
+
+export async function toggleAIModel(modelId: string, isEnabled: boolean): Promise<{ success: boolean }> {
+  return apiFetch(`/ai/models/${modelId}/enable`, { method: "POST", body: JSON.stringify({ isEnabled }) });
+}
+
+export async function getAIUsage(): Promise<unknown> {
+  return apiFetch(`/ai/usage`);
+}
+
+export async function submitAIFeedback(requestId: string, wasCorrect: boolean, comment?: string): Promise<{ success: boolean }> {
+  return apiFetch(`/ai/feedback`, { method: "POST", body: JSON.stringify({ requestId, wasCorrect, comment }) });
+}
