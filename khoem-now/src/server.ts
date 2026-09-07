@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -455,6 +455,21 @@ async function main() {
         res.json({ rules, total: rules.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety rules." });
+      }
+    }
+  );
+
+  // GET /api/gateways — list all gateways
+  app.get(
+    "/api/gateways",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const gateways = await Gateway.find().lean();
+        res.json({ gateways, total: gateways.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
       }
     }
   );
