@@ -100,6 +100,19 @@ export async function getCommandStatus(commandId: string): Promise<CommandHistor
   return apiFetch(`/commands/${commandId}`);
 }
 
+export interface RecentCommandEntry {
+  _id: string;
+  deviceId: { _id: string; name: string } | string;
+  userId: { _id: string; email: string } | string | null;
+  type: string;
+  status: string;
+  createdAt: string;
+}
+
+export async function listRecentCommands(limit = 10): Promise<{ commands: RecentCommandEntry[] }> {
+  return apiFetch(`/commands/recent?limit=${limit}`);
+}
+
 // ============================================================
 // Authentication endpoints — mirrors API/authentication.ts exactly
 // ============================================================
@@ -1109,4 +1122,86 @@ export async function listPushTokens(): Promise<PushDeviceToken[]> {
 
 export async function removePushToken(tokenId: string): Promise<{ success: boolean }> {
   return apiFetch(`/notifications/push-tokens/${tokenId}`, { method: "DELETE" });
+}
+
+// ============================================================
+// Automation endpoints — mirrors API/automation.ts exactly
+// ============================================================
+
+import type {
+  CreateRuleRequest,
+  UpdateRuleRequest,
+  TestRuleRequest,
+  TestRuleResponse,
+  CreateSceneRequest,
+  ActivateSceneRequest,
+  ListAutomationLogsRequest,
+  AutomationRule,
+  AutomationScene,
+  AutomationLog,
+} from "../../API/automation";
+
+export async function createAutomationRule(req: CreateRuleRequest): Promise<AutomationRule> {
+  return apiFetch<AutomationRule>(`/automation/rules`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listAutomationRules(orgId?: string): Promise<AutomationRule[]> {
+  return apiFetch<AutomationRule[]>(`/automation/rules${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getAutomationRule(ruleId: string): Promise<AutomationRule> {
+  return apiFetch<AutomationRule>(`/automation/rules/${ruleId}`);
+}
+
+export async function updateAutomationRule(ruleId: string, req: UpdateRuleRequest): Promise<AutomationRule> {
+  return apiFetch<AutomationRule>(`/automation/rules/${ruleId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteAutomationRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/automation/rules/${ruleId}`, { method: "DELETE" });
+}
+
+export async function enableAutomationRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/automation/rules/${ruleId}/enable`, { method: "POST" });
+}
+
+export async function disableAutomationRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/automation/rules/${ruleId}/disable`, { method: "POST" });
+}
+
+export async function testAutomationRule(req: TestRuleRequest): Promise<TestRuleResponse> {
+  return apiFetch<TestRuleResponse>(`/automation/rules/${req.ruleId}/test`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function createScene(req: CreateSceneRequest): Promise<AutomationScene> {
+  return apiFetch<AutomationScene>(`/automation/scenes`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listScenes(orgId?: string): Promise<AutomationScene[]> {
+  return apiFetch<AutomationScene[]>(`/automation/scenes${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getScene(sceneId: string): Promise<AutomationScene> {
+  return apiFetch<AutomationScene>(`/automation/scenes/${sceneId}`);
+}
+
+export async function updateScene(sceneId: string, req: CreateSceneRequest): Promise<AutomationScene> {
+  return apiFetch<AutomationScene>(`/automation/scenes/${sceneId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteScene(sceneId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/automation/scenes/${sceneId}`, { method: "DELETE" });
+}
+
+export async function activateScene(req: ActivateSceneRequest): Promise<{ success: boolean; commandsIssued: number }> {
+  return apiFetch(`/automation/scenes/${req.sceneId}/activate`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listAutomationLogs(req: ListAutomationLogsRequest = {}): Promise<{ logs: AutomationLog[]; total: number }> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch(`/automation/logs${params ? `?${params}` : ""}`);
+}
+
+export async function getAutomationLog(logId: string): Promise<AutomationLog> {
+  return apiFetch<AutomationLog>(`/automation/logs/${logId}`);
 }
