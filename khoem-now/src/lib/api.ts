@@ -1686,3 +1686,55 @@ export async function startExportJob(dataScope: string): Promise<ExportJob> {
 export async function getExportJob(jobId: string): Promise<ExportJob> {
   return apiFetch<ExportJob>(`/export/jobs/${jobId}`);
 }
+
+// ============================================================
+// Integration & Webhook endpoints — mirrors API/integration-webhook.ts exactly
+// ============================================================
+
+import type {
+  WebhookSubscription,
+  WebhookDelivery,
+  IntegrationConnector,
+  IntegrationProvider,
+} from "../../API/integration-webhook";
+
+export async function createWebhook(eventTypes: string[], targetUrl: string): Promise<WebhookSubscription> {
+  return apiFetch<WebhookSubscription>(`/webhooks`, {
+    method: "POST",
+    body: JSON.stringify({ eventTypes, targetUrl }),
+  });
+}
+
+export async function listWebhooks(): Promise<WebhookSubscription[]> {
+  return apiFetch<WebhookSubscription[]>(`/webhooks`);
+}
+
+export async function updateWebhook(webhookId: string, eventTypes?: string[], targetUrl?: string): Promise<WebhookSubscription> {
+  return apiFetch<WebhookSubscription>(`/webhooks/${webhookId}`, {
+    method: "PUT",
+    body: JSON.stringify({ eventTypes, targetUrl }),
+  });
+}
+
+export async function deleteWebhook(webhookId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/webhooks/${webhookId}`, { method: "DELETE" });
+}
+
+export async function getWebhookDeliveries(webhookId: string): Promise<WebhookDelivery[]> {
+  return apiFetch<WebhookDelivery[]>(`/webhooks/${webhookId}/deliveries`);
+}
+
+export async function testWebhook(webhookId: string): Promise<{ success: boolean; responseCode?: number }> {
+  return apiFetch(`/webhooks/${webhookId}/test`, { method: "POST" });
+}
+
+export async function connectIntegration(provider: IntegrationProvider, authCode: string): Promise<IntegrationConnector> {
+  return apiFetch<IntegrationConnector>(`/integrations/connect`, {
+    method: "POST",
+    body: JSON.stringify({ provider, authCode }),
+  });
+}
+
+export async function disconnectIntegration(connectorId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/integrations/${connectorId}/disconnect`, { method: "DELETE" });
+}
