@@ -1265,3 +1265,43 @@ export async function getBackupCodeStatus(): Promise<BackupCodeStatusResponse> {
 export async function revokeBackupCodes(): Promise<{ success: boolean }> {
   return apiFetch(`/recovery/backup-codes/revoke`, { method: "POST" });
 }
+
+// ============================================================
+// International endpoints — mirrors API/international.ts exactly
+// ============================================================
+
+import type {
+  CountryRecord,
+  ResolvedLocaleContext,
+} from "../../API/international";
+
+export async function listCountries(): Promise<CountryRecord[]> {
+  return apiFetch<CountryRecord[]>(`/international/countries`);
+}
+
+export async function getCountry(code: string): Promise<CountryRecord> {
+  return apiFetch<CountryRecord>(`/international/countries/${code}`);
+}
+
+export async function resolveLocale(input: {
+  deviceTimeZone?: string | null;
+  headerTimeZone?: string | null;
+  countryCode?: string | null;
+  languageCode?: string | null;
+}): Promise<ResolvedLocaleContext> {
+  return apiFetch<ResolvedLocaleContext>(`/international/resolve-locale`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateAccountLocale(req: {
+  preferredCountry?: string;
+  preferredLanguage?: string;
+  preferredTimeZone?: string;
+}): Promise<{ success: boolean }> {
+  return apiFetch(`/international/account/locale`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
