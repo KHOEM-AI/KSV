@@ -1305,3 +1305,87 @@ export async function updateAccountLocale(req: {
     body: JSON.stringify(req),
   });
 }
+
+// ============================================================
+// Administration endpoints — mirrors API/administration.ts exactly
+// ============================================================
+
+import type {
+  GrantAdminRoleRequest,
+  RevokeAdminRoleRequest,
+  SuspendAccountAdminRequest,
+  SearchAccountsRequest,
+  SearchAccountsResponse,
+  UpdateFeatureFlagRequest,
+  ImpersonateSessionRequest,
+  ImpersonateSessionResponse,
+  AdminUser,
+  SystemHealthReport,
+  PlatformStatistics,
+  FeatureFlag,
+  AdminActionLog,
+} from "../../API/administration";
+
+export async function grantAdminRole(req: GrantAdminRoleRequest): Promise<AdminUser> {
+  return apiFetch<AdminUser>(`/admin/roles/grant`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function revokeAdminRole(req: RevokeAdminRoleRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/admin/roles/revoke`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listAdmins(): Promise<AdminUser[]> {
+  return apiFetch<AdminUser[]>(`/admin/roles`);
+}
+
+export async function searchAccounts(req: SearchAccountsRequest = {}): Promise<SearchAccountsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<SearchAccountsResponse>(`/admin/accounts/search${params ? `?${params}` : ""}`);
+}
+
+export async function getAccountDetail(accountId: string): Promise<SearchAccountsResponse["accounts"][0]> {
+  return apiFetch(`/admin/accounts/${accountId}`);
+}
+
+export async function suspendAccountAdmin(req: SuspendAccountAdminRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/admin/accounts/${req.targetAccountId}/suspend`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function reinstateAccount(accountId: string, reason: string): Promise<{ success: boolean }> {
+  return apiFetch(`/admin/accounts/${accountId}/reinstate`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
+export async function impersonateSession(req: ImpersonateSessionRequest): Promise<ImpersonateSessionResponse> {
+  return apiFetch<ImpersonateSessionResponse>(`/admin/accounts/${req.targetAccountId}/impersonate`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function suspendOrganizationAdmin(orgId: string, reason: string): Promise<{ success: boolean }> {
+  return apiFetch(`/admin/organizations/${orgId}/suspend`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
+export async function getSystemHealth(): Promise<SystemHealthReport> {
+  return apiFetch<SystemHealthReport>(`/admin/system/health`);
+}
+
+export async function getPlatformStats(): Promise<PlatformStatistics> {
+  return apiFetch<PlatformStatistics>(`/admin/system/stats`);
+}
+
+export async function listFeatureFlags(): Promise<FeatureFlag[]> {
+  return apiFetch<FeatureFlag[]>(`/admin/feature-flags`);
+}
+
+export async function updateFeatureFlag(req: UpdateFeatureFlagRequest): Promise<FeatureFlag> {
+  return apiFetch<FeatureFlag>(`/admin/feature-flags/${req.flagKey}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function listAdminActions(fromTime?: string, toTime?: string): Promise<AdminActionLog[]> {
+  const params = new URLSearchParams();
+  if (fromTime) params.set("fromTime", fromTime);
+  if (toTime) params.set("toTime", toTime);
+  const qs = params.toString();
+  return apiFetch<AdminActionLog[]>(`/admin/actions${qs ? `?${qs}` : ""}`);
+}
