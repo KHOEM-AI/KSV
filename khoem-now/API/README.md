@@ -1291,70 +1291,64 @@ Authenticate → Authorize → Device Capability → Safety → Execute → Audi
 
 ## 🛠️ ការប្រើប្រាស់ជាក់ស្តែង (Real Implementation Status)
 
-| ស្រទាប់ | ស្ថានភាព |
-|---|---|
-| **Types + Route definitions** (27 files) | ✅ សរសេររួច — ជា spec/reference layer |
-| **Security core ជាក់ស្តែង** (`src/core/`) | ✅ auth.middleware.ts, rbac.policy.ts, encryption.util.ts, audit.log.ts, rate-limiter.ts |
-| **Safety Engine ជាក់ស្តែង** (`src/core/safety/`) | ✅ safety.engine.ts (4 rule evaluators built-in) |
-| **Database models** (`src/infrastructure/database/`) | ✅ models.ts (Mongoose), connection.ts |
-| **Command route ជាក់ស្តែង** (`src/modules/command/`, `src/server.ts`) | ✅ ភ្ជាប់ auth+rbac+ratelimit+safety+audit ចូលគ្នា |
-| **Frontend Auth helper** (`src/lib/auth.ts`) | ✅ session/token storage, role check |
-| **Frontend Realtime** (`src/lib/websocket.ts`) | ✅ live device/command updates |
-| **Frontend API client** (`src/lib/api.ts`) | ✅ **16/27 domain ភ្ជាប់រួច** — សូមមើលបញ្ជីខាងក្រោម |
-| **ControlsView.tsx** | ✅ 6 control ទាំងអស់ (vault-lock, hvac-temp, press-estop, robot-speed, east-barrier, cold-storage) ភ្ជាប់ពិតទៅ `dispatchCommand()` ជាមួយ command log ស្វ័យប្រវត្តិ |
-| **DoorControlCard.tsx** | ✅ Reference pattern ប្រើ `useDeviceCommand()` hook |
+**គោលការណ៍**: ឯកសារនេះត្រូវធ្វើបច្ចុប្បន្នភាពរាល់ពេលកែ `src/lib/api.ts` ឬបន្ថែម domain ថ្មី — ដើម្បីឲ្យ developer/AI ថ្មីអានតែឯកសារនេះក៏យល់ស្ថានភាពពិតភ្លាមៗ ដោយមិនចាំបាច់ run command ឆែកឡើងវិញ។
 
-### ✅ 16/27 Domain ដែលភ្ជាប់ចូល `src/lib/api.ts` រួចហើយ
+### ✅ ភ្ជាប់ពិត 26/26 Domain Endpoint (100%) — `src/lib/api.ts`
 
-**18 Domain ដើម (ចប់ទាំងអស់ 100%)**:
-1. `command.ts` ✅
-2. `authentication.ts` ✅
-3. `identity.ts` ✅
-4. `authorization.ts` ✅
-5. `device.ts` ✅
-6. `safety.ts` ✅
-7. `audit.ts` ✅
-8. `discovery.ts` (+ pairing) ✅
-9. `gateway.ts` ✅
-10. `protocol.ts` ✅
-11. `organization.ts` ✅ (ចំណាំ៖ ឯកសារប្រភព `API/organization.ts` មាន duplicate export `ORGANIZATION_SECURITY_RULES` — មិនប៉ះពាល់ typecheck ព្រោះមិន import object នេះ ប៉ុន្តែគួរកែប្រភព)
-12. `security.ts` ✅
-13. `notification.ts` ✅
-14. `automation.ts` ✅
-15. `account-recovery.ts` ✅
-16. `international.ts` ✅
-17. `administration.ts` ✅
+ឯកសារ `khoem-now/src/lib/api.ts` មាន typed fetch function សម្រាប់ **គ្រប់ domain endpoint ទាំង 26** (27 ដកចេញ `index.ts` ព្រោះជា re-export file):
 
-*(កំណត់ចំណាំ៖ លេខរាប់ 18 ដើម ក្លាយជា 17 ដោយសារ pairing merge ចូល discovery — ដូច្នេះ 17/17 ចប់ 100%)*
-
-### ⏳ 9 Domain Extension ដែលមិនទាន់ភ្ជាប់ (មាន Types/spec ប៉ុណ្ណោះ)
-
-| # | ឯកសារ | ស្ថានភាព |
+| ក្រុម | Domain | ស្ថានភាព |
 |---|---|---|
-| 19 | `ai-orchestration.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 20 | `billing-subscription.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 21 | `analytics-telemetry.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 22 | `notification-push.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 23 | `file-storage.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 24 | `reporting-export.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 25 | `integration-webhook.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 26 | `geolocation-map.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
-| 27 | `maintenance-ticketing.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| Identity & Access | identity, authentication, account-recovery, authorization, pairing | ✅ ទាំង 5 |
+| Organization & Device | organization, device, discovery(+pairing legacy), protocol | ✅ ទាំង 4 |
+| Command & Control | gateway, command, safety, automation | ✅ ទាំង 4 |
+| Security & Compliance | security, audit, notification, international | ✅ ទាំង 4 |
+| Administration | administration | ✅ |
+| Extension (9) | ai-orchestration, billing-subscription, analytics-telemetry, notification-push, file-storage, reporting-export, integration-webhook, geolocation-map, maintenance-ticketing | ✅ ទាំង 9 |
 
-### ⏳ នៅសល់ត្រូវធ្វើ (Express Route ពិតប្រាកដ)
+សរុប: **26/26 domain — 100% ភ្ជាប់**។ `npx tsc --noEmit` ជាប់ស្អាតគ្មាន error។
 
-Route ជាក់ស្តែងសម្រាប់ 26 domain ក្រៅពី command — មានតែ Types/spec, មិនទាន់មាន Express route ក្នុង `src/server.ts` ឬ `src/modules/` (លើកលែង command.routes.ts)។
+### ✅ Backend ជាក់ស្តែងដែលដំណើរការ
+
+| ឯកសារ | ទីតាំង | ស្ថានភាព |
+|---|---|---|
+| Auth middleware | `src/core/auth/auth.middleware.ts` | ✅ |
+| RBAC policy | `src/core/auth/rbac.policy.ts` | ✅ |
+| Rate limiter | `src/core/security/rate-limiter.ts` | ✅ |
+| Safety Engine | `src/core/safety/safety.engine.ts` | ✅ (4 rule evaluators) |
+| Audit log | `src/core/security/audit.log.ts` | ✅ |
+| Database models | `src/infrastructure/database/models.ts` | ✅ Mongoose (User, Device, Command, Organization ។ល។) |
+| Database connection | `src/infrastructure/database/connection.ts` | ✅ |
+| Command route (ពិត) | `src/server.ts` → `POST /api/devices/:id/commands` | ✅ auth+rbac+ratelimit+safety+audit ភ្ជាប់ពេញលេញ |
+| Login route (ពិត) | `src/server.ts` → `POST /api/auth/login` | ✅ bcrypt + JWT |
+
+**⚠️ សំខាន់**: Backend base URL ពិតគឺ `/api` (មិនមែន `/api/v1` ដូចក្នុង spec ខាងលើ) — `api.ts` បាន sync ត្រឹមត្រូវរួចហើយ។ Field name command គឺ `commandType` មិនមែន `type`។
+
+### ✅ Frontend ជាក់ស្តែងដែលដំណើរការ
+
+| ឯកសារ | ស្ថានភាព |
+|---|---|
+| `src/lib/api.ts` | ✅ 26/26 domain, `API_BASE = "/api"` |
+| `src/lib/auth.ts` | ✅ session/token storage (`ksv_access_token`), role check |
+| `src/lib/websocket.ts` | ✅ realtime device/command updates |
+| `src/hooks/useDeviceCommand.ts` | ✅ hook គ្រប់គ្រង loading/blocked/error state |
+| `src/views/ControlsView.tsx` | ✅ **6/6 control** (vault-lock, hvac-temp, press-estop, robot-speed, east-barrier, cold-storage) ភ្ជាប់ពិតទៅ `dispatchCommand()` + command history log |
+| `src/components/DoorControlCard.tsx` | ✅ Reference pattern component ប្រើ `useDeviceCommand()` |
+
+### ⏳ នៅសល់ត្រូវធ្វើ (ជំហានបន្ទាប់សម្រាប់ developer)
+
+1. **Express route ពិតប្រាកដ** សម្រាប់ 25 domain ក្រៅពី command — បច្ចុប្បន្នមានតែ Types/spec ក្នុង `API/*.ts`, `src/server.ts` មិនទាន់មាន route ដូចជា `/api/devices`, `/api/safety/*`, `/api/organizations` ។ល។
+2. **Capability check** (ជំហានទី 4 ក្នុង Command Pipeline 9-ជំហាន) — command route បច្ចុប្បន្នរំលងជំហាននេះ
+3. **Human Confirmation** សម្រាប់ high-risk command (ជំហានទី 6) — មិនទាន់ implement
+4. Views ផ្សេងក្រៅពី Dashboard/Controls (Devices, Protocols, Gateway, Security, Safety, Audit, Organization, International, Certificates, Settings) — ត្រូវឆែកម្តងមួយថាហៅ `api.ts` ពិតឬនៅ ឬនៅតែ hardcoded mock data
+
+### 📌 Known Issues
+
+- `API/organization.ts`: មាន `ORGANIZATION_SECURITY_RULES` export ២ដង (មិនប៉ះពាល់ `api.ts` ព្រោះមិន import object នេះ)
+- `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` — ត្រូវប្រយ័ត្នពេល import object ទាំងមូល
+- `pairing.ts` (session-based, route `/pairing/sessions/*`) ខុសពី pairing types ក្នុង `discovery.ts` (route `/pairing/initiate`) — ទាំងពីរត្រូវបានភ្ជាប់ដាច់ដោយឡែកក្នុង `api.ts` ដោយប្រើ alias `PairingSessionV2` ជៀសវាង naming conflict
 
 ---
 
-## 📌 ចំណុចត្រូវប្រយ័ត្ន (Known Issues)
-
-- **`API/organization.ts`**: មាន `ORGANIZATION_SECURITY_RULES` ប្រកាសពីរដង (duplicate export) — មិនប៉ះពាល់ `api.ts` ព្រោះមិន import object នេះ ប៉ុន្តែគួរកែឯកសារប្រភពនៅពេលក្រោយ
-- **`pairing.ts` vs `discovery.ts`**: `pairing.ts` merge ចូល `discovery.ts` រួចហើយ — `api.ts` ប្រើពី `discovery.ts` ត្រង់ៗ
-- **`ActionType`** ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` — មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import រួមគ្នា ប៉ុន្តែត្រូវប្រយ័ត្នពេលភ្ជាប់ domain extension ថ្មី
-- Command Pipeline ជាក់ស្តែងឥឡូវអនុវត្តតែ 6 ជំហាន (Authenticate→Authorize→RateLimit→Safety→Execute→Audit) — ខ្វះ **Capability check** និង **Human Confirmation** សម្រាប់ high-risk commands
-
----
-
-*ឯកសារនេះជា Master Index នៃ KSV API — ត្រូវធ្វើបច្ចុប្បន្នភាពរាល់ពេលមាន domain ថ្មី ឬផ្លាស់ប្តូររចនាសម្ព័ន្ធ*
+*ធ្វើបច្ចុប្បន្នភាពចុងក្រោយ: 26/27 ឯកសារ domain ភ្ជាប់ពេញលេញទៅ `src/lib/api.ts` (index.ts មិនរាប់បញ្ចូល)*
 *ទីតាំង: `khoem-now/API/README.md`*
