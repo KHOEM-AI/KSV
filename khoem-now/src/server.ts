@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -470,6 +470,30 @@ async function main() {
         res.json({ gateways, total: gateways.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
+      }
+    }
+  );
+
+  // GET /api/audit/logs — list audit log entries for the user's organization
+  app.get(
+    "/api/audit/logs",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const limit = Math.min(Number(req.query.limit) || 50, 200);
+      try {
+        const logs = await AuditLog.find({ organizationId: user.organizationId })
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .lean();
+        res.json({ logs, total: logs.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit logs." });
       }
     }
   );
