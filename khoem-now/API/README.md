@@ -1293,23 +1293,66 @@ Authenticate → Authorize → Device Capability → Safety → Execute → Audi
 
 | ស្រទាប់ | ស្ថានភាព |
 |---|---|
-| **Types + Route definitions** (27 files ខាងលើ) | ✅ សរសេររួច — ជា spec/reference layer |
+| **Types + Route definitions** (27 files) | ✅ សរសេររួច — ជា spec/reference layer |
 | **Security core ជាក់ស្តែង** (`src/core/`) | ✅ auth.middleware.ts, rbac.policy.ts, encryption.util.ts, audit.log.ts, rate-limiter.ts |
 | **Safety Engine ជាក់ស្តែង** (`src/core/safety/`) | ✅ safety.engine.ts (4 rule evaluators built-in) |
-| **Database models** (`src/infrastructure/database/`) | ✅ models.ts (Mongoose — User, Device, Command, Organization ។ល។) |
-| **Command route ជាក់ស្តែង** (`src/modules/command/`) | ✅ command.routes.ts (ភ្ជាប់ auth+rbac+safety+audit ចូលគ្នា) |
-| **Route ជាក់ស្តែងសម្រាប់ 26 domain ដទៃ** | ⏳ មិនទាន់ — មានតែ Types/spec, មិនទាន់មាន Express route ពិតប្រាកដ |
-| **Frontend API client** (`src/lib/api.ts`) | ✅ 12/27 domain ភ្ជាប់រួច (command, authentication, identity, authorization, device, safety, audit, discovery+pairing, gateway, protocol, organization, security, notification) — vault-lock button ក្នុង `ControlsView.tsx` ភ្ជាប់ពិតទៅ `dispatchCommand()`, ១១ ប៊ូតុងផ្សេងទៀតនៅ mockup |
+| **Database models** (`src/infrastructure/database/`) | ✅ models.ts (Mongoose), connection.ts |
+| **Command route ជាក់ស្តែង** (`src/modules/command/`, `src/server.ts`) | ✅ ភ្ជាប់ auth+rbac+ratelimit+safety+audit ចូលគ្នា |
+| **Frontend Auth helper** (`src/lib/auth.ts`) | ✅ session/token storage, role check |
+| **Frontend Realtime** (`src/lib/websocket.ts`) | ✅ live device/command updates |
+| **Frontend API client** (`src/lib/api.ts`) | ✅ **16/27 domain ភ្ជាប់រួច** — សូមមើលបញ្ជីខាងក្រោម |
+| **ControlsView.tsx** | ✅ 6 control ទាំងអស់ (vault-lock, hvac-temp, press-estop, robot-speed, east-barrier, cold-storage) ភ្ជាប់ពិតទៅ `dispatchCommand()` ជាមួយ command log ស្វ័យប្រវត្តិ |
+| **DoorControlCard.tsx** | ✅ Reference pattern ប្រើ `useDeviceCommand()` hook |
 
-**សេចក្តីសង្ខេប**៖ ២៧ ឯកសារខាងលើគឺជា **ផែនទី/blueprint ពេញលេញ** នៃ API ទាំងមូល។ ក្នុងចំណោមនោះ មានតែ **Security core + Safety Engine + Command route** ប៉ុណ្ណោះដែលក្លាយជាកូដ **ដំណើរការពិតប្រាកដ** រួចហើយ។ ២៦ domain ដទៃទៀត (Identity, Device, Organization ។ល។) នៅសល់ជាជំហានបន្ទាប់ត្រូវប្តូរពី "Types spec" ទៅជា "Express route ពិត" ដូច `command.routes.ts`។
+### ✅ 16/27 Domain ដែលភ្ជាប់ចូល `src/lib/api.ts` រួចហើយ
+
+**18 Domain ដើម (ចប់ទាំងអស់ 100%)**:
+1. `command.ts` ✅
+2. `authentication.ts` ✅
+3. `identity.ts` ✅
+4. `authorization.ts` ✅
+5. `device.ts` ✅
+6. `safety.ts` ✅
+7. `audit.ts` ✅
+8. `discovery.ts` (+ pairing) ✅
+9. `gateway.ts` ✅
+10. `protocol.ts` ✅
+11. `organization.ts` ✅ (ចំណាំ៖ ឯកសារប្រភព `API/organization.ts` មាន duplicate export `ORGANIZATION_SECURITY_RULES` — មិនប៉ះពាល់ typecheck ព្រោះមិន import object នេះ ប៉ុន្តែគួរកែប្រភព)
+12. `security.ts` ✅
+13. `notification.ts` ✅
+14. `automation.ts` ✅
+15. `account-recovery.ts` ✅
+16. `international.ts` ✅
+17. `administration.ts` ✅
+
+*(កំណត់ចំណាំ៖ លេខរាប់ 18 ដើម ក្លាយជា 17 ដោយសារ pairing merge ចូល discovery — ដូច្នេះ 17/17 ចប់ 100%)*
+
+### ⏳ 9 Domain Extension ដែលមិនទាន់ភ្ជាប់ (មាន Types/spec ប៉ុណ្ណោះ)
+
+| # | ឯកសារ | ស្ថានភាព |
+|---|---|---|
+| 19 | `ai-orchestration.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 20 | `billing-subscription.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 21 | `analytics-telemetry.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 22 | `notification-push.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 23 | `file-storage.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 24 | `reporting-export.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 25 | `integration-webhook.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 26 | `geolocation-map.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+| 27 | `maintenance-ticketing.ts` | ⏳ Types/spec ប៉ុណ្ណោះ |
+
+### ⏳ នៅសល់ត្រូវធ្វើ (Express Route ពិតប្រាកដ)
+
+Route ជាក់ស្តែងសម្រាប់ 26 domain ក្រៅពី command — មានតែ Types/spec, មិនទាន់មាន Express route ក្នុង `src/server.ts` ឬ `src/modules/` (លើកលែង command.routes.ts)។
 
 ---
 
 ## 📌 ចំណុចត្រូវប្រយ័ត្ន (Known Issues)
 
-- **`pairing.ts` vs `discovery.ts`**: ឯកសារ blueprint ចាស់ចែងថា pairing merge ចូល discovery — ត្រូវផ្ទៀងផ្ទាត់ថាតើ `pairing.ts` ជា file ស្ទួន ឬការសម្រេចចិត្តថ្មីញែកចេញ
-- **`ActionType`** ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` — មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import រួមគ្នា ប៉ុន្តែត្រូវប្រយ័ត្នពេលភ្ជាប់
-- Command Pipeline ជាក់ស្តែងឥឡូវអនុវត្តតែ 6 ជំហាន (Authenticate→Authorize→RateLimit→Safety→Execute→Audit) — ខ្វះ **Capability check** (ជំហានទី 4 ក្នុង spec 9-ជំហាន) និង **Human Confirmation** (ជំហានទី 6 សម្រាប់ high-risk commands)
+- **`API/organization.ts`**: មាន `ORGANIZATION_SECURITY_RULES` ប្រកាសពីរដង (duplicate export) — មិនប៉ះពាល់ `api.ts` ព្រោះមិន import object នេះ ប៉ុន្តែគួរកែឯកសារប្រភពនៅពេលក្រោយ
+- **`pairing.ts` vs `discovery.ts`**: `pairing.ts` merge ចូល `discovery.ts` រួចហើយ — `api.ts` ប្រើពី `discovery.ts` ត្រង់ៗ
+- **`ActionType`** ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` — មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import រួមគ្នា ប៉ុន្តែត្រូវប្រយ័ត្នពេលភ្ជាប់ domain extension ថ្មី
+- Command Pipeline ជាក់ស្តែងឥឡូវអនុវត្តតែ 6 ជំហាន (Authenticate→Authorize→RateLimit→Safety→Execute→Audit) — ខ្វះ **Capability check** និង **Human Confirmation** សម្រាប់ high-risk commands
 
 ---
 
