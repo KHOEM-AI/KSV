@@ -1435,3 +1435,65 @@ export async function getAIUsage(): Promise<unknown> {
 export async function submitAIFeedback(requestId: string, wasCorrect: boolean, comment?: string): Promise<{ success: boolean }> {
   return apiFetch(`/ai/feedback`, { method: "POST", body: JSON.stringify({ requestId, wasCorrect, comment }) });
 }
+
+// ============================================================
+// Billing & Subscription endpoints — mirrors API/billing-subscription.ts exactly
+// ============================================================
+
+import type {
+  SubscriptionPlan,
+  OrganizationSubscription,
+  Invoice,
+  PaymentMethod,
+  UsageMeter,
+  PlanTier,
+} from "../../API/billing-subscription";
+
+export async function listBillingPlans(): Promise<SubscriptionPlan[]> {
+  return apiFetch<SubscriptionPlan[]>(`/billing/plans`);
+}
+
+export async function createSubscription(planId: string): Promise<OrganizationSubscription> {
+  return apiFetch<OrganizationSubscription>(`/billing/subscriptions`, {
+    method: "POST",
+    body: JSON.stringify({ planId }),
+  });
+}
+
+export async function updateSubscription(subscriptionId: string, newPlanId: string): Promise<OrganizationSubscription> {
+  return apiFetch<OrganizationSubscription>(`/billing/subscriptions/${subscriptionId}`, {
+    method: "PUT",
+    body: JSON.stringify({ planId: newPlanId }),
+  });
+}
+
+export async function cancelSubscription(subscriptionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/billing/subscriptions/${subscriptionId}`, { method: "DELETE" });
+}
+
+export async function listInvoices(): Promise<Invoice[]> {
+  return apiFetch<Invoice[]>(`/billing/invoices`);
+}
+
+export async function downloadInvoice(invoiceId: string): Promise<Blob> {
+  const token = localStorage.getItem("ksv_access_token");
+  const res = await fetch(`${API_BASE}/billing/invoices/${invoiceId}/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.blob();
+}
+
+export async function addPaymentMethod(type: PaymentMethod["type"], token: string): Promise<PaymentMethod> {
+  return apiFetch<PaymentMethod>(`/billing/payment-methods`, {
+    method: "POST",
+    body: JSON.stringify({ type, token }),
+  });
+}
+
+export async function removePaymentMethod(methodId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/billing/payment-methods/${methodId}`, { method: "DELETE" });
+}
+
+export async function getBillingUsage(): Promise<UsageMeter[]> {
+  return apiFetch<UsageMeter[]>(`/billing/usage`);
+}
