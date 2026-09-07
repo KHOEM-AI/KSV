@@ -1351,4 +1351,38 @@ Authenticate → Authorize → Device Capability → Safety → Execute → Audi
 ---
 
 *ធ្វើបច្ចុប្បន្នភាពចុងក្រោយ: 26/27 ឯកសារ domain ភ្ជាប់ពេញលេញទៅ `src/lib/api.ts` (index.ts មិនរាប់បញ្ចូល)*
+
+## 🆕 ធ្វើបច្ចុប្បន្នភាព (ថ្ងៃទី 2) — Backend Express Routes ចាប់ផ្តើមសាងសង់ពិត
+
+បន្ថែមលើ `src/lib/api.ts` (26/26 domain ភ្ជាប់ 100%), ថ្ងៃនេះបានបន្ថែម **Express route ពិតប្រាកដ** ចូល `src/server.ts` សម្រាប់ domain ខាងក្រោម (ភ្ជាប់ authenticate + requirePermission + MongoDB ពិត):
+
+| Route | Method | ស្ថានភាព |
+|---|---|---|
+| `/api/organizations` | GET | ✅ |
+| `/api/safety/rules` | GET | ✅ |
+| `/api/gateways` | GET | ✅ |
+| `/api/audit/logs` | GET | ✅ |
+| `/api/protocols` | GET | ✅ |
+| `/api/identity/account` | GET | ✅ |
+| `/api/notifications` | GET | ✅ (+ `Notification` model ថ្មីបន្ថែមក្នុង `models.ts`) |
+| `/api/international/countries` | GET | ✅ |
+| `/api/international/languages` | GET | ✅ |
+| `/api/automation/rules` | GET | ✅ |
+| `/api/discovery/devices` | GET | ✅ |
+| `/api/safety/events` | GET | ✅ |
+| `/api/telemetry/devices/:id` | GET | ✅ |
+| `/api/billing/invoices` | GET | ✅ (+ `Invoice`, `OrganizationSubscription` model ថ្មី) |
+| `/api/billing/subscriptions` | GET | ✅ |
+
+**សរុប**: Backend server ឥឡូវមាន GET route ចំនួន **~19 domain** ភ្ជាប់ MongoDB ពិត (មិនរាប់ command/login/certificates/users/settings/security/devices ដែលមានពីមុន)។
+
+### ⏳ នៅសល់ត្រូវធ្វើ (អាទិភាពបន្ទាប់សម្រាប់ developer ថ្មី)
+
+1. **POST/PUT/DELETE route** សម្រាប់ domain ខាងលើ — ឥឡូវមានតែ GET (read) ប៉ុណ្ណោះ, ត្រូវបន្ថែម create/update/delete
+2. **Domain នៅសល់ដែលមិនទាន់មាន route ណាមួយ**: authentication (mfa/refresh/sessions), authorization (permissions), account-recovery, administration, ai-orchestration, notification-push, file-storage, reporting-export, integration-webhook, geolocation-map, maintenance-ticketing, pairing (session-based)
+3. **View frontend** ដែលនៅតែប្រើ mock data — ត្រូវឆែកម្តងមួយថា Dashboard, Protocols, Gateway (UI), Organization (UI), Certificates, Settings ហៅ `api.ts` ពិតឬនៅ
+4. Capability check + Human confirmation ក្នុង Command Pipeline (ដូចកំណត់ខាងលើ)
+
+*របៀបបន្ត៖ មើលគំរូ route ណាមួយក្នុង `src/server.ts` (ស្វែងរក `app.get("/api/organizations"...)` ជាគំរូ) ចម្លងទម្រង់ដដែល ប្តូរ model+field ត្រូវនឹង domain ដែលចង់បន្ថែម រួច `npx tsc --noEmit` ឆែក error មុន push*
+
 *ទីតាំង: `khoem-now/API/README.md`*
