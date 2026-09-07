@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -560,6 +560,26 @@ async function main() {
         res.json({ countries, total: countries.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load countries." });
+      }
+    }
+  );
+
+  // GET /api/automation/rules — list automation rules for the user's organization
+  app.get(
+    "/api/automation/rules",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const rules = await AutomationRule.find({ organizationId: user.organizationId }).lean();
+        res.json({ rules, total: rules.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load automation rules." });
       }
     }
   );
