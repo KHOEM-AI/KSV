@@ -1919,3 +1919,33 @@ export async function transferDeviceOwnership(deviceId: string, toAccountId: str
     body: JSON.stringify({ toAccountId }),
   });
 }
+
+
+// ============================================================
+// Settings endpoints — mirrors server.ts /api/settings exactly
+// ============================================================
+
+export interface KSVSettings {
+  organizationId: string;
+  autoUpdate: boolean;
+  offlineMode: boolean;
+  auditLog: boolean;
+  twoFactor: boolean;
+  zeroPlaintext: boolean;
+  safetyOverride: boolean;
+  emailAlerts: boolean;
+  smsAlerts: boolean;
+  defaultLanguage: string;
+  defaultTimezone: string;
+}
+
+export async function getSettings(): Promise<{ settings: KSVSettings }> {
+  return apiFetch<{ settings: KSVSettings }>(`/settings`);
+}
+
+export async function updateSettings(patch: Partial<KSVSettings>): Promise<{ settings: KSVSettings }> {
+  return apiFetch<{ settings: KSVSettings }>(`/settings`, {
+    method: "PUT",
+    body: JSON.stringify(patch),
+  });
+}
