@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -580,6 +580,21 @@ async function main() {
         res.json({ rules, total: rules.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load automation rules." });
+      }
+    }
+  );
+
+  // GET /api/discovery/devices — list recently discovered (unpaired) devices
+  app.get(
+    "/api/discovery/devices",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      try {
+        const discovered = await Discovery.find().sort({ createdAt: -1 }).limit(50).lean();
+        res.json({ devices: discovered, total: discovered.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load discovered devices." });
       }
     }
   );
