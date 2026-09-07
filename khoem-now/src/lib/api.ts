@@ -1627,3 +1627,62 @@ export async function shareFile(fileId: string, granteeAccountId: string, expire
 export async function getStorageQuota(): Promise<StorageQuota> {
   return apiFetch<StorageQuota>(`/files/storage/quota`);
 }
+
+// ============================================================
+// Reporting & Export endpoints — mirrors API/reporting-export.ts exactly
+// ============================================================
+
+import type {
+  ReportTemplate,
+  ScheduledReport,
+  ReportInstance,
+  ExportJob,
+  ReportCategory,
+  ReportFormat,
+  ReportFrequency,
+} from "../../API/reporting-export";
+
+export async function listReportTemplates(): Promise<ReportTemplate[]> {
+  return apiFetch<ReportTemplate[]>(`/reports/templates`);
+}
+
+export async function generateReport(templateId: string, format: ReportFormat): Promise<ReportInstance> {
+  return apiFetch<ReportInstance>(`/reports/generate`, {
+    method: "POST",
+    body: JSON.stringify({ templateId, format }),
+  });
+}
+
+export async function scheduleReport(templateId: string, frequency: ReportFrequency, recipients: string[]): Promise<ScheduledReport> {
+  return apiFetch<ScheduledReport>(`/reports/schedule`, {
+    method: "POST",
+    body: JSON.stringify({ templateId, frequency, recipients }),
+  });
+}
+
+export async function listScheduledReports(): Promise<ScheduledReport[]> {
+  return apiFetch<ScheduledReport[]>(`/reports/scheduled`);
+}
+
+export async function cancelScheduledReport(scheduleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/reports/scheduled/${scheduleId}`, { method: "DELETE" });
+}
+
+export async function downloadReportInstance(instanceId: string): Promise<Blob> {
+  const token = localStorage.getItem("ksv_access_token");
+  const res = await fetch(`${API_BASE}/reports/instances/${instanceId}/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.blob();
+}
+
+export async function startExportJob(dataScope: string): Promise<ExportJob> {
+  return apiFetch<ExportJob>(`/export/jobs`, {
+    method: "POST",
+    body: JSON.stringify({ dataScope }),
+  });
+}
+
+export async function getExportJob(jobId: string): Promise<ExportJob> {
+  return apiFetch<ExportJob>(`/export/jobs/${jobId}`);
+}
