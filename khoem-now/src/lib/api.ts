@@ -1797,3 +1797,74 @@ export async function getFenceEvents(fenceId: string): Promise<GeoFenceEvent[]> 
 export async function getVehicleTracking(deviceId: string): Promise<VehicleTrackingSession> {
   return apiFetch<VehicleTrackingSession>(`/geo/vehicles/${deviceId}/tracking`);
 }
+
+// ============================================================
+// Maintenance & Ticketing endpoints — mirrors API/maintenance-ticketing.ts exactly
+// ============================================================
+
+import type {
+  MaintenanceTicket,
+  MaintenanceSchedule,
+  TicketComment,
+  TechnicianAssignment,
+  TicketPriority,
+  TicketStatus,
+} from "../../API/maintenance-ticketing";
+
+export async function createTicket(deviceId: string, priority: TicketPriority, description: string): Promise<MaintenanceTicket> {
+  return apiFetch<MaintenanceTicket>(`/tickets`, {
+    method: "POST",
+    body: JSON.stringify({ deviceId, priority, description }),
+  });
+}
+
+export async function listTickets(deviceId?: string, status?: TicketStatus): Promise<MaintenanceTicket[]> {
+  const params = new URLSearchParams();
+  if (deviceId) params.set("deviceId", deviceId);
+  if (status) params.set("status", status);
+  const qs = params.toString();
+  return apiFetch<MaintenanceTicket[]>(`/tickets${qs ? `?${qs}` : ""}`);
+}
+
+export async function getTicket(ticketId: string): Promise<MaintenanceTicket & { comments: TicketComment[] }> {
+  return apiFetch(`/tickets/${ticketId}`);
+}
+
+export async function updateTicketStatus(ticketId: string, status: TicketStatus): Promise<MaintenanceTicket> {
+  return apiFetch<MaintenanceTicket>(`/tickets/${ticketId}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function assignTechnician(ticketId: string, technicianAccountId: string, eta?: string): Promise<TechnicianAssignment> {
+  return apiFetch<TechnicianAssignment>(`/tickets/${ticketId}/assign`, {
+    method: "POST",
+    body: JSON.stringify({ technicianAccountId, eta }),
+  });
+}
+
+export async function addTicketComment(ticketId: string, body: string, attachedFileIds: string[] = []): Promise<TicketComment> {
+  return apiFetch<TicketComment>(`/tickets/${ticketId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ body, attachedFileIds }),
+  });
+}
+
+export async function addTicketAttachment(ticketId: string, fileId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/tickets/${ticketId}/attachments`, {
+    method: "POST",
+    body: JSON.stringify({ fileId }),
+  });
+}
+
+export async function createMaintenanceSchedule(deviceId: string, intervalDays: number): Promise<MaintenanceSchedule> {
+  return apiFetch<MaintenanceSchedule>(`/maintenance/schedules`, {
+    method: "POST",
+    body: JSON.stringify({ deviceId, intervalDays }),
+  });
+}
+
+export async function getSchedulesDue(): Promise<MaintenanceSchedule[]> {
+  return apiFetch<MaintenanceSchedule[]>(`/maintenance/schedules/due`);
+}
