@@ -352,3 +352,32 @@ const notificationSchema = new Schema(
 );
 
 export const Notification = models.Notification || model("Notification", notificationSchema);
+
+// ============================================================
+// BILLING & SUBSCRIPTION
+// ============================================================
+
+const organizationSubscriptionSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    planId: { type: String, required: true }, // "free" | "pro" | "enterprise"
+    status: { type: String, default: "active" }, // active | past_due | cancelled | trialing
+    renewalDate: Date,
+  },
+  { timestamps: true }
+);
+
+const invoiceSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "USD" },
+    status: { type: String, default: "due" }, // paid | due | overdue | void
+    dueAt: Date,
+  },
+  { timestamps: { createdAt: "issuedAt", updatedAt: false } }
+);
+
+export const OrganizationSubscription =
+  models.OrganizationSubscription || model("OrganizationSubscription", organizationSubscriptionSchema);
+export const Invoice = models.Invoice || model("Invoice", invoiceSchema);
