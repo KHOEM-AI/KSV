@@ -1299,7 +1299,7 @@ Authenticate → Authorize → Device Capability → Safety → Execute → Audi
 | **Database models** (`src/infrastructure/database/`) | ✅ models.ts (Mongoose — User, Device, Command, Organization ។ល។) |
 | **Command route ជាក់ស្តែង** (`src/modules/command/`) | ✅ command.routes.ts (ភ្ជាប់ auth+rbac+safety+audit ចូលគ្នា) |
 | **Route ជាក់ស្តែងសម្រាប់ 26 domain ដទៃ** | ⏳ មិនទាន់ — មានតែ Types/spec, មិនទាន់មាន Express route ពិតប្រាកដ |
-| **Frontend API client** (`src/lib/api.ts`) | ⏳ មិនទាន់ — `ControlsView.tsx` មិនទាន់ហៅ endpoint ពិត |
+| **Frontend API client** (`src/lib/api.ts`) | ✅ 12/27 domain ភ្ជាប់រួច (command, authentication, identity, authorization, device, safety, audit, discovery+pairing, gateway, protocol, organization, security, notification) — vault-lock button ក្នុង `ControlsView.tsx` ភ្ជាប់ពិតទៅ `dispatchCommand()`, ១១ ប៊ូតុងផ្សេងទៀតនៅ mockup |
 
 **សេចក្តីសង្ខេប**៖ ២៧ ឯកសារខាងលើគឺជា **ផែនទី/blueprint ពេញលេញ** នៃ API ទាំងមូល។ ក្នុងចំណោមនោះ មានតែ **Security core + Safety Engine + Command route** ប៉ុណ្ណោះដែលក្លាយជាកូដ **ដំណើរការពិតប្រាកដ** រួចហើយ។ ២៦ domain ដទៃទៀត (Identity, Device, Organization ។ល។) នៅសល់ជាជំហានបន្ទាប់ត្រូវប្តូរពី "Types spec" ទៅជា "Express route ពិត" ដូច `command.routes.ts`។
 
