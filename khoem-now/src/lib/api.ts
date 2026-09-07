@@ -1497,3 +1497,49 @@ export async function removePaymentMethod(methodId: string): Promise<{ success: 
 export async function getBillingUsage(): Promise<UsageMeter[]> {
   return apiFetch<UsageMeter[]>(`/billing/usage`);
 }
+
+// ============================================================
+// Analytics & Telemetry endpoints — mirrors API/analytics-telemetry.ts exactly
+// ============================================================
+
+import type {
+  DeviceTelemetry,
+  PlatformMetric,
+  MetricAggregation,
+  AnomalyDetectionResult,
+  AnalyticsDashboard,
+} from "../../API/analytics-telemetry";
+
+export async function ingestTelemetry(deviceId: string, metricName: string, value: number, unit: string): Promise<{ success: boolean }> {
+  return apiFetch(`/telemetry/ingest`, {
+    method: "POST",
+    body: JSON.stringify({ deviceId, metricName, value, unit }),
+  });
+}
+
+export async function getDeviceTelemetryHistory(deviceId: string, limit = 50): Promise<DeviceTelemetry[]> {
+  return apiFetch<DeviceTelemetry[]>(`/telemetry/devices/${deviceId}?limit=${limit}`);
+}
+
+export async function getPlatformMetrics(): Promise<PlatformMetric[]> {
+  return apiFetch<PlatformMetric[]>(`/telemetry/platform`);
+}
+
+export async function getMetricAggregate(metricName: string, period: "hourly" | "daily" | "monthly"): Promise<MetricAggregation> {
+  return apiFetch<MetricAggregation>(`/telemetry/aggregate?metricName=${metricName}&period=${period}`);
+}
+
+export async function getAnomalies(): Promise<AnomalyDetectionResult[]> {
+  return apiFetch<AnomalyDetectionResult[]>(`/telemetry/anomalies`);
+}
+
+export async function createAnalyticsDashboard(name: string, widgets: AnalyticsDashboard["widgets"]): Promise<AnalyticsDashboard> {
+  return apiFetch<AnalyticsDashboard>(`/telemetry/dashboards`, {
+    method: "POST",
+    body: JSON.stringify({ name, widgets }),
+  });
+}
+
+export async function getAnalyticsDashboard(dashboardId: string): Promise<AnalyticsDashboard> {
+  return apiFetch<AnalyticsDashboard>(`/telemetry/dashboards/${dashboardId}`);
+}
