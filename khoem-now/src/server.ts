@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -623,6 +623,24 @@ async function main() {
         res.json({ events, total: events.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety events." });
+      }
+    }
+  );
+
+  // GET /api/telemetry/devices/:id — telemetry/log history for a device
+  app.get(
+    "/api/telemetry/devices/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      try {
+        const logs = await DeviceLog.find({ deviceId: req.params.id })
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .lean();
+        res.json({ logs, total: logs.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device telemetry." });
       }
     }
   );
