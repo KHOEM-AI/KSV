@@ -1205,3 +1205,63 @@ export async function listAutomationLogs(req: ListAutomationLogsRequest = {}): P
 export async function getAutomationLog(logId: string): Promise<AutomationLog> {
   return apiFetch<AutomationLog>(`/automation/logs/${logId}`);
 }
+
+// ============================================================
+// Account Recovery endpoints — mirrors API/account-recovery.ts exactly
+// ============================================================
+
+import type {
+  InitiateRecoveryRequest,
+  InitiateRecoveryResponse,
+  ResendOTPRequest,
+  ResendOTPResponse,
+  VerifyRecoveryOTPRequest,
+  VerifyRecoveryOTPResponse,
+  VerifyRecoveryOAuthRequest,
+  UseBackupCodeRequest,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  CancelRecoveryRequest,
+  GenerateBackupCodesResponse,
+  BackupCodeStatusResponse,
+} from "../../API/account-recovery";
+
+export async function initiateRecovery(req: InitiateRecoveryRequest): Promise<InitiateRecoveryResponse> {
+  return apiFetch<InitiateRecoveryResponse>(`/recovery/initiate`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function resendRecoveryOTP(req: ResendOTPRequest): Promise<ResendOTPResponse> {
+  return apiFetch<ResendOTPResponse>(`/recovery/otp/resend`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function verifyRecoveryOTP(req: VerifyRecoveryOTPRequest): Promise<VerifyRecoveryOTPResponse> {
+  return apiFetch<VerifyRecoveryOTPResponse>(`/recovery/otp/verify`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function verifyRecoveryOAuth(req: VerifyRecoveryOAuthRequest): Promise<VerifyRecoveryOTPResponse> {
+  return apiFetch<VerifyRecoveryOTPResponse>(`/recovery/provider/verify`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function useBackupCode(req: UseBackupCodeRequest): Promise<VerifyRecoveryOTPResponse> {
+  return apiFetch<VerifyRecoveryOTPResponse>(`/recovery/backup-code/verify`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function resetPassword(req: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+  return apiFetch<ResetPasswordResponse>(`/recovery/password/reset`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function cancelRecovery(req: CancelRecoveryRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/recovery/cancel`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function generateBackupCodes(): Promise<GenerateBackupCodesResponse> {
+  return apiFetch<GenerateBackupCodesResponse>(`/recovery/backup-codes/generate`, { method: "POST" });
+}
+
+export async function getBackupCodeStatus(): Promise<BackupCodeStatusResponse> {
+  return apiFetch<BackupCodeStatusResponse>(`/recovery/backup-codes/status`);
+}
+
+export async function revokeBackupCodes(): Promise<{ success: boolean }> {
+  return apiFetch(`/recovery/backup-codes/revoke`, { method: "POST" });
+}
