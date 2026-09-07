@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -332,65 +332,6 @@ async function main() {
     }
   });
 
-  // GET /api/commands/recent — latest dispatched commands across the
-  // org, for "Live Control Activity" style feeds. Joins through Device
-  // since Command has no organizationId of its own.
-  app.get("/api/commands/recent", authenticate, requirePermission("device:read"), async (req, res) => {
-    const user = req.user!;
-    if (!user.organizationId) {
-      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
-      return;
-    }
-    try {
-      const limit = Math.min(Number(req.query.limit) || 10, 50);
-      const deviceIds = await Device.find({ organizationId: user.organizationId }).distinct("_id");
-      const commands = await Command.find({ deviceId: { $in: deviceIds } })
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .populate("deviceId", "name")
-        .populate("userId", "email")
-        .lean();
-      res.json({ commands });
-    } catch (err) {
-      console.error("[COMMANDS] Failed to load recent commands:", err);
-      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load recent commands." });
-    }
-  });
-
-
-  // GET /api/security/threats — list threat detections for the org
-  app.get("/api/security/threats", authenticate, requirePermission("org:read"), async (req, res) => {
-    const user = req.user!;
-    if (!user.organizationId) {
-      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
-      return;
-    }
-    try {
-      const threats = await ThreatDetection.find({ organizationId: user.organizationId })
-        .sort({ detectedAt: -1 })
-        .lean();
-      res.json({ threats, total: threats.length });
-    } catch (err) {
-      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load threats." });
-    }
-  });
-
-  // GET /api/security/incidents — list security incidents for the org
-  app.get("/api/security/incidents", authenticate, requirePermission("org:read"), async (req, res) => {
-    const user = req.user!;
-    if (!user.organizationId) {
-      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
-      return;
-    }
-    try {
-      const incidents = await SecurityIncident.find({ organizationId: user.organizationId })
-        .sort({ detectedAt: -1 })
-        .lean();
-      res.json({ incidents, total: incidents.length });
-    } catch (err) {
-      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load incidents." });
-    }
-  });
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });

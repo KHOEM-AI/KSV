@@ -39,7 +39,8 @@ commandRouter.post(
   deviceCommandRateLimiter,
   async (req: Request, res: Response) => {
     const { deviceId } = req.params;
-    const { type: commandType, payload, signals } = req.body ?? {};
+    const { type, commandType: bodyCommandType, payload, signals } = req.body ?? {};
+    const commandType = type ?? bodyCommandType;
 
     if (!commandType || typeof commandType !== "string") {
       res.status(400).json({ error: "INVALID_REQUEST", message: "commandType is required." });

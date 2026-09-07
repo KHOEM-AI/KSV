@@ -220,6 +220,39 @@ const auditLogSchema = new Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+const threatDetectionSchema = new Schema(
+  {
+    type: { type: String, required: true },
+    severity: { type: String, required: true },
+    accountId: { type: ObjectId, ref: "User" },
+    deviceId: { type: ObjectId, ref: "Device" },
+    organizationId: { type: ObjectId, ref: "Organization" },
+    ipAddress: String,
+    description: { type: String, required: true },
+    autoActionTaken: String,
+    requiresReview: { type: Boolean, default: true },
+    falsePositiveMarked: { type: Boolean, default: false },
+  },
+  { timestamps: { createdAt: "detectedAt", updatedAt: false } }
+);
+
+const securityIncidentSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    status: { type: String, required: true, default: "detected" },
+    severity: { type: String, required: true },
+    organizationId: { type: ObjectId, ref: "Organization" },
+    relatedDetectionIds: [{ type: ObjectId, ref: "ThreatDetection" }],
+    affectedAccountIds: [{ type: ObjectId, ref: "User" }],
+    affectedDeviceIds: [{ type: ObjectId, ref: "Device" }],
+    containedAt: Date,
+    resolvedAt: Date,
+    assignedTo: { type: ObjectId, ref: "User" },
+    evidencePreserved: { type: Boolean, default: false },
+  },
+  { timestamps: { createdAt: "detectedAt", updatedAt: false } }
+);
+
 // ============================================================
 // INTERNATIONALIZATION
 // ============================================================
@@ -258,6 +291,8 @@ export const Event = models.Event || model("Event", eventSchema);
 export const AuditLog = models.AuditLog || model("AuditLog", auditLogSchema);
 export const Country = models.Country || model("Country", countrySchema);
 export const Language = models.Language || model("Language", languageSchema);
+export const ThreatDetection = models.ThreatDetection || model("ThreatDetection", threatDetectionSchema);
+export const SecurityIncident = models.SecurityIncident || model("SecurityIncident", securityIncidentSchema);
 
 // ============================================================
 // CERTIFICATES (Personal / Organization achievements)

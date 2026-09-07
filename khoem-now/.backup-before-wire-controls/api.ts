@@ -1,0 +1,1112 @@
+/**
+ * KSV — Frontend API Client
+ * Location: khoem-now/src/lib/api.ts
+ *
+ * The single place the frontend talks to the backend. ControlsView.tsx
+ * (and every other view) should import from here instead of using
+ * local useState toggles that don't persist or audit anything.
+ */
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+
+function getAccessToken(): string | null {
+  // Wherever the app stores the JWT after login — adjust if your
+  // auth flow keeps it somewhere else (context, cookie, etc).
+  return localStorage.getItem("ksv_access_token");
+}
+
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getAccessToken();
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    // Surface the backend's error shape (SAFETY_BLOCKED, RATE_LIMITED, etc.)
+    // so the UI can show a real, specific message instead of "something
+    // went wrong".
+    throw new ApiError(res.status, body?.error ?? "UNKNOWN_ERROR", body?.message ?? res.statusText, body);
+  }
+
+  return body as T;
+}
+
+export class ApiError extends Error {
+  status: number;
+  code: string;
+  details?: unknown;
+
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+// ============================================================
+// Command endpoints — mirrors command.routes.ts exactly
+// ============================================================
+
+export interface DispatchCommandInput {
+  deviceId: string;
+  type: string; // "UNLOCK", "LOCK", "SETPOINT", "SPEED_LIMIT", "RESET", "OPEN", ...
+  payload?: Record<string, unknown>;
+  signals?: {
+    isInsideGeoFence?: boolean;
+    humanZoneOccupied?: boolean;
+    tamperDetected?: boolean;
+    currentSpeed?: number;
+    doorForceLockActive?: boolean;
+  };
+}
+
+export interface DispatchCommandResult {
+  commandId: string;
+  deviceId: string;
+  type: string;
+  status: "pending";
+}
+
+export async function dispatchCommand(input: DispatchCommandInput): Promise<DispatchCommandResult> {
+  return apiFetch<DispatchCommandResult>(`/devices/${input.deviceId}/commands`, {
+    method: "POST",
+    body: JSON.stringify({ commandType: input.type, payload: input.payload, signals: input.signals }),
+  });
+}
+
+export interface CommandHistoryEntry {
+  _id: string;
+  deviceId: string;
+  userId: string;
+  type: string;
+  status: string;
+  createdAt: string;
+}
+
+export async function getDeviceCommandHistory(deviceId: string, limit = 10): Promise<{ commands: CommandHistoryEntry[] }> {
+  return apiFetch(`/devices/${deviceId}/commands?limit=${limit}`);
+}
+
+export async function getCommandStatus(commandId: string): Promise<CommandHistoryEntry> {
+  return apiFetch(`/commands/${commandId}`);
+}
+
+// ============================================================
+// Authentication endpoints — mirrors API/authentication.ts exactly
+// ============================================================
+
+import type {
+  PasswordLoginRequest,
+  OAuthLoginRequest,
+  LoginResponse,
+  MFAVerifyRequest,
+  MFAVerifyResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  LogoutRequest,
+  LogoutResponse,
+  ListSessionsResponse,
+  MFAEnrollRequest,
+  MFAEnrollResponse,
+  MFAConfirmEnrollRequest,
+  MFADisableRequest,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+} from "../../API/authentication";
+
+export async function loginWithPassword(req: PasswordLoginRequest): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>(`/auth/login/password`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function loginWithOAuth(req: OAuthLoginRequest): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>(`/auth/login/oauth`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function verifyMFA(req: MFAVerifyRequest): Promise<MFAVerifyResponse> {
+  return apiFetch<MFAVerifyResponse>(`/auth/mfa/verify`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function refreshAuthToken(req: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+  return apiFetch<RefreshTokenResponse>(`/auth/token/refresh`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function logout(req: LogoutRequest): Promise<LogoutResponse> {
+  return apiFetch<LogoutResponse>(`/auth/logout`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSessions(): Promise<ListSessionsResponse> {
+  return apiFetch<ListSessionsResponse>(`/auth/sessions`);
+}
+
+export async function revokeSession(sessionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/auth/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export async function enrollMFA(req: MFAEnrollRequest): Promise<MFAEnrollResponse> {
+  return apiFetch<MFAEnrollResponse>(`/auth/mfa/enroll`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function confirmMFAEnroll(req: MFAConfirmEnrollRequest): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/auth/mfa/enroll/confirm`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function disableMFA(req: MFADisableRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/auth/mfa/disable`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function changePassword(req: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+  return apiFetch<ChangePasswordResponse>(`/auth/password/change`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// ============================================================
+// Identity endpoints — mirrors API/identity.ts exactly
+// ============================================================
+
+import type {
+  GetAccountResponse,
+  UpdateAccountRequest,
+  UpdateAccountResponse,
+  LinkIdentityRequest,
+  LinkIdentityResponse,
+  UnlinkIdentityRequest,
+  UnlinkIdentityResponse,
+  VerifyIdentityRequest,
+  VerifyIdentityResponse,
+  DeleteAccountRequest,
+  DeleteAccountResponse,
+} from "../../API/identity";
+
+export async function getAccount(): Promise<GetAccountResponse> {
+  return apiFetch<GetAccountResponse>(`/identity/account`);
+}
+
+export async function updateAccount(req: UpdateAccountRequest): Promise<UpdateAccountResponse> {
+  return apiFetch<UpdateAccountResponse>(`/identity/account`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteAccount(req: DeleteAccountRequest): Promise<DeleteAccountResponse> {
+  return apiFetch<DeleteAccountResponse>(`/identity/account`, {
+    method: "DELETE",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listIdentities(): Promise<{ identities: import("../../API/identity").KSVIdentity[] }> {
+  return apiFetch(`/identity/identities`);
+}
+
+export async function linkIdentity(req: LinkIdentityRequest): Promise<LinkIdentityResponse> {
+  return apiFetch<LinkIdentityResponse>(`/identity/identities/link`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function unlinkIdentity(req: UnlinkIdentityRequest): Promise<UnlinkIdentityResponse> {
+  return apiFetch<UnlinkIdentityResponse>(`/identity/identities/${req.identityId}`, {
+    method: "DELETE",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function verifyIdentity(req: VerifyIdentityRequest): Promise<VerifyIdentityResponse> {
+  return apiFetch<VerifyIdentityResponse>(`/identity/identities/${req.identityId}/verify`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// ============================================================
+// Authorization endpoints — mirrors API/authorization.ts exactly
+// ============================================================
+
+import type {
+  PermissionCheckInput,
+  PermissionCheckResult,
+  GrantPermissionRequest,
+  GrantPermissionResponse,
+  RevokePermissionRequest,
+  RevokePermissionResponse,
+  ListPermissionsRequest,
+  ListPermissionsResponse,
+  ApproveActionRequest,
+  PendingApproval,
+  ResourceType,
+} from "../../API/authorization";
+
+export async function checkPermission(req: PermissionCheckInput): Promise<PermissionCheckResult> {
+  return apiFetch<PermissionCheckResult>(`/authz/check`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function checkPermissionsBatch(reqs: PermissionCheckInput[]): Promise<PermissionCheckResult[]> {
+  return apiFetch<PermissionCheckResult[]>(`/authz/check/batch`, {
+    method: "POST",
+    body: JSON.stringify(reqs),
+  });
+}
+
+export async function grantPermission(req: GrantPermissionRequest): Promise<GrantPermissionResponse> {
+  return apiFetch<GrantPermissionResponse>(`/authz/permissions`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function revokePermission(req: RevokePermissionRequest): Promise<RevokePermissionResponse> {
+  return apiFetch<RevokePermissionResponse>(`/authz/permissions/${req.permissionId}`, {
+    method: "DELETE",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listPermissions(req: ListPermissionsRequest = {}): Promise<ListPermissionsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListPermissionsResponse>(`/authz/permissions${params ? `?${params}` : ""}`);
+}
+
+export async function getMyPermissions(): Promise<ListPermissionsResponse> {
+  return apiFetch<ListPermissionsResponse>(`/authz/my-permissions`);
+}
+
+export async function getMyPermissionsForResource(
+  resourceType: ResourceType,
+  resourceId: string
+): Promise<ListPermissionsResponse> {
+  return apiFetch<ListPermissionsResponse>(`/authz/my-permissions/${resourceType}/${resourceId}`);
+}
+
+export async function listPendingApprovals(): Promise<PendingApproval[]> {
+  return apiFetch<PendingApproval[]>(`/authz/approvals/pending`);
+}
+
+export async function approveAction(req: ApproveActionRequest): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/authz/approvals/${req.pendingActionId}`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function transferOwnership(
+  resourceType: ResourceType,
+  resourceId: string,
+  newOwnerAccountId: string,
+  confirmPhrase: string
+): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/authz/owner/${resourceType}/${resourceId}/transfer`, {
+    method: "POST",
+    body: JSON.stringify({ newOwnerAccountId, confirmPhrase }),
+  });
+}
+
+// ============================================================
+// Device endpoints — mirrors API/device.ts exactly
+// ============================================================
+
+import type {
+  RegisterDeviceRequest,
+  UpdateDeviceRequest,
+  ListDevicesRequest,
+  ListDevicesResponse,
+  GetDeviceStateResponse,
+  UpdateFirmwareRequest,
+  UpdateFirmwareResponse,
+  QuarantineDeviceRequest,
+  DecommissionDeviceRequest,
+  KSVDevice,
+  DeviceCapability,
+} from "../../API/device";
+
+export async function registerDevice(req: RegisterDeviceRequest): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listDevices(req: ListDevicesRequest = {}): Promise<ListDevicesResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListDevicesResponse>(`/devices${params ? `?${params}` : ""}`);
+}
+
+export async function getDevice(deviceId: string): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices/${deviceId}`);
+}
+
+export async function updateDevice(deviceId: string, req: UpdateDeviceRequest): Promise<KSVDevice> {
+  return apiFetch<KSVDevice>(`/devices/${deviceId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteDevice(deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}`, { method: "DELETE" });
+}
+
+export async function getDeviceState(deviceId: string): Promise<GetDeviceStateResponse> {
+  return apiFetch<GetDeviceStateResponse>(`/devices/${deviceId}/state`);
+}
+
+export async function listDeviceCapabilities(deviceId: string): Promise<DeviceCapability[]> {
+  return apiFetch<DeviceCapability[]>(`/devices/${deviceId}/capabilities`);
+}
+
+export async function updateFirmware(req: UpdateFirmwareRequest): Promise<UpdateFirmwareResponse> {
+  return apiFetch<UpdateFirmwareResponse>(`/devices/${req.deviceId}/firmware/update`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function rollbackFirmware(deviceId: string, targetVersion: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/firmware/rollback`, {
+    method: "POST",
+    body: JSON.stringify({ targetVersion }),
+  });
+}
+
+export async function quarantineDevice(req: QuarantineDeviceRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${req.deviceId}/quarantine`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function releaseQuarantine(deviceId: string, reason: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/quarantine/release`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function decommissionDevice(req: DecommissionDeviceRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${req.deviceId}/decommission`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listDeviceGroups(): Promise<{ groups: unknown[] }> {
+  return apiFetch(`/device-groups`);
+}
+
+export async function createDeviceGroup(name: string, deviceIds: string[] = []): Promise<{ groupId: string }> {
+  return apiFetch(`/device-groups`, {
+    method: "POST",
+    body: JSON.stringify({ name, deviceIds }),
+  });
+}
+
+export async function addToDeviceGroup(groupId: string, deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/device-groups/${groupId}/devices`, {
+    method: "POST",
+    body: JSON.stringify({ deviceId }),
+  });
+}
+
+export async function removeFromDeviceGroup(groupId: string, deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/device-groups/${groupId}/devices/${deviceId}`, { method: "DELETE" });
+}
+
+// ============================================================
+// Safety endpoints — mirrors API/safety.ts exactly
+// ============================================================
+
+import type {
+  SafetyCheckRequest,
+  SafetyCheckResponse,
+  CreateSafetyRuleRequest,
+  UpdateSafetyRuleRequest,
+  EmergencyStopRequest,
+  EmergencyStopResponse,
+  ReleaseEmergencyStopRequest,
+  ListSafetyEventsRequest,
+  SafetyRule,
+  SafetyEvent,
+  DeviceSafetyStatus,
+} from "../../API/safety";
+
+export async function checkSafety(req: SafetyCheckRequest): Promise<SafetyCheckResponse> {
+  return apiFetch<SafetyCheckResponse>(`/safety/check`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function createSafetyRule(req: CreateSafetyRuleRequest): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSafetyRules(orgId?: string): Promise<SafetyRule[]> {
+  return apiFetch<SafetyRule[]>(`/safety/rules${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getSafetyRule(ruleId: string): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules/${ruleId}`);
+}
+
+export async function updateSafetyRule(ruleId: string, req: UpdateSafetyRuleRequest): Promise<SafetyRule> {
+  return apiFetch<SafetyRule>(`/safety/rules/${ruleId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}`, { method: "DELETE" });
+}
+
+export async function enableSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}/enable`, { method: "POST" });
+}
+
+export async function disableSafetyRule(ruleId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/safety/rules/${ruleId}/disable`, { method: "POST" });
+}
+
+export async function getDeviceSafetyStatus(deviceId: string): Promise<DeviceSafetyStatus> {
+  return apiFetch<DeviceSafetyStatus>(`/safety/devices/${deviceId}`);
+}
+
+export async function listDeviceSafetyStatuses(): Promise<DeviceSafetyStatus[]> {
+  return apiFetch<DeviceSafetyStatus[]>(`/safety/devices`);
+}
+
+export async function emergencyStop(req: EmergencyStopRequest): Promise<EmergencyStopResponse> {
+  return apiFetch<EmergencyStopResponse>(`/safety/emergency-stop`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function releaseEmergencyStop(
+  req: ReleaseEmergencyStopRequest
+): Promise<{ success: boolean; releasedDeviceCount: number }> {
+  return apiFetch(`/safety/emergency-stop/release`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSafetyEvents(req: ListSafetyEventsRequest = {}): Promise<{ events: SafetyEvent[]; total: number }> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch(`/safety/events${params ? `?${params}` : ""}`);
+}
+
+export async function getSafetyEvent(eventId: string): Promise<SafetyEvent> {
+  return apiFetch<SafetyEvent>(`/safety/events/${eventId}`);
+}
+
+// ============================================================
+// Audit endpoints — mirrors API/audit.ts exactly
+// ============================================================
+
+import type {
+  AuditQuery,
+  AuditQueryResponse,
+  AuditRecord,
+  AuditExportRequest,
+  AuditExportResponse,
+  ComplianceReportRequest,
+  ComplianceReport,
+} from "../../API/audit";
+
+export async function queryAuditLog(query: AuditQuery = {}): Promise<AuditQueryResponse> {
+  const params = new URLSearchParams(query as Record<string, string>).toString();
+  return apiFetch<AuditQueryResponse>(`/audit/events${params ? `?${params}` : ""}`);
+}
+
+export async function getAuditRecord(auditId: string): Promise<AuditRecord> {
+  return apiFetch<AuditRecord>(`/audit/events/${auditId}`);
+}
+
+export async function exportAuditLog(req: AuditExportRequest): Promise<AuditExportResponse> {
+  return apiFetch<AuditExportResponse>(`/audit/export`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getExportStatus(exportId: string): Promise<AuditExportResponse> {
+  return apiFetch<AuditExportResponse>(`/audit/export/${exportId}`);
+}
+
+export async function generateComplianceReport(req: ComplianceReportRequest): Promise<ComplianceReport> {
+  return apiFetch<ComplianceReport>(`/audit/compliance-report`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listComplianceReports(orgId?: string): Promise<ComplianceReport[]> {
+  return apiFetch<ComplianceReport[]>(`/audit/compliance-report${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getDeviceAuditTrail(deviceId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/devices/${deviceId}`);
+}
+
+export async function getAccountAuditTrail(accountId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/accounts/${accountId}`);
+}
+
+export async function getOrgAuditTrail(orgId: string): Promise<AuditRecord[]> {
+  return apiFetch<AuditRecord[]>(`/audit/orgs/${orgId}`);
+}
+
+// ============================================================
+// Discovery & Pairing endpoints — mirrors API/discovery.ts exactly
+// ============================================================
+
+import type {
+  StartDiscoveryRequest,
+  StartDiscoveryResponse,
+  ListDiscoveredDevicesRequest,
+  ListDiscoveredDevicesResponse,
+  VerifyDiscoveredDeviceRequest,
+  VerifyDiscoveredDeviceResponse,
+  InitiatePairingRequest,
+  InitiatePairingResponse,
+  CompletePairingRequest,
+  CompletePairingResponse,
+  UnpairDeviceRequest,
+  UnpairDeviceResponse,
+  PairingSession,
+} from "../../API/discovery";
+
+export async function startDiscovery(req: StartDiscoveryRequest): Promise<StartDiscoveryResponse> {
+  return apiFetch<StartDiscoveryResponse>(`/discovery/start`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function stopDiscovery(discoveryJobId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/discovery/${discoveryJobId}/stop`, { method: "POST" });
+}
+
+export async function listDiscoveredDevices(req: ListDiscoveredDevicesRequest = {}): Promise<ListDiscoveredDevicesResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListDiscoveredDevicesResponse>(`/discovery/devices${params ? `?${params}` : ""}`);
+}
+
+export async function getDiscoveredDevice(discoveryId: string): Promise<import("../../API/discovery").DiscoveredDevice> {
+  return apiFetch(`/discovery/devices/${discoveryId}`);
+}
+
+export async function verifyDiscoveredDevice(req: VerifyDiscoveredDeviceRequest): Promise<VerifyDiscoveredDeviceResponse> {
+  return apiFetch<VerifyDiscoveredDeviceResponse>(`/discovery/devices/${req.discoveryId}/verify`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function dismissDiscoveredDevice(discoveryId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/discovery/devices/${discoveryId}`, { method: "DELETE" });
+}
+
+export async function initiatePairing(req: InitiatePairingRequest): Promise<InitiatePairingResponse> {
+  return apiFetch<InitiatePairingResponse>(`/pairing/initiate`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getPairingStatus(pairingSessionId: string): Promise<PairingSession> {
+  return apiFetch<PairingSession>(`/pairing/${pairingSessionId}`);
+}
+
+export async function completePairing(req: CompletePairingRequest): Promise<CompletePairingResponse> {
+  return apiFetch<CompletePairingResponse>(`/pairing/${req.pairingSessionId}/complete`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function cancelPairing(pairingSessionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/pairing/${pairingSessionId}/cancel`, { method: "POST" });
+}
+
+export async function unpairDevice(req: UnpairDeviceRequest): Promise<UnpairDeviceResponse> {
+  return apiFetch<UnpairDeviceResponse>(`/devices/${req.deviceId}/unpair`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function repairDevice(deviceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/devices/${deviceId}/repair`, { method: "POST" });
+}
+
+// ============================================================
+// Gateway endpoints — mirrors API/gateway.ts exactly
+// ============================================================
+
+import type {
+  RegisterGatewayRequest,
+  RegisterGatewayResponse,
+  UpdateGatewayRequest,
+  GatewayStatusResponse,
+  UpdateGatewayFirmwareRequest,
+  LocalCommandRequest,
+  SyncQueueResponse,
+  GatewaySyncRequest,
+  GatewaySyncResponse,
+  OfflinePolicyConfig,
+  KSVGateway,
+} from "../../API/gateway";
+
+export async function registerGateway(req: RegisterGatewayRequest): Promise<RegisterGatewayResponse> {
+  return apiFetch<RegisterGatewayResponse>(`/gateways`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listGateways(orgId?: string): Promise<KSVGateway[]> {
+  return apiFetch<KSVGateway[]>(`/gateways${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function getGateway(gatewayId: string): Promise<KSVGateway> {
+  return apiFetch<KSVGateway>(`/gateways/${gatewayId}`);
+}
+
+export async function updateGateway(gatewayId: string, req: UpdateGatewayRequest): Promise<KSVGateway> {
+  return apiFetch<KSVGateway>(`/gateways/${gatewayId}`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteGateway(gatewayId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/gateways/${gatewayId}`, { method: "DELETE" });
+}
+
+export async function getGatewayStatus(gatewayId: string): Promise<GatewayStatusResponse> {
+  return apiFetch<GatewayStatusResponse>(`/gateways/${gatewayId}/status`);
+}
+
+export async function syncGateway(req: GatewaySyncRequest): Promise<GatewaySyncResponse> {
+  return apiFetch<GatewaySyncResponse>(`/gateways/${req.gatewayId}/sync`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getSyncQueue(gatewayId: string): Promise<SyncQueueResponse> {
+  return apiFetch<SyncQueueResponse>(`/gateways/${gatewayId}/sync/queue`);
+}
+
+export async function sendLocalCommand(req: LocalCommandRequest): Promise<{ commandId: string; queued: boolean }> {
+  return apiFetch(`/gateways/${req.gatewayId}/command`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function updateGatewayFirmware(req: UpdateGatewayFirmwareRequest): Promise<{ success: boolean; jobId: string }> {
+  return apiFetch(`/gateways/${req.gatewayId}/firmware/update`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getOfflinePolicy(gatewayId: string): Promise<OfflinePolicyConfig> {
+  return apiFetch<OfflinePolicyConfig>(`/gateways/${gatewayId}/offline-policy`);
+}
+
+export async function updateOfflinePolicy(gatewayId: string, req: OfflinePolicyConfig): Promise<{ success: boolean }> {
+  return apiFetch(`/gateways/${gatewayId}/offline-policy`, {
+    method: "PUT",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listGatewayDevices(gatewayId: string): Promise<{ devices: unknown[] }> {
+  return apiFetch(`/gateways/${gatewayId}/devices`);
+}
+
+// ============================================================
+// Protocol endpoints — mirrors API/protocol.ts exactly
+// ============================================================
+
+import type {
+  ListAdaptersResponse,
+  GetConnectionsRequest,
+  GetConnectionsResponse,
+  TestConnectionRequest,
+  TestConnectionResponse,
+  ListManufacturersResponse,
+  ProtocolAdapter,
+  ProtocolConnection,
+  ManufacturerProfile,
+  DeviceProtocol,
+} from "../../API/protocol";
+
+export async function listProtocolAdapters(): Promise<ListAdaptersResponse> {
+  return apiFetch<ListAdaptersResponse>(`/protocols/adapters`);
+}
+
+export async function getProtocolAdapter(adapterId: string): Promise<ProtocolAdapter> {
+  return apiFetch<ProtocolAdapter>(`/protocols/adapters/${adapterId}`);
+}
+
+export async function listProtocolConnections(req: GetConnectionsRequest = {}): Promise<GetConnectionsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<GetConnectionsResponse>(`/protocols/connections${params ? `?${params}` : ""}`);
+}
+
+export async function getProtocolConnection(connectionId: string): Promise<ProtocolConnection> {
+  return apiFetch<ProtocolConnection>(`/protocols/connections/${connectionId}`);
+}
+
+export async function testProtocolConnection(req: TestConnectionRequest): Promise<TestConnectionResponse> {
+  return apiFetch<TestConnectionResponse>(`/protocols/connections/test`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function disconnectProtocol(connectionId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/protocols/connections/${connectionId}/disconnect`, { method: "POST" });
+}
+
+export async function reconnectProtocol(connectionId: string): Promise<{ success: boolean; connectionId: string }> {
+  return apiFetch(`/protocols/connections/${connectionId}/reconnect`, { method: "POST" });
+}
+
+export async function listManufacturers(): Promise<ListManufacturersResponse> {
+  return apiFetch<ListManufacturersResponse>(`/protocols/manufacturers`);
+}
+
+export async function getManufacturer(manufacturerId: string): Promise<ManufacturerProfile> {
+  return apiFetch<ManufacturerProfile>(`/protocols/manufacturers/${manufacturerId}`);
+}
+
+export async function getProtocolConfig(protocol: DeviceProtocol, deviceId: string): Promise<unknown> {
+  return apiFetch(`/protocols/${protocol}/config/${deviceId}`);
+}
+
+export async function updateProtocolConfig(protocol: DeviceProtocol, deviceId: string, config: unknown): Promise<{ success: boolean }> {
+  return apiFetch(`/protocols/${protocol}/config/${deviceId}`, {
+    method: "PUT",
+    body: JSON.stringify(config),
+  });
+}
+
+// ============================================================
+// Organization endpoints — mirrors API/organization.ts exactly
+// ============================================================
+
+import type {
+  CreateOrgRequest,
+  UpdateOrgRequest,
+  CreateSiteRequest,
+  CreateBuildingRequest,
+  CreateRoomRequest,
+  InviteMemberRequest,
+  InviteMemberResponse,
+  UpdateMemberRoleRequest,
+  RemoveMemberRequest,
+  KSVOrganization,
+  KSVSite,
+  KSVBuilding,
+  KSVRoom,
+  KSVOrgMember,
+} from "../../API/organization";
+
+export async function createOrg(req: CreateOrgRequest): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listMyOrgs(): Promise<KSVOrganization[]> {
+  return apiFetch<KSVOrganization[]>(`/orgs`);
+}
+
+export async function getOrg(orgId: string): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs/${orgId}`);
+}
+
+export async function updateOrg(orgId: string, req: UpdateOrgRequest): Promise<KSVOrganization> {
+  return apiFetch<KSVOrganization>(`/orgs/${orgId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteOrg(orgId: string, confirmPhrase: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}`, { method: "DELETE", body: JSON.stringify({ confirmPhrase }) });
+}
+
+export async function createSite(orgId: string, req: CreateSiteRequest): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listSites(orgId: string): Promise<KSVSite[]> {
+  return apiFetch<KSVSite[]>(`/orgs/${orgId}/sites`);
+}
+
+export async function getSite(orgId: string, siteId: string): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites/${siteId}`);
+}
+
+export async function updateSite(orgId: string, siteId: string, req: CreateSiteRequest): Promise<KSVSite> {
+  return apiFetch<KSVSite>(`/orgs/${orgId}/sites/${siteId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteSite(orgId: string, siteId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}`, { method: "DELETE" });
+}
+
+export async function createBuilding(orgId: string, siteId: string, req: CreateBuildingRequest): Promise<KSVBuilding> {
+  return apiFetch<KSVBuilding>(`/orgs/${orgId}/sites/${siteId}/buildings`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listBuildings(orgId: string, siteId: string): Promise<KSVBuilding[]> {
+  return apiFetch<KSVBuilding[]>(`/orgs/${orgId}/sites/${siteId}/buildings`);
+}
+
+export async function updateBuilding(orgId: string, siteId: string, buildingId: string, req: CreateBuildingRequest): Promise<KSVBuilding> {
+  return apiFetch<KSVBuilding>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteBuilding(orgId: string, siteId: string, buildingId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}`, { method: "DELETE" });
+}
+
+export async function createRoom(orgId: string, siteId: string, buildingId: string, req: CreateRoomRequest): Promise<KSVRoom> {
+  return apiFetch<KSVRoom>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listRooms(orgId: string, siteId: string, buildingId: string): Promise<KSVRoom[]> {
+  return apiFetch<KSVRoom[]>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms`);
+}
+
+export async function updateRoom(orgId: string, siteId: string, buildingId: string, roomId: string, req: CreateRoomRequest): Promise<KSVRoom> {
+  return apiFetch<KSVRoom>(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms/${roomId}`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function deleteRoom(orgId: string, siteId: string, buildingId: string, roomId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/sites/${siteId}/buildings/${buildingId}/rooms/${roomId}`, { method: "DELETE" });
+}
+
+export async function inviteMember(orgId: string, req: InviteMemberRequest): Promise<InviteMemberResponse> {
+  return apiFetch<InviteMemberResponse>(`/orgs/${orgId}/members/invite`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listMembers(orgId: string): Promise<KSVOrgMember[]> {
+  return apiFetch<KSVOrgMember[]>(`/orgs/${orgId}/members`);
+}
+
+export async function getMember(orgId: string, memberId: string): Promise<KSVOrgMember> {
+  return apiFetch<KSVOrgMember>(`/orgs/${orgId}/members/${memberId}`);
+}
+
+export async function updateMemberRole(orgId: string, req: UpdateMemberRoleRequest): Promise<KSVOrgMember> {
+  return apiFetch<KSVOrgMember>(`/orgs/${orgId}/members/${req.memberId}/role`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function removeMember(orgId: string, req: RemoveMemberRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/orgs/${orgId}/members/${req.memberId}`, { method: "DELETE", body: JSON.stringify(req) });
+}
+
+// ============================================================
+// Security endpoints — mirrors API/security.ts exactly
+// ============================================================
+
+import type {
+  CreateKeyRequest,
+  CreateKeyResponse,
+  ListKeysRequest,
+  ListKeysResponse,
+  RotateKeyRequest,
+  RevokeKeyRequest,
+  EncryptDataRequest,
+  EncryptDataResponse,
+  DecryptDataRequest,
+  ListThreatsRequest,
+  MarkFalsePositiveRequest,
+  CreateIncidentRequest,
+  TakeIncidentActionRequest,
+  ManagedKey,
+  ThreatDetection,
+  SecurityIncident,
+  IncidentStatus,
+  IncidentAction,
+} from "../../API/security";
+
+export async function createSecurityKey(req: CreateKeyRequest): Promise<CreateKeyResponse> {
+  return apiFetch<CreateKeyResponse>(`/security/keys`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listSecurityKeys(req: ListKeysRequest = {}): Promise<ListKeysResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListKeysResponse>(`/security/keys${params ? `?${params}` : ""}`);
+}
+
+export async function getKeyMetadata(keyId: string): Promise<ManagedKey> {
+  return apiFetch<ManagedKey>(`/security/keys/${keyId}`);
+}
+
+export async function rotateKey(req: RotateKeyRequest): Promise<{ success: boolean; newKeyId: string }> {
+  return apiFetch(`/security/keys/${req.keyId}/rotate`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function revokeKey(req: RevokeKeyRequest): Promise<{ success: boolean; affectedCount: number }> {
+  return apiFetch(`/security/keys/${req.keyId}/revoke`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function encryptData(req: EncryptDataRequest): Promise<EncryptDataResponse> {
+  return apiFetch<EncryptDataResponse>(`/security/encrypt`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function decryptData(req: DecryptDataRequest): Promise<{ plaintext: string }> {
+  return apiFetch(`/security/decrypt`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listThreats(req: ListThreatsRequest = {}): Promise<{ threats: ThreatDetection[]; total: number }> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch(`/security/threats${params ? `?${params}` : ""}`);
+}
+
+export async function getThreat(detectionId: string): Promise<ThreatDetection> {
+  return apiFetch<ThreatDetection>(`/security/threats/${detectionId}`);
+}
+
+export async function markFalsePositive(req: MarkFalsePositiveRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/security/threats/${req.detectionId}/false-positive`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function createIncident(req: CreateIncidentRequest): Promise<SecurityIncident> {
+  return apiFetch<SecurityIncident>(`/security/incidents`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listIncidents(status?: IncidentStatus): Promise<SecurityIncident[]> {
+  return apiFetch<SecurityIncident[]>(`/security/incidents${status ? `?status=${status}` : ""}`);
+}
+
+export async function getIncident(incidentId: string): Promise<SecurityIncident> {
+  return apiFetch<SecurityIncident>(`/security/incidents/${incidentId}`);
+}
+
+export async function takeIncidentAction(req: TakeIncidentActionRequest): Promise<IncidentAction> {
+  return apiFetch<IncidentAction>(`/security/incidents/${req.incidentId}/actions`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function resolveIncident(incidentId: string, summary: string): Promise<{ success: boolean }> {
+  return apiFetch(`/security/incidents/${incidentId}/resolve`, { method: "POST", body: JSON.stringify({ summary }) });
+}
+
+export async function getRateLimitStatus(accountId: string): Promise<{ remaining: number; resetAt: string; limit: number }> {
+  return apiFetch(`/security/rate-limit/${accountId}`);
+}
+
+// ============================================================
+// Notification endpoints — mirrors API/notification.ts exactly
+// ============================================================
+
+import type {
+  SendNotificationRequest,
+  SendBulkNotificationRequest,
+  SendBulkNotificationResponse,
+  ListNotificationsRequest,
+  ListNotificationsResponse,
+  MarkReadRequest,
+  MarkAllReadRequest,
+  UpdatePreferencesRequest,
+  RegisterPushTokenRequest,
+  KSVNotification,
+  NotificationPreferences,
+  PushDeviceToken,
+} from "../../API/notification";
+
+export async function sendNotification(req: SendNotificationRequest): Promise<{ notificationId: string; queued: boolean }> {
+  return apiFetch(`/notifications/send`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function sendBulkNotification(req: SendBulkNotificationRequest): Promise<SendBulkNotificationResponse> {
+  return apiFetch<SendBulkNotificationResponse>(`/notifications/send-bulk`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listNotifications(req: ListNotificationsRequest = {}): Promise<ListNotificationsResponse> {
+  const params = new URLSearchParams(req as Record<string, string>).toString();
+  return apiFetch<ListNotificationsResponse>(`/notifications${params ? `?${params}` : ""}`);
+}
+
+export async function getNotification(notificationId: string): Promise<KSVNotification> {
+  return apiFetch<KSVNotification>(`/notifications/${notificationId}`);
+}
+
+export async function markNotificationRead(req: MarkReadRequest): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/${req.notificationId}/read`, { method: "POST" });
+}
+
+export async function markAllNotificationsRead(req: MarkAllReadRequest = {}): Promise<{ success: boolean; markedCount: number }> {
+  return apiFetch(`/notifications/read-all`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function deleteNotification(notificationId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/${notificationId}`, { method: "DELETE" });
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>(`/notifications/preferences`);
+}
+
+export async function updateNotificationPreferences(req: UpdatePreferencesRequest): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>(`/notifications/preferences`, { method: "PUT", body: JSON.stringify(req) });
+}
+
+export async function registerPushToken(req: RegisterPushTokenRequest): Promise<PushDeviceToken> {
+  return apiFetch<PushDeviceToken>(`/notifications/push-tokens`, { method: "POST", body: JSON.stringify(req) });
+}
+
+export async function listPushTokens(): Promise<PushDeviceToken[]> {
+  return apiFetch<PushDeviceToken[]>(`/notifications/push-tokens`);
+}
+
+export async function removePushToken(tokenId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/notifications/push-tokens/${tokenId}`, { method: "DELETE" });
+}

@@ -18,6 +18,7 @@ import { OrganizationView } from '@/views/OrganizationView';
 import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
+import { LoginView } from '@/views/LoginView';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -34,7 +35,7 @@ const views: Record<ViewId, () => JSX.Element> = {
   settings: SettingsView,
 };
 
-export default function App() {
+function AuthenticatedApp() {
   const [active, setActive] = useState<ViewId>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   // t() is the ONLY source of on-screen text below. Switching language
@@ -192,4 +193,16 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!localStorage.getItem('ksv_access_token')
+  );
+
+  if (!isAuthenticated) {
+    return <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
+  return <AuthenticatedApp />;
 }
