@@ -1543,3 +1543,38 @@ export async function createAnalyticsDashboard(name: string, widgets: AnalyticsD
 export async function getAnalyticsDashboard(dashboardId: string): Promise<AnalyticsDashboard> {
   return apiFetch<AnalyticsDashboard>(`/telemetry/dashboards/${dashboardId}`);
 }
+
+// ============================================================
+// Push Notification Delivery endpoints — mirrors API/notification-push.ts exactly
+// ============================================================
+
+import type {
+  PushProvider,
+  PushBatchJob,
+  DeviceTokenHealth,
+  PushPlatform,
+} from "../../API/notification-push";
+
+export async function sendPush(deviceTokenId: string, title: string, body: string): Promise<{ success: boolean }> {
+  return apiFetch(`/push/send`, { method: "POST", body: JSON.stringify({ deviceTokenId, title, body }) });
+}
+
+export async function sendPushBatch(deviceTokenIds: string[], title: string, body: string): Promise<PushBatchJob> {
+  return apiFetch<PushBatchJob>(`/push/send-batch`, { method: "POST", body: JSON.stringify({ deviceTokenIds, title, body }) });
+}
+
+export async function getPushJob(jobId: string): Promise<PushBatchJob> {
+  return apiFetch<PushBatchJob>(`/push/jobs/${jobId}`);
+}
+
+export async function configurePushProvider(platform: PushPlatform, credentialsRef: string): Promise<PushProvider> {
+  return apiFetch<PushProvider>(`/push/providers`, { method: "POST", body: JSON.stringify({ platform, credentialsRef }) });
+}
+
+export async function getTokenHealth(tokenId: string): Promise<DeviceTokenHealth> {
+  return apiFetch<DeviceTokenHealth>(`/push/tokens/${tokenId}/health`);
+}
+
+export async function cleanupPushTokens(): Promise<{ success: boolean; removedCount: number }> {
+  return apiFetch(`/push/tokens/cleanup`, { method: "POST" });
+}
