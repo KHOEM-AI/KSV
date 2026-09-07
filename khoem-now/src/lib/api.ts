@@ -1738,3 +1738,62 @@ export async function connectIntegration(provider: IntegrationProvider, authCode
 export async function disconnectIntegration(connectorId: string): Promise<{ success: boolean }> {
   return apiFetch(`/integrations/${connectorId}/disconnect`, { method: "DELETE" });
 }
+
+// ============================================================
+// Geolocation & Map endpoints — mirrors API/geolocation-map.ts exactly
+// ============================================================
+
+import type {
+  SiteMapPin,
+  GeoFence,
+  GeoFenceTarget,
+  GeoFencePoint,
+  GeoFenceEvent,
+  GeoLocation,
+  VehicleTrackingSession,
+} from "../../API/geolocation-map";
+
+export async function getSiteMap(siteId: string): Promise<SiteMapPin[]> {
+  return apiFetch<SiteMapPin[]>(`/geo/sites/${siteId}/map`);
+}
+
+export async function createGeoFence(name: string, polygon: GeoFencePoint[], appliesTo: GeoFenceTarget): Promise<GeoFence> {
+  return apiFetch<GeoFence>(`/geo/fences`, {
+    method: "POST",
+    body: JSON.stringify({ name, polygon, appliesTo }),
+  });
+}
+
+export async function listGeoFences(orgId?: string): Promise<GeoFence[]> {
+  return apiFetch<GeoFence[]>(`/geo/fences${orgId ? `?orgId=${orgId}` : ""}`);
+}
+
+export async function updateGeoFence(fenceId: string, polygon?: GeoFencePoint[], isEnabled?: boolean): Promise<GeoFence> {
+  return apiFetch<GeoFence>(`/geo/fences/${fenceId}`, {
+    method: "PUT",
+    body: JSON.stringify({ polygon, isEnabled }),
+  });
+}
+
+export async function deleteGeoFence(fenceId: string): Promise<{ success: boolean }> {
+  return apiFetch(`/geo/fences/${fenceId}`, { method: "DELETE" });
+}
+
+export async function reportDeviceLocation(deviceId: string, location: GeoLocation): Promise<{ success: boolean }> {
+  return apiFetch(`/geo/devices/${deviceId}/location`, {
+    method: "POST",
+    body: JSON.stringify(location),
+  });
+}
+
+export async function getLocationHistory(deviceId: string): Promise<GeoLocation[]> {
+  return apiFetch<GeoLocation[]>(`/geo/devices/${deviceId}/location/history`);
+}
+
+export async function getFenceEvents(fenceId: string): Promise<GeoFenceEvent[]> {
+  return apiFetch<GeoFenceEvent[]>(`/geo/fences/${fenceId}/events`);
+}
+
+export async function getVehicleTracking(deviceId: string): Promise<VehicleTrackingSession> {
+  return apiFetch<VehicleTrackingSession>(`/geo/vehicles/${deviceId}/tracking`);
+}
