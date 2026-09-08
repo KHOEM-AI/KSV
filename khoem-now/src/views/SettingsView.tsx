@@ -17,7 +17,7 @@ export function SettingsView() {
   useEffect(() => {
     getSettings()
       .then((res) => setSettings(res.settings))
-      .catch((err) => setError(err.message || 'Failed to load settings'))
+      .catch((err) => setError(err.message || t('view.settings.loadFailed')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,7 +47,7 @@ export function SettingsView() {
   }
 
   if (!settings) {
-    return <div className="p-5 text-sm text-red-400">{error || 'Could not load settings.'}</div>;
+    return <div className="p-5 text-sm text-red-400">{error || t('view.settings.loadFailed')}</div>;
   }
 
   const platformSettings: { key: ToggleKey; label: string; desc: string }[] = [

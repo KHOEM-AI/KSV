@@ -456,6 +456,9 @@ const en: Dict = {
   'time.weeksAgo': '{count}w ago',
   'view.security.session.active': 'active',
   'view.security.session.expired': 'expired',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const km: Dict = {
@@ -841,6 +844,9 @@ const km: Dict = {
   'time.weeksAgo': '{count}សប្តាហ៍មុន',
   'view.security.session.active': 'សកម្ម',
   'view.security.session.expired': 'ផុតកំណត់',
+  'view.login.title': 'ចូលប្រព័ន្ធ KSV',
+  'view.devices.loadFailed': 'មិនអាចផ្ទុកឧបករណ៍បានទេ។',
+  'view.settings.loadFailed': 'មិនអាចផ្ទុកការកំណត់បានទេ។',
 };
 
 
@@ -1194,6 +1200,9 @@ const ja: Dict = {
   'time.weeksAgo': '{count}週間前',
   'view.security.session.active': 'アクティブ',
   'view.security.session.expired': '期限切れ',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const zh: Dict = {
@@ -1258,6 +1267,9 @@ const zh: Dict = {
   'time.weeksAgo': '{count}周前',
   'view.security.session.active': '活跃',
   'view.security.session.expired': '已过期',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const th: Dict = {
@@ -1608,6 +1620,9 @@ const th: Dict = {
   'time.weeksAgo': '{count}สัปดาห์ที่แล้ว',
   'view.security.session.active': 'ใช้งานอยู่',
   'view.security.session.expired': 'หมดอายุ',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const ko: Dict = {
@@ -1672,6 +1687,9 @@ const ko: Dict = {
   'time.weeksAgo': '{count}주 전',
   'view.security.session.active': '활성',
   'view.security.session.expired': '만료됨',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const fr: Dict = {
@@ -1736,6 +1754,9 @@ const fr: Dict = {
   'time.weeksAgo': 'il y a {count}sem',
   'view.security.session.active': 'actif',
   'view.security.session.expired': 'expiré',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const es: Dict = {
@@ -1800,6 +1821,9 @@ const es: Dict = {
   'time.weeksAgo': 'hace {count}sem',
   'view.security.session.active': 'activo',
   'view.security.session.expired': 'expirado',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const vi: Dict = {
@@ -1864,6 +1888,9 @@ const vi: Dict = {
   'time.weeksAgo': '{count} tuần trước',
   'view.security.session.active': 'hoạt động',
   'view.security.session.expired': 'hết hạn',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const ar: Dict = {
@@ -1928,6 +1955,9 @@ const ar: Dict = {
   'time.weeksAgo': 'منذ {count} أسبوع',
   'view.security.session.active': 'نشط',
   'view.security.session.expired': 'منتهي الصلاحية',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const it: Dict = {
@@ -1987,6 +2017,9 @@ const it: Dict = {
   'time.weeksAgo': '{count}sett fa',
   'view.security.session.active': 'attivo',
   'view.security.session.expired': 'scaduto',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const de: Dict = {
@@ -2046,6 +2079,9 @@ const de: Dict = {
   'time.weeksAgo': 'vor {count}Wo',
   'view.security.session.active': 'aktiv',
   'view.security.session.expired': 'abgelaufen',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const pt: Dict = {
@@ -2105,6 +2141,9 @@ const pt: Dict = {
   'time.weeksAgo': 'há {count}sem',
   'view.security.session.active': 'ativo',
   'view.security.session.expired': 'expirado',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const ru: Dict = {
@@ -2164,6 +2203,9 @@ const ru: Dict = {
   'time.weeksAgo': '{count} нед назад',
   'view.security.session.active': 'активен',
   'view.security.session.expired': 'истёк',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const hi: Dict = {
@@ -2223,6 +2265,9 @@ const hi: Dict = {
   'time.weeksAgo': '{count} सप्ताह पहले',
   'view.security.session.active': 'सक्रिय',
   'view.security.session.expired': 'समाप्त',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const id: Dict = {
@@ -2282,6 +2327,9 @@ const id: Dict = {
   'time.weeksAgo': '{count} minggu lalu',
   'view.security.session.active': 'aktif',
   'view.security.session.expired': 'kedaluwarsa',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const tr: Dict = {
@@ -2341,6 +2389,9 @@ const tr: Dict = {
   'time.weeksAgo': '{count}hf önce',
   'view.security.session.active': 'aktif',
   'view.security.session.expired': 'süresi doldu',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const nl: Dict = {
@@ -2400,6 +2451,9 @@ const nl: Dict = {
   'time.weeksAgo': '{count}w geleden',
   'view.security.session.active': 'actief',
   'view.security.session.expired': 'verlopen',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const pl: Dict = {
@@ -2459,6 +2513,9 @@ const pl: Dict = {
   'time.weeksAgo': '{count}tyg temu',
   'view.security.session.active': 'aktywny',
   'view.security.session.expired': 'wygasł',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const sv: Dict = {
@@ -2518,6 +2575,9 @@ const sv: Dict = {
   'time.weeksAgo': '{count}v sedan',
   'view.security.session.active': 'aktiv',
   'view.security.session.expired': 'utgången',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const bn: Dict = {
@@ -2577,6 +2637,9 @@ const bn: Dict = {
   'time.weeksAgo': '{count} সপ্তাহ আগে',
   'view.security.session.active': 'সক্রিয়',
   'view.security.session.expired': 'মেয়াদ শেষ',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const ur: Dict = {
@@ -2636,6 +2699,9 @@ const ur: Dict = {
   'time.weeksAgo': '{count} ہفتے پہلے',
   'view.security.session.active': 'فعال',
   'view.security.session.expired': 'میعاد ختم',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const ms: Dict = {
@@ -2695,6 +2761,9 @@ const ms: Dict = {
   'time.weeksAgo': '{count}mg lalu',
   'view.security.session.active': 'aktif',
   'view.security.session.expired': 'tamat tempoh',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const tl: Dict = {
@@ -2754,6 +2823,9 @@ const tl: Dict = {
   'time.weeksAgo': '{count}linggo ang nakalipas',
   'view.security.session.active': 'aktibo',
   'view.security.session.expired': 'napaso',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const my: Dict = {
@@ -2813,6 +2885,9 @@ const my: Dict = {
   'time.weeksAgo': '{count} ပတ်က',
   'view.security.session.active': 'အသက်ဝင်',
   'view.security.session.expired': 'သက်တမ်းကုန်',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const lo: Dict = {
@@ -2872,6 +2947,9 @@ const lo: Dict = {
   'time.weeksAgo': '{count}ອາທິດກ່ອນ',
   'view.security.session.active': 'ໃຊ້ງານຢູ່',
   'view.security.session.expired': 'ໝົດອາຍຸ',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const el: Dict = {
@@ -2931,6 +3009,9 @@ const el: Dict = {
   'time.weeksAgo': 'πριν {count}εβδ',
   'view.security.session.active': 'ενεργό',
   'view.security.session.expired': 'έληξε',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const he: Dict = {
@@ -2990,6 +3071,9 @@ const he: Dict = {
   'time.weeksAgo': 'לפני {count} שבוע',
   'view.security.session.active': 'פעיל',
   'view.security.session.expired': 'פג תוקף',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const uk: Dict = {
@@ -3049,6 +3133,9 @@ const uk: Dict = {
   'time.weeksAgo': '{count}тиж тому',
   'view.security.session.active': 'активний',
   'view.security.session.expired': 'закінчився',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const cs: Dict = {
@@ -3108,6 +3195,9 @@ const cs: Dict = {
   'time.weeksAgo': 'před {count}týd',
   'view.security.session.active': 'aktivní',
   'view.security.session.expired': 'vypršelo',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 const zhTW: Dict = {
@@ -3172,6 +3262,9 @@ const zhTW: Dict = {
   'time.weeksAgo': '{count}週前',
   'view.security.session.active': '活躍',
   'view.security.session.expired': '已過期',
+  'view.login.title': 'KSV Login',
+  'view.devices.loadFailed': 'Failed to load devices.',
+  'view.settings.loadFailed': 'Failed to load settings.',
 };
 
 export const TRANSLATIONS: Record<LanguageCode, Dict> = {

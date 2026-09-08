@@ -50,7 +50,7 @@ export function DevicesView() {
   useEffect(() => {
     listDevices()
       .then((res: any) => setDevices(res.devices ?? []))
-      .catch((err) => setError(err.message ?? 'Failed to load devices'))
+      .catch((err) => setError(err.message ?? t('view.devices.loadFailed')))
       .finally(() => setLoading(false));
   }, []);
 
