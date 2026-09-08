@@ -663,6 +663,10 @@ const km: Dict = {
   'view.controls.log.hvac': 'ម៉ាស៊ីនត្រជាក់បន្ទប់ស្អាត',
   'view.controls.log.pressLine': 'ខ្សែសង្កត់ 7',
   'view.controls.log.eastGate': 'របាំងច្រកខាងកើត',
+  'view.controls.logLoading': 'កំពុងផ្ទុកសកម្មភាពថ្មីៗ…',
+  'view.controls.logEmpty': 'មិនទាន់មានពាក្យបញ្ជាផ្ញើនៅឡើយទេ។',
+  'view.controls.logLoadFailed': 'មិនអាចផ្ទុកសកម្មភាពថ្មីៗបានទេ។'
+
 
   // Gateway view
   'view.gateway.online': 'អនឡាញ',
