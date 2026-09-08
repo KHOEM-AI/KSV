@@ -835,6 +835,53 @@ async function main() {
     }
   );
 
+
+  // GET /api/v1/ai/sessions/:id — fetch one AI conversation session
+  app.get(
+    "/api/v1/ai/sessions/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const session = await AIConversationSession.findOne({
+          _id: req.params.id,
+          accountId: user.userId,
+        }).lean();
+        if (!session) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+        res.json({ session });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load session." });
+      }
+    }
+  );
+
+  // DELETE /api/v1/ai/sessions/:id — delete a session (privacy)
+  app.delete(
+    "/api/v1/ai/sessions/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const result = await AIConversationSession.deleteOne({
+          _id: req.params.id,
+          accountId: user.userId,
+        });
+        if (result.deletedCount === 0) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+        res.status(204).send();
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete session." });
+      }
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
