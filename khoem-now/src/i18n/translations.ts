@@ -16,7 +16,7 @@
 
 export type LanguageCode = 'km' | 'en' | 'ja' | 'zh' | 'th' | 'ko' | 'fr' | 'es' | 'vi' | 'ar'
   | 'it' | 'de' | 'pt' | 'ru' | 'hi' | 'id' | 'tr' | 'nl' | 'pl' | 'sv'
-  | 'bn' | 'ur' | 'ms' | 'tl' | 'my' | 'lo' | 'el' | 'he' | 'uk' | 'cs';
+  | 'bn' | 'ur' | 'ms' | 'tl' | 'my' | 'lo' | 'el' | 'he' | 'uk' | 'cs' | 'zhTW';
 
 export interface LanguageInfo {
   code: LanguageCode;
@@ -32,6 +32,7 @@ export const LANGUAGES: LanguageInfo[] = [
   { code: 'en', nativeName: 'English', englishName: 'English', flag: '🇬🇧', dir: 'ltr' },
   { code: 'ja', nativeName: '日本語', englishName: 'Japanese', flag: '🇯🇵', dir: 'ltr' },
   { code: 'zh', nativeName: '中文', englishName: 'Chinese', flag: '🇨🇳', dir: 'ltr' },
+  { code: 'zhTW', nativeName: '繁體中文', englishName: 'Chinese (Traditional)', flag: '🇹🇼', dir: 'ltr' },
   { code: 'th', nativeName: 'ไทย', englishName: 'Thai', flag: '🇹🇭', dir: 'ltr' },
   { code: 'ko', nativeName: '한국어', englishName: 'Korean', flag: '🇰🇷', dir: 'ltr' },
   { code: 'fr', nativeName: 'Français', englishName: 'French', flag: '🇫🇷', dir: 'ltr' },
@@ -2895,10 +2896,67 @@ const cs: Dict = {
 
 };
 
+const zhTW: Dict = {
+  'dashboard.stat.connectedDevices': '已連接設備',
+  'dashboard.stat.activeSafetyRules': '有效安全規則',
+  'dashboard.stat.edgeGateways': '邊緣網關',
+  'dashboard.stat.online': '在線',
+  'dashboard.stat.countriesDeployed': '已部署國家',
+  'app.title': 'KSV 通用安全控制平臺',
+  'nav.dashboard': '儀表盤',
+  'nav.devices': '設備',
+  'nav.map': '地圖',
+  'nav.controls': '控制',
+  'nav.protocols': '協議',
+  'nav.gateway': '網關',
+  'nav.security': '安全',
+  'nav.safety': '安全防護',
+  'nav.audit': '審計',
+  'nav.organization': '組織',
+  'nav.international': '國際化',
+  'nav.certificates': '證書',
+  'nav.settings': '設置',
+  'common.search': '搜索…',
+  'common.notifications': '通知',
+  'common.save': '保存',
+  'common.cancel': '取消',
+  'common.confirm': '確認',
+  'common.close': '關閉',
+  'common.pinned': '已固定',
+  'common.results': '個結果',
+  'app.subtitle': '安全控制平臺',
+  'sidebar.systemStatus': '系統狀態',
+  'sidebar.operational': '運行中',
+  'sidebar.devicesOnline': '{count} 臺設備在線',
+  'sidebar.uptime': '已運行 {count} 天',
+  'user.orgOwner': '組織所有者',
+  'intl.title': '國際化',
+  'intl.subtitle': '國家、語言與時區各自獨立管理 — 支持 {count} 個國家和地區。',
+  'intl.search': '搜索國家、代碼或區號…',
+  'intl.dialCode': '區號',
+  'intl.language': '語言',
+  'intl.chooseLanguage': '請選擇您的語言',
+  'intl.daytime': '白天',
+  'intl.nighttime': '夜晚',
+  'view.map.title': '交互式地圖',
+  'view.map.subtitle': '實時查看整個車隊設備的地理位置',
+  'view.map.filter.all': '全部',
+  'view.map.filter.online': '在線',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.maintenance': '維護中',
+  'view.map.filter.offline': '離線',
+  'view.map.detail.category': '類別',
+  'view.map.detail.protocol': '協議',
+  'view.map.detail.status': '狀態',
+  'view.map.detail.coords': '座標',
+  'view.map.detail.controlNote': '請打開設備詳情發送指令 — 地圖不會繞過授權與安全檢查。'
+
+};
+
 export const TRANSLATIONS: Record<LanguageCode, Dict> = {
   en, km, ja, zh, th, ko, fr, es, vi, ar,
   it, de, pt, ru, hi, id, tr, nl, pl, sv,
-  bn, ur, ms, tl, my, lo, el, he, uk, cs,
+  bn, ur, ms, tl, my, lo, el, he, uk, cs, zhTW,
 };
 
 /** Fallback chain: missing key in a language falls back to English,
