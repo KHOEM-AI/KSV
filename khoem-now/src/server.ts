@@ -882,6 +882,52 @@ async function main() {
     }
   );
 
+
+  // POST /api/v1/ai/interpret/confirm — user confirms an ambiguous
+  // AI interpretation by picking one of the ambiguityOptions returned
+  // from /api/v1/ai/interpret.
+  app.post(
+    "/api/v1/ai/interpret/confirm",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { sessionId, structuredCommand } = req.body || {};
+
+      if (!sessionId || !structuredCommand || typeof structuredCommand !== "object") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "sessionId and structuredCommand are required." });
+        return;
+      }
+      if (!structuredCommand.deviceId || !structuredCommand.commandType) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "structuredCommand must include deviceId and commandType." });
+        return;
+      }
+
+      try {
+        const session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.userId });
+        if (!session) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+
+        // NOTE: this only records the confirmation. Actually dispatching
+        // structuredCommand through the Command Pipeline (authenticate ->
+        // authorize -> safety -> execute -> audit) is a separate step,
+        // shared with manually typed commands — not duplicated here.
+        session.turns.push({
+          role: "user",
+          text: `[confirmed] ${JSON.stringify(structuredCommand)}`,
+          createdAt: new Date(),
+        });
+        await session.save();
+
+        res.json({ confirmed: true, structuredCommand, sessionId: String(session._id) });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to confirm interpretation." });
+      }
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
