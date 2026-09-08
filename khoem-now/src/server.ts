@@ -928,6 +928,43 @@ async function main() {
     }
   );
 
+
+  // GET /api/v1/ai/models — list AI model profiles the org may use
+  // NOTE: static list for now (no AIModelProfile DB table yet — no real
+  // provider is configured). Only "internal" (the mock interpreter) is
+  // enabled. Swap for a DB-backed list once Anthropic/OpenAI keys exist.
+  app.get(
+    "/api/v1/ai/models",
+    authenticate,
+    requirePermission("device:read"),
+    async (_req, res) => {
+      const models = [
+        {
+          modelId: "internal-mock-v1",
+          provider: "internal",
+          version: "1.0.0-mock",
+          allowedScopes: ["device:read"],
+          isEnabled: true,
+        },
+        {
+          modelId: "anthropic-claude",
+          provider: "anthropic",
+          version: "not-configured",
+          allowedScopes: [],
+          isEnabled: false,
+        },
+        {
+          modelId: "openai-gpt",
+          provider: "openai",
+          version: "not-configured",
+          allowedScopes: [],
+          isEnabled: false,
+        },
+      ];
+      res.json({ models });
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
