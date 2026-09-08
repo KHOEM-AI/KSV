@@ -390,3 +390,23 @@ export const KSV_API_ROUTE_REGISTRY = {
 };
 ឯកសារនេះបន្ថែម 9 Extension Domains ទៅលើ KSV Universal Secure Control Platform
 ទីតាំង: khoem-now/API/ — ត្រូវ merge ចូល index.ts ដើម
+
+---
+
+## ✅ Update (Sep 9, 2026) — 9 Extension Domains Wired
+
+ឯកសារទាំង ៩ (ai-orchestration, billing-subscription, analytics-telemetry,
+notification-push, file-storage, reporting-export, integration-webhook,
+geolocation-map, maintenance-ticketing) ដែលមានស្រាប់ក្នុង API/ ត្រូវបាន
+**wire ចូល `index.ts`** ពេញលេញ៖
+
+- Export * from ទាំង ៩ file
+- Import ROUTES constants ទាំង ៩
+- បន្ថែមចូល `KSV_API_ROUTE_REGISTRY`
+- បន្ថែមចូល `KSV_API_DOMAIN_FILES`
+
+KSV API ឥឡូវសរុប **27 domains** (18 ដើម + 9 ថ្មី) ≈ 279 endpoints, ≈ 250 audit events.
+Build + typecheck clean។ Commit: `f37080f8`.
+
+**ការងារបន្ទាប់ (TODO)**: សាកល្បង endpoint ថ្មីៗទាំង ៩ ជាក់ស្តែង (curl test)
+មុននឹងចាត់ទុកថា production-ready។
