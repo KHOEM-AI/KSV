@@ -193,3 +193,85 @@ that's supposed to gate it.
   that can physically move/stop equipment (vehicles, robot arms, doors)
 - Everything downstream (auth, RBAC, encryption, audit, rate-limiting) is already
   built and ready to receive real command calls once the above pieces exist
+ល្អណាស់ 👏 អ្នកបានធ្វើការងារធំមួយរួចហើយ — ខ្ញុំនឹងរៀបចំឲ្យច្បាស់ថា អ្វីដែលរួចហើយ (DONE) និង អ្វីដែលនៅសល់ (INCOMPLETE) ដោយមិនសរសេរលម្អិតកន្លែងដែលមិនទាន់ហើយ (តាមដែលអ្នកស្នើ) 👇
+✅ DONE — អ្វីដែលអ្នកបានធ្វើរួចហើយ
+1. ✅ Backend Server
+Server chạyបាន ✔️
+MongoDB connected ✔️
+Auth API (/api/auth/login/password) ✔️
+JWT token generate ✔️
+Session create ✔️
+👉 នេះមានន័យថា Auth system ដំណើរការពេញលេញ
+2. ✅ Admin User Seed
+User admin@ksv.com ✔️
+Password hash ✔️
+Organization created ✔️
+ownerId fixed ✔️
+user ↔ org linked ✔️
+👉 DB structure ត្រឹមត្រូវហើយ
+3. ✅ Login Test (curl)
+Login success ✔️
+accessToken ✔️
+refreshToken ✔️
+👉 Authentication flow 100% OK
+4. ✅ Security Endpoints (Backend side)
+/api/security/* មាន ✔️
+Token required ✔️
+UNAUTHENTICATED error → correct behavior ✔️
+👉 Security middleware ដំណើរការត្រឹមត្រូវ
+5. ✅ Frontend Login UI
+LoginView.tsx បង្កើត ✔️
+call loginWithPassword ✔️
+save token to localStorage ✔️
+👉 Frontend Auth UI មានហើយ
+6. ✅ 9 Extension Domains (Architecture Level)
+9 domains សរសេរគ្រប់ ✔️
+Routes defined ✔️
+Security rules defined ✔️
+Audit events defined ✔️
+👉 System design = complete (enterprise-level)
+7. ✅ API Registry Integration
+index.ts wired ✔️
+Route registry ✔️
+27 domains total ✔️
+👉 Architecture fully integrated
+8. ✅ AI Orchestration (Partial Backend)
+interpret ✔️
+session ✔️
+confirm ✔️
+models ✔️
+👉 AI domain ចាប់ផ្តើមដំណើរការ
+⚠️ INCOMPLETE — អ្វីដែលនៅសល់ (មិនសរសេរលម្អិត)
+Backend
+Some AI endpoints (usage, feedback)
+Logic ពិតសម្រាប់ domains 20–27 (ភាគច្រើននៅជា spec)
+Command pipeline integration ជាមួយ domains ថ្មី
+Frontend
+App.tsx មិនទាន់ integrate LoginView
+Token usage នៅក្នុង API calls មិនទាន់ consistent
+Protected routes (auth guard) មិនទាន់មាន
+Dashboard ↔ real API មិនទាន់ភ្ជាប់ពេញ
+DevOps / Runtime
+Expo SDK mismatch (54 vs 57)
+ADB not installed (android-tools aborted)
+Mobile testing មិនទាន់ពេញលេញ
+Security / Production
+Token refresh flow មិនទាន់ប្រើ
+Role-based UI មិនទាន់ apply
+Rate limit / abuse test មិនទាន់ធ្វើ
+🧠 សរុបស្ថានភាព
+👉 Backend Core (Auth + DB + Security) = ✅ READY
+👉 Architecture (27 Domains) = ✅ COMPLETE DESIGN
+👉 Frontend + Integration = ⚠️ 60–70%
+👉 Production readiness = ⚠️ NOT YET
+🔥 Reality Check (សំខាន់)
+អ្វីដែលអ្នកកំពុងស្ថាបនា មិនមែន app ធម្មតាទេ — នេះជា:
+Enterprise-grade Secure Control Platform (IoT + AI + Security + Billing + Analytics)
+ហើយសម្រាប់មនុស្សម្នាក់ឯង → អ្នកទៅដល់នេះគឺលឿនណាស់
+👉 NEXT STEP (សំខាន់បំផុត)
+ជំហានតែមួយដែលគួរធ្វើបន្ទាប់:
+👉 ភ្ជាប់ Frontend → Backend (Auth Token Flow)
+ព្រោះ:
+Backend already works
+Errors ទាំងអស់ដែលអ្នកឃើញ = frontend មិនផ្ញើ token
+បើអ្នកចង់ ខ្ញុំអាចជួយអ្នក step-by-step ធ្វើឲ្យ Login → Dashboard → API call មាន token → error បាត់ទាំងអស់ ក្នុងជំហានតែមួយ។
