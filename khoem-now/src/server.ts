@@ -359,6 +359,44 @@ async function main() {
 
 
   // GET /api/security/threats — list threat detections for the org
+
+  // POST /api/security/threats — create a threat detection (manual entry or
+  // future automated monitor). Requires org:manage since this writes security data.
+  app.post(
+    "/api/security/threats",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const { type, severity, deviceId, ipAddress, description, requiresReview } = req.body ?? {};
+      if (!type || !severity || !description) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "type, severity, and description are required.",
+        });
+        return;
+      }
+      try {
+        const threat = await ThreatDetection.create({
+          type,
+          severity,
+          deviceId,
+          ipAddress,
+          description,
+          organizationId: user.organizationId,
+          requiresReview: requiresReview ?? true,
+        });
+        res.status(201).json({ threat });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create threat." });
+      }
+    }
+  );
+
   app.get("/api/security/threats", authenticate, requirePermission("org:read"), async (req, res) => {
     const user = req.user!;
     if (!user.organizationId) {
@@ -470,6 +508,58 @@ async function main() {
         res.json({ gateways, total: gateways.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
+      }
+    }
+  );
+
+
+  // GET /api/audit/events — AuditLog entries reshaped for AuditView.tsx
+  // (audit.log.ts writes AuditLog docs; this maps them to the
+  // { id, actor, action, target, result, category, ip, timestamp }
+  // shape the frontend's AuditEventEntry expects.)
+  app.get(
+    "/api/audit/events",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const limit = Math.min(Number(req.query.limit) || 200, 500);
+      try {
+        const logs = await AuditLog.find({ organizationId: user.organizationId })
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .populate("userId", "email")
+          .lean();
+
+        const RESULT_MAP: Record<string, string> = {"SUCCESS":"success","BLOCKED":"denied","FAILURE":"error"};
+
+        const categoryOf = (action: string) => {
+          const prefix = String(action).split(":")[0];
+          if (prefix === "auth") return "auth";
+          if (prefix === "device") return "device";
+          if (prefix === "safety") return "safety";
+          if (prefix === "settings" || prefix === "org") return "admin";
+          return "network";
+        };
+
+        const events = logs.map((log) => ({
+          id: String(log._id),
+          actor: log.userId && typeof log.userId === "object" ? log.userId.email : "system",
+          action: log.action,
+          target: log.deviceId ? String(log.deviceId) : (log.reason || log.action),
+          result: RESULT_MAP[log.result] || "error",
+          category: categoryOf(log.action),
+          ip: log.ip || "",
+          timestamp: log.createdAt,
+        }));
+
+        res.json({ events, total: events.length });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit events." });
       }
     }
   );

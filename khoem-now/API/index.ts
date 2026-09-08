@@ -31,6 +31,15 @@ export * from './audit';
 export * from './notification';
 export * from './international';
 export * from './administration';
+export * from './ai-orchestration';
+export * from './billing-subscription';
+export * from './analytics-telemetry';
+export * from './notification-push';
+export * from './file-storage';
+export * from './reporting-export';
+export * from './integration-webhook';
+export * from './geolocation-map';
+export * from './maintenance-ticketing';
 
 // ---------------------------------------------------------------
 // Combined Route Registry
@@ -54,6 +63,15 @@ import { AUDIT_ROUTES } from './audit';
 import { NOTIFICATION_ROUTES } from './notification';
 import { INTERNATIONAL_ROUTES } from './international';
 import { ADMINISTRATION_ROUTES } from './administration';
+import { AI_ORCHESTRATION_ROUTES } from './ai-orchestration';
+import { BILLING_ROUTES } from './billing-subscription';
+import { TELEMETRY_ROUTES } from './analytics-telemetry';
+import { PUSH_ROUTES } from './notification-push';
+import { FILE_STORAGE_ROUTES } from './file-storage';
+import { REPORTING_ROUTES } from './reporting-export';
+import { WEBHOOK_ROUTES } from './integration-webhook';
+import { GEO_ROUTES } from './geolocation-map';
+import { TICKETING_ROUTES } from './maintenance-ticketing';
 
 export const KSV_API_ROUTE_REGISTRY = {
   identity: IDENTITY_ROUTES,
@@ -73,6 +91,15 @@ export const KSV_API_ROUTE_REGISTRY = {
   notification: NOTIFICATION_ROUTES,
   international: INTERNATIONAL_ROUTES,
   administration: ADMINISTRATION_ROUTES,
+  aiOrchestration: AI_ORCHESTRATION_ROUTES,
+  billingSubscription: BILLING_ROUTES,
+  analyticsTelemetry: TELEMETRY_ROUTES,
+  notificationPush: PUSH_ROUTES,
+  fileStorage: FILE_STORAGE_ROUTES,
+  reportingExport: REPORTING_ROUTES,
+  integrationWebhook: WEBHOOK_ROUTES,
+  geolocationMap: GEO_ROUTES,
+  maintenanceTicketing: TICKETING_ROUTES,
 } as const;
 
 // ---------------------------------------------------------------
@@ -99,4 +126,13 @@ export const KSV_API_DOMAIN_FILES = [
   { domain: 'Notification',    file: 'notification.ts' },
   { domain: 'International',   file: 'international.ts' },
   { domain: 'Administration',  file: 'administration.ts' },
+  { domain: 'AI Orchestration', file: 'ai-orchestration.ts' },
+  { domain: 'Billing & Subscription', file: 'billing-subscription.ts' },
+  { domain: 'Analytics & Telemetry', file: 'analytics-telemetry.ts' },
+  { domain: 'Push Notification Delivery', file: 'notification-push.ts' },
+  { domain: 'File & Media Storage', file: 'file-storage.ts' },
+  { domain: 'Reporting & Export', file: 'reporting-export.ts' },
+  { domain: 'Integration & Webhook', file: 'integration-webhook.ts' },
+  { domain: 'Geolocation & Map', file: 'geolocation-map.ts' },
+  { domain: 'Maintenance & Ticketing', file: 'maintenance-ticketing.ts' },
 ] as const;

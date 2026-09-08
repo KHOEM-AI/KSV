@@ -113,6 +113,21 @@ export async function listRecentCommands(limit = 10): Promise<{ commands: Recent
   return apiFetch(`/commands/recent?limit=${limit}`);
 }
 
+export interface AuditEventEntry {
+  id: string;
+  actor: string;
+  action: string;
+  target: string;
+  result: 'success' | 'denied' | 'error';
+  category: 'auth' | 'device' | 'safety' | 'admin' | 'network';
+  ip: string;
+  timestamp: string;
+}
+
+export async function listAuditEvents(limit = 200): Promise<{ events: AuditEventEntry[] }> {
+  return apiFetch(`/audit/events?limit=${limit}`);
+}
+
 // ============================================================
 // Authentication endpoints — mirrors API/authentication.ts exactly
 // ============================================================
@@ -1948,4 +1963,59 @@ export async function updateSettings(patch: Partial<KSVSettings>): Promise<{ set
     method: "PUT",
     body: JSON.stringify(patch),
   });
+}
+export async function getDashboardStats() {
+  return apiFetch<{
+    totalDevices: number;
+    onlineDevices: number;
+    safetyRules: number;
+    gateways: number;
+  }>("/dashboard/stats");
+}
+
+// ============================================================
+// Security endpoints — mirrors server.ts /api/security/*
+// ============================================================
+
+export interface ThreatEntry {
+  _id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  deviceId?: string;
+  ipAddress?: string;
+  description: string;
+  requiresReview: boolean;
+  falsePositiveMarked: boolean;
+  detectedAt: string;
+}
+
+export async function getThreats(): Promise<{ threats: ThreatEntry[]; total: number }> {
+  return apiFetch('/security/threats');
+}
+
+export interface CreateThreatInput {
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  deviceId?: string;
+  ipAddress?: string;
+  description: string;
+}
+
+export async function createThreat(input: CreateThreatInput): Promise<{ threat: ThreatEntry }> {
+  return apiFetch('/security/threats', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export interface IncidentEntry {
+  _id: string;
+  title: string;
+  status: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  detectedAt: string;
+}
+
+export async function getIncidents(): Promise<{ incidents: IncidentEntry[]; total: number }> {
+  return apiFetch('/security/incidents');
 }

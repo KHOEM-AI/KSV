@@ -133,7 +133,7 @@ export function ControlsView() {
           </div>
           <button
             onClick={() => toggle('vault-lock')}
-            disabled={pending['vault-lock']}
+            
             className={`btn w-full disabled:opacity-50 ${controls['vault-lock'].on ? 'btn-danger' : 'btn-primary'}`}
           >
             {controls['vault-lock'].on ? <Unlock size={16} /> : <Lock size={16} />}
@@ -154,7 +154,7 @@ export function ControlsView() {
                 <p className="text-xs text-ink-400">DEV-04822 · {t('view.controls.hvac.site')}</p>
               </div>
             </div>
-            <Toggle checked={controls['hvac-temp'].on} onChange={() => toggle('hvac-temp')} disabled={pending['hvac-temp']} />
+            <Toggle checked={controls['hvac-temp'].on} onChange={() => toggle('hvac-temp')}  />
           </div>
           <div className="py-4">
             <div className="mb-2 flex items-baseline justify-between">
@@ -208,7 +208,7 @@ export function ControlsView() {
           <div className="flex flex-col items-center gap-4 py-4">
             <button
               onClick={() => toggle('press-estop')}
-              disabled={pending['press-estop']}
+              
               className={`flex h-28 w-28 items-center justify-center rounded-full border-4 font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 ${
                 controls['press-estop'].on
                   ? 'border-danger-500 bg-danger-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.5)]'
@@ -225,7 +225,7 @@ export function ControlsView() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => toggle('press-estop')} disabled={pending['press-estop']} className="btn-ghost flex-1 text-xs disabled:opacity-50">
+            <button onClick={() => toggle('press-estop')}  className="btn-ghost flex-1 text-xs disabled:opacity-50">
               <RotateCcw size={14} /> {t('view.controls.reset')}
             </button>
           </div>
@@ -244,7 +244,7 @@ export function ControlsView() {
                 <p className="text-xs text-ink-400">DEV-04828 · {t('view.controls.robotArm.site')}</p>
               </div>
             </div>
-            <Toggle checked={controls['robot-speed'].on} onChange={() => toggle('robot-speed')} disabled={pending['robot-speed']} />
+            <Toggle checked={controls['robot-speed'].on} onChange={() => toggle('robot-speed')}  />
           </div>
           <div className="py-4">
             <div className="mb-2 flex items-baseline justify-between">
@@ -299,7 +299,7 @@ export function ControlsView() {
             <p className="text-sm font-semibold text-ink-300">{controls['east-barrier'].on ? t('view.controls.barrierOpen') : t('view.controls.barrierClosed')}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => toggle('east-barrier')} disabled={pending['east-barrier']} className="btn-ghost flex-1 text-xs disabled:opacity-50">
+            <button onClick={() => toggle('east-barrier')}  className="btn-ghost flex-1 text-xs disabled:opacity-50">
               {controls['east-barrier'].on ? t('view.controls.close') : t('view.controls.open')}
             </button>
             <button className="btn-ghost text-xs"><Settings2 size={14} /></button>
@@ -319,7 +319,7 @@ export function ControlsView() {
                 <p className="text-xs text-ink-400">DEV-04830 · {t('view.controls.coldStorage.site')}</p>
               </div>
             </div>
-            <Toggle checked={controls['cold-storage'].on} onChange={() => toggle('cold-storage')} disabled={pending['cold-storage']} />
+            <Toggle checked={controls['cold-storage'].on} onChange={() => toggle('cold-storage')}  />
           </div>
           <div className="py-4">
             <div className="mb-2 flex items-baseline justify-between">

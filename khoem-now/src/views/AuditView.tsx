@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ScrollText, Search, Filter } from 'lucide-react';
 import { Panel, SectionHeader, Badge, StatusDot } from '@/components/ui';
-import { auditEvents } from '@/data/domain';
+import { listAuditEvents, type AuditEventEntry } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 const resultVariant: Record<string, 'success' | 'danger' | 'warning'> = {
@@ -39,6 +39,27 @@ export function AuditView() {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
+  const [auditEvents, setAuditEvents] = useState<AuditEventEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const { events } = await listAuditEvents(200);
+      setAuditEvents(events);
+    } catch (err) {
+      console.error('Failed to load audit events:', err);
+      setLoadError(t('view.audit.loadFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
 
   const cats = ['all', 'auth', 'device', 'safety', 'admin', 'network'];
   const filtered = auditEvents.filter((e) => {
@@ -47,6 +68,13 @@ export function AuditView() {
     const matchesCat = catFilter === 'all' || e.category === catFilter;
     return matchesQuery && matchesCat;
   });
+
+  if (loading) {
+    return <Panel className="p-5 animate-fade-in"><p className="text-sm text-ink-400">{t('view.audit.loading')}</p></Panel>;
+  }
+  if (loadError) {
+    return <Panel className="p-5 animate-fade-in"><p className="text-sm text-danger-400">{loadError}</p></Panel>;
+  }
 
   return (
     <div className="space-y-6">
@@ -107,7 +135,7 @@ export function AuditView() {
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-ink-400">
                   <span>{e.actor}</span>
                   <span className="font-mono">{e.ip}</span>
-                  <span>{e.timestamp}</span>
+                  <span>{new Date(e.timestamp).toLocaleString()}</span>
                 </div>
               </div>
             </div>

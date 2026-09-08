@@ -1,9 +1,11 @@
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Cpu, ShieldCheck, ShieldAlert, Globe2, Activity, Zap, AlertTriangle,
   TrendingUp, Server, Lock, Radio, ChevronRight, ArrowUpRight, Network,
 } from 'lucide-react';
 import { Panel, SectionHeader, StatCard, Sparkline, Donut, ProgressBar, Badge, StatusDot } from '@/components/ui';
 import { stats, trafficData, alertTrend, devices, safetyRules, gateways, protocols } from '@/data/domain';
+import { getDashboardStats } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatTimeAgo } from '@/i18n/timeAgo';
 
@@ -18,6 +20,13 @@ import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function DashboardView() {
   const { t, language } = useLanguage();
+  const [liveStats, setLiveStats] = useState<{totalDevices:number;onlineDevices:number;safetyRules:number;gateways:number}|null>(null);
+
+  useEffect(() => {
+    getDashboardStats()
+      .then(setLiveStats)
+      .catch(() => {});
+  }, []);
 
   const onlinePct = Math.round((stats.onlineDevices / stats.totalDevices) * 100);
   const offlineCount = stats.totalDevices - stats.onlineDevices;

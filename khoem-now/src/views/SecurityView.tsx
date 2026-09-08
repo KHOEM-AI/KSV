@@ -3,9 +3,23 @@ import { Panel, SectionHeader, Badge, StatusDot, ProgressBar, Donut } from '@/co
 import { sessions } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatTimeAgo } from '@/i18n/timeAgo';
+import { useEffect, useState } from 'react';
+import { getThreats, getIncidents, type ThreatEntry, type IncidentEntry } from '@/lib/api';
 
 export function SecurityView() {
   const { t, language } = useLanguage();
+  const [threats, setThreats] = useState<ThreatEntry[]>([]);
+  const [incidents, setIncidents] = useState<IncidentEntry[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([getThreats(), getIncidents()])
+      .then(([t, i]) => {
+        setThreats(t.threats);
+        setIncidents(i.incidents);
+      })
+      .catch((err) => setLoadError(err instanceof Error ? err.message : 'Failed to load security data'));
+  }, []);
   const activeSessions = sessions.filter((s) => s.status === 'active').length;
   const mfaEnabled = sessions.filter((s) => s.mfa).length;
   const mfaPct = Math.round((mfaEnabled / sessions.length) * 100);
@@ -131,6 +145,48 @@ export function SecurityView() {
             </div>
           </Panel>
         </div>
+
+      <Panel className="p-5 animate-fade-in">
+        <SectionHeader title="Threats & Incidents" subtitle="Live from /api/security" icon={<AlertTriangle size={18} />} />
+        {loadError && <p className="text-sm text-danger-400 mb-3">{loadError}</p>}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <p className="mb-2 text-xs uppercase tracking-wider text-ink-400">Threats ({threats.length})</p>
+            {threats.length === 0 ? (
+              <p className="text-sm text-ink-400">No threats detected.</p>
+            ) : (
+              <ul className="space-y-2">
+                {threats.map((th) => (
+                  <li key={th._id} className="rounded-lg bg-ink-800/40 p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-ink-100">{th.type}</span>
+                      <Badge variant={th.severity === 'critical' || th.severity === 'high' ? 'warning' : 'brand'}>{th.severity}</Badge>
+                    </div>
+                    <p className="mt-1 text-ink-300">{th.description}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <p className="mb-2 text-xs uppercase tracking-wider text-ink-400">Incidents ({incidents.length})</p>
+            {incidents.length === 0 ? (
+              <p className="text-sm text-ink-400">No incidents.</p>
+            ) : (
+              <ul className="space-y-2">
+                {incidents.map((inc) => (
+                  <li key={inc._id} className="rounded-lg bg-ink-800/40 p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-ink-100">{inc.title}</span>
+                      <Badge variant="warning">{inc.status}</Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </Panel>
       </div>
     </div>
   );
