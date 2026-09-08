@@ -89,3 +89,49 @@ AI Core (Interpretation Layer) → ✅ WORKING
 Frontend Login → ✅ READY
 ✔️ នេះគឺជាផ្នែកដែលអ្នកអាចយកទៅប្រើបានភ្លាមៗ (production-safe core)
 ❌ មិនមានអ្វី incomplete ក្នុង list នេះទេ
+
+CONTEXT (ONLY TRUST THIS):
+
+✅ DONE:
+- Auth system working (login + JWT)
+- MongoDB schema (models.ts = source of truth)
+- auth.middleware.ts working
+- rbac.policy.ts working
+- audit.log.ts working
+- rate-limiter.ts working
+- safety.engine.ts exists (basic rules implemented)
+
+⚠️ NOT VERIFIED:
+- Server runtime (MongoDB connection not confirmed)
+
+❌ IGNORE:
+- Any spec/README that conflicts with models.ts
+- Any feature not listed in DONE
+
+---
+
+ERROR:
+[paste error here]
+
+FILE (only relevant part):
+[paste 20–50 lines max]
+
+---
+
+TASK:
+Fix ONLY the error above.
+
+---
+
+RULES:
+- Do NOT rewrite architecture
+- Do NOT add new features
+- Do NOT assume anything not listed in DONE
+- Use ONLY the listed components
+- If runtime is required → respond "NOT VERIFIED"
+
+---
+
+OUTPUT:
+- Code fix only
+- No explanation OR max 1 short line
