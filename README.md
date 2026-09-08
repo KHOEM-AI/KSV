@@ -51,3 +51,17 @@ RULES:
 OUTPUT:
 - Code fix only
 - Max 1 short line explanation (or none)
+
+ស្ថានភាពឥឡូវ៖
+✅ src/infrastructure/database/models.ts — Source of Truth
+✅ src/core/safety/safety.engine.ts — verified
+✅ src/core/auth/auth.middleware.ts — verified
+✅ src/core/auth/rbac.policy.ts — verified
+✅ src/core/security/audit.log.ts — verified
+✅ src/core/security/rate-limiter.ts — verified
+✅ src/server.ts Command Route — មានពិត និង security flow ត្រឹមត្រូវ
+⚠️ API/command.ts — ត្រូវឆែក/កែ spec ឲ្យត្រូវ models.ts
+⚠️ DOCUMENTATION/controls-wiring-audit.md — ចាស់នៅចំណុចខ្លះ ព្រោះវានិយាយថា Safety Engine និង Command Route មិនទាន់មាន ប៉ុន្តែឥឡូវមានរួច
+⚠️ Real Gateway/Protocol dispatch — មិនទាន់មាន ដូច្នេះ command នៅតែជា recorded success មិនមែន device execution ពិតទេ។
+សំខាន់: យើងមិនគួរលុប ឬសរសេរឯកសារទាំងអស់ឡើងវិញទេ។ គោលការណ៍គឺ៖
+កូដពិត → ផ្ទៀងផ្ទាត់ → រកឯកសារដែលផ្ទុយ → កែតែឯកសារដែល outdated។
