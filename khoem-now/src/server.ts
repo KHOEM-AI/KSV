@@ -965,6 +965,45 @@ async function main() {
     }
   );
 
+
+  // POST /api/v1/ai/models/:id/enable — Admin: toggle a model's enabled flag
+  // NOTE: models are a static in-memory list for now (no AIModelProfile DB
+  // table — no real provider configured yet). "internal-mock-v1" cannot be
+  // disabled since it is the only working interpreter right now.
+  app.post(
+    "/api/v1/ai/models/:id/enable",
+    authenticate,
+    requireMinRole("OrgAdmin"),
+    async (req, res) => {
+      const { id } = req.params;
+      const { isEnabled } = req.body || {};
+
+      if (typeof isEnabled !== "boolean") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "isEnabled (boolean) is required." });
+        return;
+      }
+
+      const knownModelIds = ["internal-mock-v1", "anthropic-claude", "openai-gpt"];
+      if (!knownModelIds.includes(id)) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Unknown modelId." });
+        return;
+      }
+      if (id === "internal-mock-v1" && !isEnabled) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "internal-mock-v1 cannot be disabled (no other provider is configured)." });
+        return;
+      }
+      if ((id === "anthropic-claude" || id === "openai-gpt") && isEnabled) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `${id} has no API key configured yet and cannot be enabled.` });
+        return;
+      }
+
+      // NOTE: no persistence yet (static list) — this confirms the request
+      // is valid and well-formed. Once AIModelProfile is a real DB model,
+      // this will update it and return the new state.
+      res.json({ modelId: id, isEnabled, persisted: false });
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
