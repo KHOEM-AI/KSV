@@ -254,6 +254,26 @@ const securityIncidentSchema = new Schema(
 );
 
 // ============================================================
+// AI ORCHESTRATION
+// ============================================================
+
+const aiConversationSessionSchema = new Schema(
+  {
+    accountId: { type: ObjectId, ref: "User", required: true },
+    organizationId: { type: ObjectId, ref: "Organization" },
+    turns: [
+      {
+        role: { type: String, enum: ["user", "assistant"], required: true },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    expiresAt: { type: Date, required: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+// ============================================================
 // INTERNATIONALIZATION
 // ============================================================
 
@@ -289,6 +309,7 @@ export const SafetyLog = models.SafetyLog || model("SafetyLog", safetyLogSchema)
 export const DeviceLog = models.DeviceLog || model("DeviceLog", deviceLogSchema);
 export const Event = models.Event || model("Event", eventSchema);
 export const AuditLog = models.AuditLog || model("AuditLog", auditLogSchema);
+export const AIConversationSession = models.AIConversationSession || model("AIConversationSession", aiConversationSessionSchema);
 export const Country = models.Country || model("Country", countrySchema);
 export const Language = models.Language || model("Language", languageSchema);
 export const ThreatDetection = models.ThreatDetection || model("ThreatDetection", threatDetectionSchema);

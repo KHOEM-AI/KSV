@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession } from "./infrastructure/database/models.ts";
 import { User } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -771,6 +771,66 @@ async function main() {
         res.json({ subscription });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load subscription." });
+      }
+    }
+  );
+
+
+  // POST /api/v1/ai/interpret — AI Orchestration (MOCK)
+  // NOTE: no AI provider API key is configured yet. This uses a simple
+  // keyword-matching stub so the pipeline (auth -> session -> audit) can
+  // be built and tested now, and swapped for a real model call later
+  // without changing the route contract.
+  app.post(
+    "/api/v1/ai/interpret",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { naturalLanguageInput, sessionId } = req.body || {};
+
+      if (!naturalLanguageInput || typeof naturalLanguageInput !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "naturalLanguageInput is required." });
+        return;
+      }
+
+      try {
+        // --- MOCK interpretation logic (keyword match only) ---
+        const text = naturalLanguageInput.toLowerCase();
+        const requiresClarification = !(text.includes("turn on") || text.includes("turn off") || text.includes("status"));
+
+        const result = {
+          requestId: `mock-${Date.now()}`,
+          confidence: requiresClarification ? 0.3 : 0.6,
+          structuredCommand: requiresClarification
+            ? undefined
+            : { deviceId: "UNKNOWN", commandType: text.includes("turn off") ? "POWER_OFF" : "POWER_ON" },
+          requiresClarification,
+          ambiguityOptions: requiresClarification
+            ? [{ label: "Please specify a device and action.", structuredCommand: null }]
+            : undefined,
+        };
+
+        // Persist / append to conversation session
+        let session;
+        if (sessionId) {
+          session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.userId });
+        }
+        if (!session) {
+          session = new AIConversationSession({
+            accountId: user.userId,
+            organizationId: user.organizationId,
+            turns: [],
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+          });
+        }
+        session.turns.push({ role: "user", text: naturalLanguageInput, createdAt: new Date() });
+        session.turns.push({ role: "assistant", text: JSON.stringify(result), createdAt: new Date() });
+        await session.save();
+
+        res.json({ ...result, sessionId: String(session._id) });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to interpret input." });
       }
     }
   );
