@@ -449,6 +449,13 @@ const en: Dict = {
   'view.map.detail.coords': 'Coordinates',
   'view.map.detail.controlNote': 'Full controls are available from the Devices view.'
 
+  'time.secondsAgo': '{count}s ago',
+  'time.minutesAgo': '{count}m ago',
+  'time.hoursAgo': '{count}h ago',
+  'time.daysAgo': '{count}d ago',
+  'time.weeksAgo': '{count}w ago',
+  'view.security.session.active': 'active',
+  'view.security.session.expired': 'expired',
 };
 
 const km: Dict = {
@@ -827,6 +834,13 @@ const km: Dict = {
   'view.map.detail.coords': 'កូអរដោនេ',
   'view.map.detail.controlNote': 'ការគ្រប់គ្រងពេញលេញអាចរកបាននៅផ្នែកឧបករណ៍។'
 
+  'time.secondsAgo': '{count}វិនាទីមុន',
+  'time.minutesAgo': '{count}នាទីមុន',
+  'time.hoursAgo': '{count}ម៉ោងមុន',
+  'time.daysAgo': '{count}ថ្ងៃមុន',
+  'time.weeksAgo': '{count}សប្តាហ៍មុន',
+  'view.security.session.active': 'សកម្ម',
+  'view.security.session.expired': 'ផុតកំណត់',
 };
 
 
@@ -1173,6 +1187,13 @@ const ja: Dict = {
   'view.map.detail.coords': '座標',
   'view.map.detail.controlNote': '操作はデバイス詳細画面から行ってください — マップは認証と安全確認を回避しません。'
 
+  'time.secondsAgo': '{count}秒前',
+  'time.minutesAgo': '{count}分前',
+  'time.hoursAgo': '{count}時間前',
+  'time.daysAgo': '{count}日前',
+  'time.weeksAgo': '{count}週間前',
+  'view.security.session.active': 'アクティブ',
+  'view.security.session.expired': '期限切れ',
 };
 
 const zh: Dict = {
@@ -1230,6 +1251,13 @@ const zh: Dict = {
   'view.map.detail.coords': '坐标',
   'view.map.detail.controlNote': '请打开设备详情发送指令 — 地图不会绕过授权与安全检查。'
 
+  'time.secondsAgo': '{count}秒前',
+  'time.minutesAgo': '{count}分钟前',
+  'time.hoursAgo': '{count}小时前',
+  'time.daysAgo': '{count}天前',
+  'time.weeksAgo': '{count}周前',
+  'view.security.session.active': '活跃',
+  'view.security.session.expired': '已过期',
 };
 
 const th: Dict = {
@@ -1573,6 +1601,13 @@ const th: Dict = {
   'view.map.detail.coords': 'พิกัด',
   'view.map.detail.controlNote': 'เปิดรายละเอียดอุปกรณ์เพื่อส่งคำสั่ง — แผนที่จะไม่ข้ามการตรวจสอบสิทธิ์และความปลอดภัย'
 
+  'time.secondsAgo': '{count}วินาทีที่แล้ว',
+  'time.minutesAgo': '{count}นาทีที่แล้ว',
+  'time.hoursAgo': '{count}ชั่วโมงที่แล้ว',
+  'time.daysAgo': '{count}วันที่แล้ว',
+  'time.weeksAgo': '{count}สัปดาห์ที่แล้ว',
+  'view.security.session.active': 'ใช้งานอยู่',
+  'view.security.session.expired': 'หมดอายุ',
 };
 
 const ko: Dict = {
@@ -1630,6 +1665,13 @@ const ko: Dict = {
   'view.map.detail.coords': '좌표',
   'view.map.detail.controlNote': '명령은 장치 상세 페이지에서 전송하세요 — 지도에서는 권한 및 안전 검사를 우회하지 않습니다.'
 
+  'time.secondsAgo': '{count}초 전',
+  'time.minutesAgo': '{count}분 전',
+  'time.hoursAgo': '{count}시간 전',
+  'time.daysAgo': '{count}일 전',
+  'time.weeksAgo': '{count}주 전',
+  'view.security.session.active': '활성',
+  'view.security.session.expired': '만료됨',
 };
 
 const fr: Dict = {
@@ -1687,6 +1729,13 @@ const fr: Dict = {
   'view.map.detail.coords': 'Coordonnées',
   'view.map.detail.controlNote': "Ouvrez la fiche de l'appareil pour envoyer des commandes — la carte ne contourne jamais l'authentification ni les contrôles de sécurité.",
 
+  'time.secondsAgo': 'il y a {count}s',
+  'time.minutesAgo': 'il y a {count}min',
+  'time.hoursAgo': 'il y a {count}h',
+  'time.daysAgo': 'il y a {count}j',
+  'time.weeksAgo': 'il y a {count}sem',
+  'view.security.session.active': 'actif',
+  'view.security.session.expired': 'expiré',
 };
 
 const es: Dict = {
@@ -1744,6 +1793,13 @@ const es: Dict = {
   'view.map.detail.coords': 'Coordenadas',
   'view.map.detail.controlNote': 'Abre el detalle del dispositivo para enviar comandos — el mapa nunca omite la autorización ni la seguridad.'
 
+  'time.secondsAgo': 'hace {count}s',
+  'time.minutesAgo': 'hace {count}min',
+  'time.hoursAgo': 'hace {count}h',
+  'time.daysAgo': 'hace {count}d',
+  'time.weeksAgo': 'hace {count}sem',
+  'view.security.session.active': 'activo',
+  'view.security.session.expired': 'expirado',
 };
 
 const vi: Dict = {
@@ -1801,6 +1857,13 @@ const vi: Dict = {
   'view.map.detail.coords': 'Tọa độ',
   'view.map.detail.controlNote': 'Mở chi tiết thiết bị để gửi lệnh — bản đồ không bao giờ bỏ qua việc xác thực và kiểm tra an toàn.'
 
+  'time.secondsAgo': '{count} giây trước',
+  'time.minutesAgo': '{count} phút trước',
+  'time.hoursAgo': '{count} giờ trước',
+  'time.daysAgo': '{count} ngày trước',
+  'time.weeksAgo': '{count} tuần trước',
+  'view.security.session.active': 'hoạt động',
+  'view.security.session.expired': 'hết hạn',
 };
 
 const ar: Dict = {
@@ -1858,6 +1921,13 @@ const ar: Dict = {
   'view.map.detail.coords': 'الإحداثيات',
   'view.map.detail.controlNote': 'افتح تفاصيل الجهاز لإرسال الأوامر — لا تتجاوز الخريطة التحقق من الهوية والفحوصات الأمنية أبدًا.'
 
+  'time.secondsAgo': 'منذ {count} ثانية',
+  'time.minutesAgo': 'منذ {count} دقيقة',
+  'time.hoursAgo': 'منذ {count} ساعة',
+  'time.daysAgo': 'منذ {count} يوم',
+  'time.weeksAgo': 'منذ {count} أسبوع',
+  'view.security.session.active': 'نشط',
+  'view.security.session.expired': 'منتهي الصلاحية',
 };
 
 const it: Dict = {
@@ -1910,6 +1980,13 @@ const it: Dict = {
   'view.map.detail.coords': 'Coordinate',
   'view.map.detail.controlNote': "Apri i dettagli del dispositivo per inviare comandi — la mappa non aggira mai l'autenticazione né i controlli di sicurezza.",
 
+  'time.secondsAgo': '{count}s fa',
+  'time.minutesAgo': '{count}min fa',
+  'time.hoursAgo': '{count}h fa',
+  'time.daysAgo': '{count}g fa',
+  'time.weeksAgo': '{count}sett fa',
+  'view.security.session.active': 'attivo',
+  'view.security.session.expired': 'scaduto',
 };
 
 const de: Dict = {
@@ -1962,6 +2039,13 @@ const de: Dict = {
   'view.map.detail.coords': 'Koordinaten',
   'view.map.detail.controlNote': 'Öffnen Sie die Gerätedetails, um Befehle zu senden — die Karte umgeht niemals Authentifizierung und Sicherheitsprüfungen.'
 
+  'time.secondsAgo': 'vor {count}s',
+  'time.minutesAgo': 'vor {count}Min',
+  'time.hoursAgo': 'vor {count}Std',
+  'time.daysAgo': 'vor {count}Tg',
+  'time.weeksAgo': 'vor {count}Wo',
+  'view.security.session.active': 'aktiv',
+  'view.security.session.expired': 'abgelaufen',
 };
 
 const pt: Dict = {
@@ -2014,6 +2098,13 @@ const pt: Dict = {
   'view.map.detail.coords': 'Coordenadas',
   'view.map.detail.controlNote': 'Abra os detalhes do dispositivo para enviar comandos — o mapa nunca ignora a autenticação nem as verificações de segurança.'
 
+  'time.secondsAgo': 'há {count}s',
+  'time.minutesAgo': 'há {count}min',
+  'time.hoursAgo': 'há {count}h',
+  'time.daysAgo': 'há {count}d',
+  'time.weeksAgo': 'há {count}sem',
+  'view.security.session.active': 'ativo',
+  'view.security.session.expired': 'expirado',
 };
 
 const ru: Dict = {
@@ -2066,6 +2157,13 @@ const ru: Dict = {
   'view.map.detail.coords': 'Координаты',
   'view.map.detail.controlNote': 'Откройте детали устройства для отправки команд — карта никогда не обходит проверку подлинности и безопасности.'
 
+  'time.secondsAgo': '{count} сек назад',
+  'time.minutesAgo': '{count} мин назад',
+  'time.hoursAgo': '{count} ч назад',
+  'time.daysAgo': '{count} дн назад',
+  'time.weeksAgo': '{count} нед назад',
+  'view.security.session.active': 'активен',
+  'view.security.session.expired': 'истёк',
 };
 
 const hi: Dict = {
@@ -2118,6 +2216,13 @@ const hi: Dict = {
   'view.map.detail.coords': 'निर्देशांक',
   'view.map.detail.controlNote': 'कमांड भेजने के लिए डिवाइस विवरण खोलें — मानचित्र कभी भी प्रमाणीकरण और सुरक्षा जांच को नज़रअंदाज़ नहीं करता।'
 
+  'time.secondsAgo': '{count} सेकंड पहले',
+  'time.minutesAgo': '{count} मिनट पहले',
+  'time.hoursAgo': '{count} घंटे पहले',
+  'time.daysAgo': '{count} दिन पहले',
+  'time.weeksAgo': '{count} सप्ताह पहले',
+  'view.security.session.active': 'सक्रिय',
+  'view.security.session.expired': 'समाप्त',
 };
 
 const id: Dict = {
@@ -2170,6 +2275,13 @@ const id: Dict = {
   'view.map.detail.coords': 'Koordinat',
   'view.map.detail.controlNote': 'Buka detail perangkat untuk mengirim perintah — peta tidak pernah melewati autentikasi dan pemeriksaan keamanan.'
 
+  'time.secondsAgo': '{count} detik lalu',
+  'time.minutesAgo': '{count} menit lalu',
+  'time.hoursAgo': '{count} jam lalu',
+  'time.daysAgo': '{count} hari lalu',
+  'time.weeksAgo': '{count} minggu lalu',
+  'view.security.session.active': 'aktif',
+  'view.security.session.expired': 'kedaluwarsa',
 };
 
 const tr: Dict = {
@@ -2222,6 +2334,13 @@ const tr: Dict = {
   'view.map.detail.coords': 'Koordinatlar',
   'view.map.detail.controlNote': 'Komut göndermek için cihaz detaylarını açın — harita kimlik doğrulamayı ve güvenlik kontrollerini asla atlamaz.'
 
+  'time.secondsAgo': '{count}sn önce',
+  'time.minutesAgo': '{count}dk önce',
+  'time.hoursAgo': '{count}sa önce',
+  'time.daysAgo': '{count}g önce',
+  'time.weeksAgo': '{count}hf önce',
+  'view.security.session.active': 'aktif',
+  'view.security.session.expired': 'süresi doldu',
 };
 
 const nl: Dict = {
@@ -2274,6 +2393,13 @@ const nl: Dict = {
   'view.map.detail.coords': 'Coördinaten',
   'view.map.detail.controlNote': 'Open de apparaatdetails om opdrachten te verzenden — de kaart omzeilt nooit authenticatie of beveiligingscontroles.'
 
+  'time.secondsAgo': '{count}s geleden',
+  'time.minutesAgo': '{count}min geleden',
+  'time.hoursAgo': '{count}u geleden',
+  'time.daysAgo': '{count}d geleden',
+  'time.weeksAgo': '{count}w geleden',
+  'view.security.session.active': 'actief',
+  'view.security.session.expired': 'verlopen',
 };
 
 const pl: Dict = {
@@ -2326,6 +2452,13 @@ const pl: Dict = {
   'view.map.detail.coords': 'Współrzędne',
   'view.map.detail.controlNote': 'Otwórz szczegóły urządzenia, aby wysyłać polecenia — mapa nigdy nie omija uwierzytelniania ani kontroli bezpieczeństwa.'
 
+  'time.secondsAgo': '{count}s temu',
+  'time.minutesAgo': '{count}min temu',
+  'time.hoursAgo': '{count}godz temu',
+  'time.daysAgo': '{count}dni temu',
+  'time.weeksAgo': '{count}tyg temu',
+  'view.security.session.active': 'aktywny',
+  'view.security.session.expired': 'wygasł',
 };
 
 const sv: Dict = {
@@ -2378,6 +2511,13 @@ const sv: Dict = {
   'view.map.detail.coords': 'Koordinater',
   'view.map.detail.controlNote': 'Öppna enhetsdetaljer för att skicka kommandon — kartan kringgår aldrig autentisering eller säkerhetskontroller.'
 
+  'time.secondsAgo': '{count}s sedan',
+  'time.minutesAgo': '{count}min sedan',
+  'time.hoursAgo': '{count}tim sedan',
+  'time.daysAgo': '{count}d sedan',
+  'time.weeksAgo': '{count}v sedan',
+  'view.security.session.active': 'aktiv',
+  'view.security.session.expired': 'utgången',
 };
 
 const bn: Dict = {
@@ -2430,6 +2570,13 @@ const bn: Dict = {
   'view.map.detail.coords': 'স্থানাঙ্ক',
   'view.map.detail.controlNote': 'কমান্ড পাঠাতে ডিভাইসের বিবরণ খুলুন — মানচিত্র কখনও প্রমাণীকরণ এবং নিরাপত্তা যাচাই এড়িয়ে যায় না।'
 
+  'time.secondsAgo': '{count} সেকেন্ড আগে',
+  'time.minutesAgo': '{count} মিনিট আগে',
+  'time.hoursAgo': '{count} ঘণ্টা আগে',
+  'time.daysAgo': '{count} দিন আগে',
+  'time.weeksAgo': '{count} সপ্তাহ আগে',
+  'view.security.session.active': 'সক্রিয়',
+  'view.security.session.expired': 'মেয়াদ শেষ',
 };
 
 const ur: Dict = {
@@ -2482,6 +2629,13 @@ const ur: Dict = {
   'view.map.detail.coords': 'نقاط',
   'view.map.detail.controlNote': 'کمانڈز بھیجنے کے لیے ڈیوائس کی تفصیلات کھولیں — نقشہ کبھی بھی تصدیق اور حفاظتی جانچ کو نظرانداز نہیں کرتا۔'
 
+  'time.secondsAgo': '{count} سیکنڈ پہلے',
+  'time.minutesAgo': '{count} منٹ پہلے',
+  'time.hoursAgo': '{count} گھنٹے پہلے',
+  'time.daysAgo': '{count} دن پہلے',
+  'time.weeksAgo': '{count} ہفتے پہلے',
+  'view.security.session.active': 'فعال',
+  'view.security.session.expired': 'میعاد ختم',
 };
 
 const ms: Dict = {
@@ -2534,6 +2688,13 @@ const ms: Dict = {
   'view.map.detail.coords': 'Koordinat',
   'view.map.detail.controlNote': 'Buka butiran peranti untuk menghantar arahan — peta tidak sekali-kali memintas pengesahan dan pemeriksaan keselamatan.'
 
+  'time.secondsAgo': '{count}s lalu',
+  'time.minutesAgo': '{count}min lalu',
+  'time.hoursAgo': '{count}j lalu',
+  'time.daysAgo': '{count}h lalu',
+  'time.weeksAgo': '{count}mg lalu',
+  'view.security.session.active': 'aktif',
+  'view.security.session.expired': 'tamat tempoh',
 };
 
 const tl: Dict = {
@@ -2586,6 +2747,13 @@ const tl: Dict = {
   'view.map.detail.coords': 'Coordinates',
   'view.map.detail.controlNote': 'Buksan ang detalye ng device para magpadala ng command — hindi nilalampasan ng mapa ang pagpapatunay at mga safety check.'
 
+  'time.secondsAgo': '{count}s ang nakalipas',
+  'time.minutesAgo': '{count}min ang nakalipas',
+  'time.hoursAgo': '{count}oras ang nakalipas',
+  'time.daysAgo': '{count}araw ang nakalipas',
+  'time.weeksAgo': '{count}linggo ang nakalipas',
+  'view.security.session.active': 'aktibo',
+  'view.security.session.expired': 'napaso',
 };
 
 const my: Dict = {
@@ -2638,6 +2806,13 @@ const my: Dict = {
   'view.map.detail.coords': 'ကိုသြဒိနိတ်',
   'view.map.detail.controlNote': 'အမိန့်ပေးရန် စက်ပစ္စည်းအသေးစိတ်ကို ဖွင့်ပါ — မြေပုံသည် အထောက်အထားစိစစ်ခြင်းနှင့် လုံခြုံရေးစစ်ဆေးမှုများကို ဘယ်တော့မှ ကျော်လွှားခြင်းမပြုပါ။'
 
+  'time.secondsAgo': '{count} စက္ကန့်က',
+  'time.minutesAgo': '{count} မိနစ်က',
+  'time.hoursAgo': '{count} နာရီက',
+  'time.daysAgo': '{count} ရက်က',
+  'time.weeksAgo': '{count} ပတ်က',
+  'view.security.session.active': 'အသက်ဝင်',
+  'view.security.session.expired': 'သက်တမ်းကုန်',
 };
 
 const lo: Dict = {
@@ -2690,6 +2865,13 @@ const lo: Dict = {
   'view.map.detail.coords': 'ພິກັດ',
   'view.map.detail.controlNote': 'ເປີດລາຍລະອຽດອຸປະກອນເພື່ອສົ່ງຄຳສັ່ງ — ແຜນທີ່ບໍ່ເຄີຍຂ້າມການພິສູດຢືນຢັນຕົວຕົນ ແລະ ການກວດສອບຄວາມປອດໄພ.'
 
+  'time.secondsAgo': '{count}ວິນາທີກ່ອນ',
+  'time.minutesAgo': '{count}ນາທີກ່ອນ',
+  'time.hoursAgo': '{count}ຊົ່ວໂມງກ່ອນ',
+  'time.daysAgo': '{count}ມື້ກ່ອນ',
+  'time.weeksAgo': '{count}ອາທິດກ່ອນ',
+  'view.security.session.active': 'ໃຊ້ງານຢູ່',
+  'view.security.session.expired': 'ໝົດອາຍຸ',
 };
 
 const el: Dict = {
@@ -2742,6 +2924,13 @@ const el: Dict = {
   'view.map.detail.coords': 'Συντεταγμένες',
   'view.map.detail.controlNote': 'Ανοίξτε τις λεπτομέρειες της συσκευής για να στείλετε εντολές — ο χάρτης δεν παρακάμπτει ποτέ τον έλεγχο ταυτότητας και τους ελέγχους ασφαλείας.'
 
+  'time.secondsAgo': 'πριν {count}δ',
+  'time.minutesAgo': 'πριν {count}λ',
+  'time.hoursAgo': 'πριν {count}ώ',
+  'time.daysAgo': 'πριν {count}μ',
+  'time.weeksAgo': 'πριν {count}εβδ',
+  'view.security.session.active': 'ενεργό',
+  'view.security.session.expired': 'έληξε',
 };
 
 const he: Dict = {
@@ -2794,6 +2983,13 @@ const he: Dict = {
   'view.map.detail.coords': 'קואורדינטות',
   'view.map.detail.controlNote': 'פתח את פרטי המכשיר כדי לשלוח פקודות — המפה לעולם אינה עוקפת אימות ובדיקות אבטחה.'
 
+  'time.secondsAgo': 'לפני {count} שנ'',
+  'time.minutesAgo': 'לפני {count} דק'',
+  'time.hoursAgo': 'לפני {count} שע'',
+  'time.daysAgo': 'לפני {count} יום',
+  'time.weeksAgo': 'לפני {count} שבוע',
+  'view.security.session.active': 'פעיל',
+  'view.security.session.expired': 'פג תוקף',
 };
 
 const uk: Dict = {
@@ -2846,6 +3042,13 @@ const uk: Dict = {
   'view.map.detail.coords': 'Координати',
   'view.map.detail.controlNote': 'Відкрийте деталі пристрою для надсилання команд — карта ніколи не обходить автентифікацію та перевірки безпеки.'
 
+  'time.secondsAgo': '{count}с тому',
+  'time.minutesAgo': '{count}хв тому',
+  'time.hoursAgo': '{count}г тому',
+  'time.daysAgo': '{count}д тому',
+  'time.weeksAgo': '{count}тиж тому',
+  'view.security.session.active': 'активний',
+  'view.security.session.expired': 'закінчився',
 };
 
 const cs: Dict = {
@@ -2898,6 +3101,13 @@ const cs: Dict = {
   'view.map.detail.coords': 'Souřadnice',
   'view.map.detail.controlNote': 'Otevřete podrobnosti zařízení pro odeslání příkazů — mapa nikdy neobchází ověřování a bezpečnostní kontroly.'
 
+  'time.secondsAgo': 'před {count}s',
+  'time.minutesAgo': 'před {count}min',
+  'time.hoursAgo': 'před {count}h',
+  'time.daysAgo': 'před {count}d',
+  'time.weeksAgo': 'před {count}týd',
+  'view.security.session.active': 'aktivní',
+  'view.security.session.expired': 'vypršelo',
 };
 
 const zhTW: Dict = {
@@ -2955,6 +3165,13 @@ const zhTW: Dict = {
   'view.map.detail.coords': '座標',
   'view.map.detail.controlNote': '請打開設備詳情發送指令 — 地圖不會繞過授權與安全檢查。'
 
+  'time.secondsAgo': '{count}秒前',
+  'time.minutesAgo': '{count}分鐘前',
+  'time.hoursAgo': '{count}小時前',
+  'time.daysAgo': '{count}天前',
+  'time.weeksAgo': '{count}週前',
+  'view.security.session.active': '活躍',
+  'view.security.session.expired': '已過期',
 };
 
 export const TRANSLATIONS: Record<LanguageCode, Dict> = {

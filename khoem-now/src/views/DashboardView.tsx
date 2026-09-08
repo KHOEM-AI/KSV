@@ -5,6 +5,7 @@ import {
 import { Panel, SectionHeader, StatCard, Sparkline, Donut, ProgressBar, Badge, StatusDot } from '@/components/ui';
 import { stats, trafficData, alertTrend, devices, safetyRules, gateways, protocols } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatTimeAgo } from '@/i18n/timeAgo';
 
 // ======================================================================
 // KSV — Dashboard View (Domain #1, part 2: Language)
@@ -16,7 +17,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 // ======================================================================
 
 export function DashboardView() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const onlinePct = Math.round((stats.onlineDevices / stats.totalDevices) * 100);
   const offlineCount = stats.totalDevices - stats.onlineDevices;
@@ -216,7 +217,7 @@ export function DashboardView() {
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-ink-400">
                 <span>{g.ip}</span>
-                <span>{g.lastSync}</span>
+                <span>{formatTimeAgo(g.lastSync, language)}</span>
               </div>
             </div>
           ))}

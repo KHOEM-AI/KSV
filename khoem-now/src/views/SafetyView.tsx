@@ -3,6 +3,7 @@ import { ShieldAlert, DoorClosed, Car, Factory, Zap } from 'lucide-react';
 import { Panel, SectionHeader, Badge, Toggle, StatusDot } from '@/components/ui';
 import { safetyRules, type SafetyRule } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatTimeAgo } from '@/i18n/timeAgo';
 
 const scopeIcon: Record<string, typeof DoorClosed> = {
   door: DoorClosed,
@@ -18,7 +19,7 @@ const severityVariant: Record<string, 'danger' | 'warning' | 'neutral' | 'brand'
 };
 
 export function SafetyView() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [rules, setRules] = useState<SafetyRule[]>(safetyRules);
   const [scopeFilter, setScopeFilter] = useState<string>('all');
 
@@ -111,7 +112,7 @@ export function SafetyView() {
                   ) : (
                     <span className="text-xs text-ink-400">{t('view.safety.disabled')}</span>
                   )}
-                  {r.lastTriggered && <span className="text-xs text-ink-400">· {r.lastTriggered}</span>}
+                  {r.lastTriggered && <span className="text-xs text-ink-400">· {formatTimeAgo(r.lastTriggered, language)}</span>}
                 </div>
               </div>
             </Panel>

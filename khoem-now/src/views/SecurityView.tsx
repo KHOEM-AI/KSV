@@ -2,9 +2,10 @@ import { ShieldCheck, KeyRound, Fingerprint, Lock, UserCheck, AlertTriangle } fr
 import { Panel, SectionHeader, Badge, StatusDot, ProgressBar, Donut } from '@/components/ui';
 import { sessions } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function SecurityView() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const activeSessions = sessions.filter((s) => s.status === 'active').length;
   const mfaEnabled = sessions.filter((s) => s.mfa).length;
   const mfaPct = Math.round((mfaEnabled / sessions.length) * 100);
@@ -86,8 +87,8 @@ export function SecurityView() {
                     <td className="py-3 pr-4">
                       {s.mfa ? <Badge variant="success"><Lock size={10} /> {t('view.security.mfa.on')}</Badge> : <Badge variant="warning">{t('view.security.mfa.off')}</Badge>}
                     </td>
-                    <td className="py-3 pr-4 text-ink-300">{s.lastActive}</td>
-                    <td className="py-3 pr-4"><StatusDot status={s.status} label={s.status} /></td>
+                    <td className="py-3 pr-4 text-ink-300">{formatTimeAgo(s.lastActive, language)}</td>
+                    <td className="py-3 pr-4"><StatusDot status={s.status} label={t(`view.security.session.${s.status}`)} /></td>
                   </tr>
                 ))}
               </tbody>

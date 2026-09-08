@@ -3,9 +3,10 @@ import { Network, Cpu, MemoryStick, Wifi, WifiOff, RefreshCw, Globe } from 'luci
 import { Panel, SectionHeader, Badge, StatusDot, ProgressBar } from '@/components/ui';
 import { gateways } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function GatewayView() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const online = gateways.filter((g) => g.mode === 'online').length;
   const degraded = gateways.filter((g) => g.mode === 'degraded').length;
   const offline = gateways.filter((g) => g.mode === 'offline').length;
@@ -86,7 +87,7 @@ export function GatewayView() {
               </div>
               <div>
                 <p className="text-ink-400">{t('view.gateway.lastSync')}</p>
-                <p className="text-right text-ink-200">{g.lastSync}</p>
+                <p className="text-right text-ink-200">{formatTimeAgo(g.lastSync, language)}</p>
               </div>
             </div>
 
