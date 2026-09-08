@@ -6,90 +6,6 @@
 <summary>📜 <b>ចុចទីនេះដើម្បីមើល វិញ្ញាបនបត្រ Sololearn ទាំងអស់ (Sololearn Certificates)</b></summary>
 Certificate #1 https://api2.sololearn.com/v2/certificates/CC-4WMNT8MZ/image/png?t=639211314186882960 Certificate #2 https://api2.sololearn.com/v2/certificates/CC-FQXPSLUW/image/png?t=639114126319491590 Certificate #3 https://api2.sololearn.com/v2/certificates/CC-T1WYSOHU/image/png?t=639218531599541850 Certificate #4 https://api2.sololearn.com/v2/certificates/CC-I6OFSBAU/image/png?t=639221583443257000 Certificate #5 https://api2.sololearn.com/v2/certificates/CC-IXX7OEVL/image/png?t=639129089670279240 Certificate #6 https://api2.sololearn.com/v2/certificates/CC-AYYCWFZD/image/png?t=639213017982820410 Certificate #7 https://api2.sololearn.com/v2/certificates/CC-3LIHOX01/image/png?t=639149755075790680 Certificate #8 https://api2.sololearn.com/v2/certificates/CC-HAW7ZIH5/image/png?t=639127071272290510 Certificate #9 https://api2.sololearn.com/v2/certificates/CC-U8DL49ZZ/image/png?t=639128642579113120 Certificate #10 https://api2.sololearn.com/v2/certificates/CC-SI2WZX43/image/png?t=639128879870325970 Certificate #11 https://api2.sololearn.com/v2/certificates/CC-SUOWGF8T/image/png?t=639129397891636970 Certificate #12 https://api2.sololearn.com/v2/certificates/CC-I4TIACOI/image/png?t=639129633525792890 Certificate #13 https://api2.sololearn.com/v2/certificates/CC-GT2PAJTL/image/png?t=639130145139061920 Certificate #14 https://api2.sololearn.com/v2/certificates/CC-CCYNOT2R/image/png?t=639130171535224370 Certificate #15 https://api2.sololearn.com/v2/certificates/CC-ZYSDAZM8/image/png?t=639130228680226390 Certificate #16 https://api2.sololearn.com/v2/certificates/CC-7ABADG4R/image/png?t=639130271146365570 Certificate #17 https://api2.sololearn.com/v2/certificates/CC-DBRL4YLD/image/png?t=639131460155620180 Certificate #18 https://api2.sololearn.com/v2/certificates/CC-033EXHKA/image/png?t=639132345227292480 Certificate #19 https://api2.sololearn.com/v2/certificates/CC-UYFGANZQ/image/png?t=639132373592160560 Certificate #20 https://api2.sololearn.com/v2/certificates/CC-2M47YBCR/image/png?t=639132404731128520 Certificate #21 https://api2.sololearn.com/v2/certificates/CC-WKCFVLYI/image/png?t=639132438814129950 Certificate #22 https://api2.sololearn.com/v2/certificates/CC-CRBRNFSO/image/png?t=639132486370977210 Certificate #23 https://api2.sololearn.com/v2/certificates/CC-SUEHSLUF/image/png?t=639132518202129160 Certificate #24 https://api2.sololearn.com/v2/certificates/CC-SI4N5SIB/image/png?t=639132552000527100 Certificate #25 https://api2.sololearn.com/v2/certificates/CC-ZTIH8SKI/image/png?t=639132624414342210 Certificate #26 https://api2.sololearn.com/v2/certificates/CC-OFASKCAF/image/png?t=639136631237077950 Certificate #27 https://api2.sololearn.com/v2/certificates/CC-SCJHQBG0/image/png?t=639133282834683540 Certificate #28 https://api2.sololearn.com/v2/certificates/CC-JAJVCQCJ/image/png?t=639133319713608600 Certificate #29 https://api2.sololearn.com/v2/certificates/CC-DJ9YJOG5/image/png?t=639133354278903030 Certificate #30 https://api2.sololearn.com/v2/certificates/CC-FYISPG0F/image/png?t=639139227658362860 Certificate #31 https://api2.sololearn.com/v2/certificates/CC-AXMQ8X3Q/image/png?t=639138317832565410 Certificate #32 https://api2.sololearn.com/v2/certificates/CC-OU33MLMF/image/png?t=639142032442792440 Certificate #33 https://api2.sololearn.com/v2/certificates/CC-K47BIVEI/image/png?t=639147137885562720 Certificate #34 https://api2.sololearn.com/v2/certificates/CC-AREK9EJE/image/png?t=639154446519468340 Certificate #35 https://api2.sololearn.com/v2/certificates/CC-6ZXHTBFA/image/png?t=639158173295795190 Certificate #36 https://api2.sololearn.com/v2/certificates/CC-ZDBUNAIR/image/png?t=639156230587386000 Certificate #37 https://api2.sololearn.com/v2/certificates/CC-2SCXNBZ6/image/png?t=639220875861304820 Certificate #38 https://api2.sololearn.com/v2/certificates/CC-CAZPORAO/image/png?t=639214762709896540 Certificate #39 https://api2.sololearn.com/v2/certificates/CC-S072WEWW/image/png?t=639220816092789140 Certificate #40 https://api2.sololearn.com/v2/certificates/CC-OP1HINXS/image/png?t=639222163892448310 Certificate #41 https://api2.sololearn.com/v2/certificates/CC-GPX6LLCC/image/png?t=639222232281084110 Certificate #42 https://api2.sololearn.com/v2/certificates/CC-8VRSVYY8/image/png?t=639223768700061080 Certificate #43 https://api2.sololearn.com/v2/certificates/CC-IGJZ5ICG/image/png?t=639224674159806284 Certificate #44 https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png?t=639224739175951367 Certificate #45 https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png?t=639224766824092049 Certificate #46 https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png?t=639225729535120880 Certificate​ #47 https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png?t=639227517866924285
 
-
-## ✅ KSV — Verified Completed Components (Production-Ready Parts Only)
-🔐 1. Authentication System (Backend)
-POST /api/auth/login/password — Fully working
-JWT Access Token generation ✔️
-Refresh Token generation ✔️
-Session creation ✔️
-Password hashing (bcrypt) ✔️
-👉 Result: Authentication flow is fully functional and verified via curl
-👤 2. Admin User & Organization Setup
-Admin user: admin@ksv.com ✔️
-Password hashed and stored securely ✔️
-Organization created ✔️
-ownerId correctly linked ✔️
-User ↔ Organization relationship valid ✔️
-👉 Result: Database structure is correct and consistent
-🧪 3. Login Testing (Verified)
-Login সফল ✔️
-Access token returned ✔️
-Refresh token returned ✔️
-👉 Result: End-to-end login flow confirmed working
-🛡️ 4. Core Security Layer (Backend)
-Files verified:
-auth.middleware.ts ✔️
-rbac.policy.ts ✔️
-audit.log.ts ✔️
-rate-limiter.ts ✔️
-encryption.util.ts ✔️
-Features:
-Authentication (fail-closed) ✔️
-Role-based access control ✔️
-Audit logging ✔️
-Rate limiting (anti-brute-force) ✔️
-Secret redaction ✔️
-👉 Result: Security foundation is fully implemented and correct
-⚙️ 5. Safety Engine (Core Logic)
-safety.engine.ts exists ✔️
-Schema aligned with models.ts ✔️
-Fail-safe behavior (error → BLOCKED) ✔️
-Initial safety rules implemented ✔️
-👉 Result: Safety layer ready for command integration
-🗄️ 6. Database Layer (MongoDB)
-Mongoose models defined ✔️
-Schema consistency verified ✔️
-models.ts = single source of truth ✔️
-👉 Result: Data layer is stable and production-safe
-🌐 7. API Architecture (27 Domains)
-18 core domains ✔️
-9 extension domains ✔️
-All routes defined ✔️
-Security rules defined ✔️
-Audit events defined ✔️
-👉 Result: Enterprise-grade API design completed
-🔌 8. API Registry Integration
-All domain routes wired into index.ts ✔️
-Route registry complete ✔️
-Domain mapping complete ✔️
-👉 Result: Entire API system is structurally integrated
-🤖 9. AI Orchestration (Partial but Working Core)
-/api/v1/ai/interpret ✔️
-/api/v1/ai/sessions/:id ✔️
-/api/v1/ai/interpret/confirm ✔️
-Conversation session model ✔️
-Mock interpreter logic ✔️
-👉 Result: AI interpretation pipeline is operational (mock mode)
-🎨 10. Frontend Login UI
-LoginView.tsx created ✔️
-Calls backend login API ✔️
-Stores access token ✔️
-👉 Result: Frontend authentication entry point ready
-🧼 11. Repo Hygiene & Git Fixes
-.env.backup removed from tracking ✔️
-.gitignore updated ✔️
-Merge conflicts resolved ✔️
-Git editor auto-open disabled ✔️
-👉 Result: Repository clean and stable
-🧠 Final Status (DONE Only)
-Backend Core (Auth + Security + DB) → ✅ COMPLETE
-API Architecture (27 Domains) → ✅ COMPLETE
-AI Core (Interpretation Layer) → ✅ WORKING
-Frontend Login → ✅ READY
-✔️ នេះគឺជាផ្នែកដែលអ្នកអាចយកទៅប្រើបានភ្លាមៗ (production-safe core)
-❌ មិនមានអ្វី incomplete ក្នុង list នេះទេ
-
 CONTEXT (ONLY TRUST THIS):
 
 ✅ DONE:
@@ -128,10 +44,10 @@ RULES:
 - Do NOT add new features
 - Do NOT assume anything not listed in DONE
 - Use ONLY the listed components
-- If runtime is required → respond "NOT VERIFIED"
+- If something depends on NOT VERIFIED → respond "NOT VERIFIED"
 
 ---
 
 OUTPUT:
 - Code fix only
-- No explanation OR max 1 short line
+- Max 1 short line explanation (or none)
