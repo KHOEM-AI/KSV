@@ -410,3 +410,31 @@ Build + typecheck clean។ Commit: `f37080f8`.
 
 **ការងារបន្ទាប់ (TODO)**: សាកល្បង endpoint ថ្មីៗទាំង ៩ ជាក់ស្តែង (curl test)
 មុននឹងចាត់ទុកថា production-ready។
+
+---
+
+## ✅ Update (Sep 9, 2026) — AI Orchestration Backend Logic (6/8 endpoints)
+
+បន្ទាប់ពី wire ៩ domain ចូល `index.ts` រួច ចាប់ផ្តើមសរសេរ backend logic
+ពិតប្រាកដម្តងមួយៗ ចាប់ផ្តើមពី **AI Orchestration** (មិនទាន់មាន AI provider
+key ដូច្នេះប្រើ mock/stub keyword-matching interpreter សិន)៖
+
+- បន្ថែម `AIConversationSession` model (models.ts) ដាច់ដោយឡែកពី
+  auth `Session` model
+- `POST /api/v1/ai/interpret` — mock interpretation, persist conversation turns
+- `GET /api/v1/ai/sessions/:id` — fetch session
+- `DELETE /api/v1/ai/sessions/:id` — delete session (privacy)
+- `POST /api/v1/ai/interpret/confirm` — record user confirmation
+  (command dispatch ខ្លួនឯងនៅតែឆ្លងកាត់ Command Pipeline ដដែល)
+- `GET /api/v1/ai/models` — static list (internal-mock-v1 enabled;
+  anthropic-claude/openai-gpt disabled, រង់ចាំ API key)
+- `POST /api/v1/ai/models/:id/enable` — Admin-only (OrgAdmin) toggle,
+  no persistence ទាល់ (validation logic ប៉ុណ្ណោះ)
+
+**នៅសល់**៖ `GET /api/v1/ai/usage`, `POST /api/v1/ai/feedback`
+
+Commits: `f93d9289`, `d7b8aea4`, `ac1e9f5c`, `ccd3caa8`, `8a943402`
+
+**ការកែបញ្ហាផ្សេងទៀត**៖ MongoDB Atlas Network Access ដាក់ `0.0.0.0/0`
+ជាអចិន្ត្រៃយ៍ (IP ទូរស័ព្ទប្តូរញឹកញាប់ ដោយសារផ្លាស់ទីទៅមករវាងទីតាំង) —
+ដោះស្រាយបញ្ហា "Could not connect to any servers" ជាអចិន្ត្រៃយ៍។
