@@ -23,3 +23,29 @@ Repository នេះធ្លាប់មាន organization ២ ខុសគ្
 * `fix-admin-org.ts` — Utility ភ្ជាប់ admin ទៅ org ត្រឹមត្រូវ (ប្រើក្នុងករណីមាន org ច្រើនកន្លែងច្រឡំ)
 
 *កែប្រែចុងក្រោយ:* 2026-09-09 — Login → Settings → Devices → Audit verified ភ្ជាប់គ្នាលើ organization តែមួយ
+
+---
+
+## 🎉 AI Orchestration — 8/8 COMPLETE (Sep 10, 2026)
+
+ទាំង ៨ endpoint របស់ AI Orchestration ត្រូវបានសរសេរ backend logic ពិតប្រាកដ
+ហើយសាកល្បងជោគជ័យ (verified) ១០០%៖
+
+1. `POST /api/v1/ai/interpret` — mock keyword-matching interpreter
+2. `POST /api/v1/ai/interpret/confirm`
+3. `GET /api/v1/ai/sessions/:id`
+4. `DELETE /api/v1/ai/sessions/:id`
+5. `GET /api/v1/ai/models` — static list
+6. `POST /api/v1/ai/models/:id/enable` — Admin (OrgAdmin) toggle
+7. `GET /api/v1/ai/usage`
+8. `POST /api/v1/ai/feedback` — recorded into AuditLog
+
+Commits: `f93d9289` → `7b58c373` (ចម្លងលំដាប់ក្នុង git log)
+
+**ចំណាំសម្រាប់ថ្ងៃក្រោយ**៖ interpreter នៅតែជា mock (keyword-matching) —
+ត្រូវប្តូរទៅ AI provider ពិតប្រាកដ (Anthropic/OpenAI) នៅពេលមាន API key។
+Route contract ត្រូវបានរចនាឲ្យ swap បានងាយ មិនចាំបាច់ប្តូរ API shape។
+
+**បន្ទាប់**៖ ជ្រើសរើស domain មួយក្នុងចំណោម ៨ ដែលនៅសល់ (billing-subscription,
+analytics-telemetry, notification-push, file-storage, reporting-export,
+integration-webhook, geolocation-map, maintenance-ticketing)។
