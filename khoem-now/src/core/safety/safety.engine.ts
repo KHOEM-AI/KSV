@@ -388,7 +388,10 @@ export async function evaluateSafetyForDevice(
     signals?: CommandContext["signals"];
   }
 ): Promise<SafetyCheckResult> {
-  const device = await Device.findById(deviceId).lean();
+  const device = await Device.findOne({
+    _id: deviceId,
+    organizationId,
+  }).lean();
 
   if (!device) {
     return { decision: "BLOCKED", reason: "Device not found." };

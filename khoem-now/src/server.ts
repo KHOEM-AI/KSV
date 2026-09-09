@@ -16,6 +16,8 @@ import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
 import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
+import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
+import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -25,6 +27,7 @@ async function main() {
   await connectDatabase();
 
   const app = express();
+  const gatewayDispatcher = new DefaultGatewayDispatcher();
   app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
   app.use(express.json());
 
@@ -159,25 +162,72 @@ async function main() {
           return;
         }
 
-        // ALLOWED — no real protocol/gateway dispatch exists yet, so the
-        // command is recorded as sent + immediately successful. Replace
-        // this block with an actual dispatch call once that layer exists.
-        const sentAt = new Date();
+        // ALLOWED — create the command as pending, then dispatch it through
+        // the gateway/protocol layer. A command is successful only after
+        // the physical transport/protocol returns an acknowledgement.
+        const device = await Device.findOne({
+          _id: deviceId,
+          organizationId: user.organizationId,
+        }).lean();
+
+        if (!device) {
+          res.status(404).json({
+            error: "DEVICE_NOT_FOUND",
+            message: "Device not found.",
+          });
+          return;
+        }
+
         const command = await Command.create({
           deviceId,
           userId: user.id,
           type: commandType,
           payload,
-          status: "success",
-          sentAt,
-          completedAt: new Date(),
+          status: "pending",
         });
 
-        await Device.updateOne({ _id: deviceId }, { lastSeenAt: new Date() });
+        const dispatchResult = await gatewayDispatcher.dispatch({
+          deviceId,
+          organizationId: String(user.organizationId),
+          commandId: String(command._id),
+          command: {
+            deviceId,
+            deviceCode: device.deviceCode,
+            deviceType: device.type,
+            commandType,
+            payload,
+          },
+        });
 
-        await auditDeviceCommand(user.id, deviceId, commandType, "SUCCESS", String(user.organizationId));
+        await applyDispatchResult(String(command._id), dispatchResult);
 
-        res.status(201).json({ command });
+        const updatedCommand = await Command.findById(command._id).lean();
+
+        if (dispatchResult.status === "success") {
+          await auditDeviceCommand(
+            user.id,
+            deviceId,
+            commandType,
+            "SUCCESS",
+            String(user.organizationId)
+          );
+        } else if (dispatchResult.status === "failed") {
+          await auditDeviceCommand(
+            user.id,
+            deviceId,
+            commandType,
+            "FAILURE",
+            String(user.organizationId),
+            {
+              reason: dispatchResult.message,
+              code: dispatchResult.code,
+            }
+          );
+        }
+
+        res.status(201).json({
+          command: updatedCommand,
+        });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("[COMMANDS] Failed to process device command:", err);
@@ -337,9 +387,6 @@ async function main() {
     }
   });
 
-  // GET /api/commands/recent — latest dispatched commands across the
-  // org, for "Live Control Activity" style feeds. Joins through Device
-  // since Command has no organizationId of its own.
   app.get("/api/commands/recent", authenticate, requirePermission("device:read"), async (req, res) => {
     const user = req.user!;
     if (!user.organizationId) {
@@ -362,6 +409,42 @@ async function main() {
     }
   });
 
+
+  // GET /api/commands/recent — latest dispatched commands across the
+  // org, for "Live Control Activity" style feeds. Joins through Device
+  // since Command has no organizationId of its own.
+  // GET /api/commands/:id — single command status for polling.
+  // Command ownership is verified through the user's organization.
+  app.get("/api/commands/:id", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+
+    try {
+      const command = await Command.findById(req.params.id).lean();
+      if (!command) {
+        res.status(404).json({ error: "COMMAND_NOT_FOUND", message: "Command not found." });
+        return;
+      }
+
+      const device = await Device.findOne({
+        _id: command.deviceId,
+        organizationId: user.organizationId,
+      }).lean();
+
+      if (!device) {
+        res.status(404).json({ error: "COMMAND_NOT_FOUND", message: "Command not found." });
+        return;
+      }
+
+      res.json(command);
+    } catch (err) {
+      console.error("[COMMANDS] Failed to load command status:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load command status." });
+    }
+  });
 
   // GET /api/security/threats — list threat detections for the org
 

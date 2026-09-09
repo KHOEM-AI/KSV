@@ -35,6 +35,7 @@ export interface AuditEntryInput {
     ip?: string;
     userAgent?: string;
     reason?: string; // e.g. why a command was BLOCKED
+    code?: string; // machine-readable failure/block code
   };
   details?: Record<string, unknown>; // free-form extra data - gets sanitized
 }
