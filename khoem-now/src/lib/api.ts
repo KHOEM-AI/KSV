@@ -30,6 +30,14 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   const body = await res.json().catch(() => null);
 
   if (!res.ok) {
+    // A 401 means the session token is missing/expired/invalid. There is
+    // no manual sign-out flow in this app, so this is the only place a
+    // stale token ever gets cleared — without it, the user is stuck
+    // seeing "Invalid or expired token" errors on every screen forever.
+    if (res.status === 401) {
+      localStorage.removeItem("ksv_access_token");
+      window.location.reload();
+    }
     // Surface the backend's error shape (SAFETY_BLOCKED, RATE_LIMITED, etc.)
     // so the UI can show a real, specific message instead of "something
     // went wrong".
@@ -1970,6 +1978,7 @@ export async function getDashboardStats() {
     onlineDevices: number;
     safetyRules: number;
     gateways: number;
+    warningDevices: number;
   }>("/dashboard/stats");
 }
 

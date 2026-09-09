@@ -44,6 +44,7 @@ export interface CommandContext {
   deviceType: string; // "door" | "vehicle" | "industrial" | ...
   organizationId: string;
   commandType: string; // "UNLOCK", "IMMOBILIZE", "SPEED_LIMIT", ...
+  isCompanyFleet?: boolean; // true = company-owned vehicle/asset, subject to business-hours rules
   payload?: Record<string, unknown>;
   // Signals the safety engine may need — supplied by the caller, since
   // this engine does not reach into hardware/telemetry itself.
@@ -53,6 +54,8 @@ export interface CommandContext {
     tamperDetected?: boolean;
     currentSpeed?: number;
     doorForceLockActive?: boolean;
+    duressCodeEntered?: boolean;
+    emergencyShutdownActive?: boolean;
   };
 }
 
@@ -171,22 +174,129 @@ const evaluatePressEStop: RuleEvaluator = (ctx, rule) => {
   return { decision: "ALLOWED" };
 };
 
+/**
+ * "Cold Storage Temp Floor" — a SETPOINT command for a cold-storage
+ * device is blocked if the requested temperature is above the safe
+ * maximum (i.e. not cold enough), which would risk spoilage.
+ */
+const SAFE_COLD_STORAGE_MAX_TEMP_C = -15;
+const evaluateColdStorageTempFloor: RuleEvaluator = (ctx, rule) => {
+  if (ctx.commandType !== "SETPOINT" && ctx.commandType !== "SET_TEMP") {
+    return { decision: "ALLOWED" };
+  }
+
+  const requestedTemp = Number(ctx.payload?.temp ?? ctx.payload?.setpoint);
+  if (Number.isNaN(requestedTemp)) {
+    return { decision: "ALLOWED" }; // no temp in payload — not this rule's concern
+  }
+
+  if (requestedTemp > SAFE_COLD_STORAGE_MAX_TEMP_C) {
+    return {
+      decision: "BLOCKED",
+      reason: `Requested temperature ${requestedTemp}°C is above the safe cold-storage maximum of ${SAFE_COLD_STORAGE_MAX_TEMP_C}°C.`,
+      ruleId: rule.id,
+      ruleName: rule.name,
+    };
+  }
+
+  return { decision: "ALLOWED" };
+};
+
+/**
+ * "Ignition Lock After Hours" — a company-owned fleet vehicle's
+ * ignition/start command is blocked outside business hours (06:00-22:00
+ * local time). Customer-owned vehicles (isCompanyFleet is false/unset)
+ * are never restricted by this rule — they need 24/7 availability for
+ * genuine emergencies (e.g. an urgent hospital trip).
+ */
+const FLEET_HOURS_START = 6;  // 06:00
+const FLEET_HOURS_END = 22;   // 22:00
+const evaluateIgnitionLockAfterHours: RuleEvaluator = (ctx, rule) => {
+  const ignitionCommands = ["START", "IGNITION_ON"];
+  if (!ignitionCommands.includes(ctx.commandType)) {
+    return { decision: "ALLOWED" };
+  }
+
+  if (!ctx.isCompanyFleet) {
+    return { decision: "ALLOWED" }; // customer-owned — no business-hours restriction
+  }
+
+  const hour = new Date().getHours();
+  if (hour < FLEET_HOURS_START || hour >= FLEET_HOURS_END) {
+    return {
+      decision: "BLOCKED",
+      reason: `Company fleet vehicles may only be started between ${FLEET_HOURS_START}:00 and ${FLEET_HOURS_END}:00.`,
+      ruleId: rule.id,
+      ruleName: rule.name,
+    };
+  }
+
+  return { decision: "ALLOWED" };
+};
+
+/**
+ * "Duress Code" — if a duress code was entered (a code that outwardly
+ * looks valid but signals coercion), the command is blocked here so
+ * the caller/UI can trigger a silent alert while denying real access.
+ * Treated like a tamper event for open/unlock commands.
+ */
+const evaluateDuressCode: RuleEvaluator = (ctx, rule) => {
+  const openCommands = ["UNLOCK", "OPEN"];
+  if (!openCommands.includes(ctx.commandType)) {
+    return { decision: "ALLOWED" };
+  }
+
+  if (ctx.signals?.duressCodeEntered) {
+    return {
+      decision: "BLOCKED",
+      reason: "Duress code detected — access denied and a silent alert should be raised.",
+      ruleId: rule.id,
+      ruleName: rule.name,
+    };
+  }
+
+  return { decision: "ALLOWED" };
+};
+
+/**
+ * "HVAC Emergency Shutdown" — once an emergency shutdown is active for
+ * an HVAC device, only OFF/RESET commands are allowed; anything that
+ * would turn it on or change its operating state is blocked.
+ */
+const evaluateHvacEmergencyShutdown: RuleEvaluator = (ctx, rule) => {
+  const allowedDuringShutdown = ["OFF", "RESET"];
+  if (allowedDuringShutdown.includes(ctx.commandType)) {
+    return { decision: "ALLOWED" };
+  }
+
+  if (ctx.signals?.emergencyShutdownActive) {
+    return {
+      decision: "BLOCKED",
+      reason: "HVAC emergency shutdown is active — only OFF/RESET commands are permitted until cleared.",
+      ruleId: rule.id,
+      ruleName: rule.name,
+    };
+  }
+
+  return { decision: "ALLOWED" };
+};
+
 // Maps a SafetyRule.name (as seen in the dashboard's Safety Rules list)
 // to the evaluator that handles it. Keep this table as the single place
 // that connects data-driven rules to code.
 //
-// NOTE: 4 of the 8 mock rules in src/data/domain.ts don't have an
-// evaluator yet (SAFE-005 Cold Storage, SAFE-006 Duress Code,
-// SAFE-007 Ignition Lock After Hours, SAFE-008 HVAC Emergency
-// Shutdown). They will simply be skipped (never block) until an
-// evaluator is added for them — same as any DB rule with no match
-// here. Add them incrementally the same way as the four below, one
-// at a time, rather than all at once.
+// All 8 mock rules now have evaluators. "Ignition Lock After Hours"
+// only restricts company-owned fleet vehicles (isCompanyFleet: true);
+// customer-owned vehicles are never restricted by it.
 const RULE_EVALUATORS: Record<string, RuleEvaluator> = {
   "Vehicle Immobilize Outside Geo-Fence": evaluateVehicleGeoFence,
   "Robot Speed Limit in Human Zone": evaluateRobotHumanZone,
   "Door Force-Lock on Tamper": evaluateDoorTamper,
   "Press E-Stop on Light Curtain Break": evaluatePressEStop,
+  "Cold Storage Temp Floor": evaluateColdStorageTempFloor,
+  "Duress Code": evaluateDuressCode,
+  "HVAC Emergency Shutdown": evaluateHvacEmergencyShutdown,
+  "Ignition Lock After Hours": evaluateIgnitionLockAfterHours,
 };
 
 // ============================================================
@@ -289,6 +399,7 @@ export async function evaluateSafetyForDevice(
     deviceType: device.type,
     organizationId,
     commandType,
+    isCompanyFleet: Boolean((device as { isCompanyFleet?: boolean }).isCompanyFleet),
     payload: options?.payload,
     signals: options?.signals,
   });

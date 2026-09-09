@@ -78,7 +78,7 @@ function AuthenticatedApp() {
           </button>
         </div>
 
-        <div className="px-5 pb-3"><ProjectSwitcher current="KSV" /></div>
+        <div className="px-5 pb-3"><ProjectSwitcher /></div>
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
           {navGroups.map((group) => (

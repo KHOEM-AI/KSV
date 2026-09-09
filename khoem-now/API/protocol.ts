@@ -5,6 +5,7 @@
 // =============================================================
 
 import type { DeviceProtocol } from './device';
+export type { DeviceProtocol };
 
 export type AdapterStatus = 'active' | 'inactive' | 'error' | 'updating';
 export type ConnectionState = 'connected' | 'disconnected' | 'connecting' | 'error' | 'paused';

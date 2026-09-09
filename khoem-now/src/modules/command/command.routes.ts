@@ -38,7 +38,12 @@ commandRouter.post(
   requirePermission("device:command"),
   deviceCommandRateLimiter,
   async (req: Request, res: Response) => {
-    const { deviceId } = req.params;
+    const rawDeviceId = req.params.deviceId;
+    if (typeof rawDeviceId !== "string") {
+      res.status(400).json({ error: "INVALID_DEVICE_ID" });
+      return;
+    }
+    const deviceId = rawDeviceId;
     const { type, commandType: bodyCommandType, payload, signals } = req.body ?? {};
     const commandType = type ?? bodyCommandType;
 
@@ -72,6 +77,7 @@ commandRouter.post(
         deviceId,
         commandType,
         "BLOCKED",
+        String(device.organizationId),
         { ip: req.ip, reason: safetyResult.reason }
       );
 
@@ -97,7 +103,7 @@ commandRouter.post(
         sentAt: new Date(),
       });
     } catch (err) {
-      await auditDeviceCommand(req.user!.id, deviceId, commandType, "FAILURE", {
+      await auditDeviceCommand(req.user!.id, deviceId, commandType, "FAILURE", String(device.organizationId), {
         ip: req.ip,
         reason: "Database error creating command",
       });
@@ -108,7 +114,7 @@ commandRouter.post(
     // 4. Audit the successful dispatch (result reflects "accepted for
     // execution" — actual device ack updates status separately via the
     // gateway callback route, not shown in this file).
-    await auditDeviceCommand(req.user!.id, deviceId, commandType, "SUCCESS", {
+    await auditDeviceCommand(req.user!.id, deviceId, commandType, "SUCCESS", String(device.organizationId), {
       ip: req.ip,
     });
 

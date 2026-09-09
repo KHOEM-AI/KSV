@@ -86,6 +86,10 @@ const deviceSchema = new Schema(
     protocolId: { type: ObjectId, ref: "Protocol" },
     firmwareVersion: String,
     lastSeenAt: Date,
+    // true = company-owned fleet vehicle/asset (subject to business-hours
+    // rules like Ignition Lock After Hours); false/unset = customer-owned,
+    // no such restriction — customers need 24/7 access for real emergencies.
+    isCompanyFleet: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

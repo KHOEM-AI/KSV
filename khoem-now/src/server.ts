@@ -103,7 +103,12 @@ async function main() {
     requirePermission("device:command"),
     deviceCommandRateLimiter,
     async (req, res) => {
-      const deviceId = req.params.id;
+      const rawDeviceId = req.params.id;
+      if (typeof rawDeviceId !== "string") {
+        res.status(400).json({ error: "INVALID_DEVICE_ID" });
+        return;
+      }
+      const deviceId = rawDeviceId;
       const { commandType, payload, signals } = req.body ?? {};
       const user = req.user!; // authenticate() guarantees this is set
 
@@ -141,7 +146,7 @@ async function main() {
             completedAt: new Date(),
           });
 
-          await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", {
+          await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId), {
             reason: safetyResult.reason,
           });
 
@@ -170,14 +175,14 @@ async function main() {
 
         await Device.updateOne({ _id: deviceId }, { lastSeenAt: new Date() });
 
-        await auditDeviceCommand(user.id, deviceId, commandType, "SUCCESS");
+        await auditDeviceCommand(user.id, deviceId, commandType, "SUCCESS", String(user.organizationId));
 
         res.status(201).json({ command });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("[COMMANDS] Failed to process device command:", err);
 
-        await auditDeviceCommand(user.id, deviceId, commandType, "FAILURE", {
+        await auditDeviceCommand(user.id, deviceId, commandType, "FAILURE", String(user.organizationId), {
           reason: "Internal error while processing command.",
         });
 
@@ -294,7 +299,7 @@ async function main() {
           { $set: req.body },
           { new: true, upsert: true }
         );
-        await auditDeviceCommand(user.id, "settings", "UPDATE_SETTINGS", "SUCCESS");
+        await auditDeviceCommand(user.id, "settings", "UPDATE_SETTINGS", "SUCCESS", String(user.organizationId));
         res.json({ settings: updated });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to save settings." });
@@ -814,11 +819,11 @@ async function main() {
         // Persist / append to conversation session
         let session;
         if (sessionId) {
-          session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.userId });
+          session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.id });
         }
         if (!session) {
           session = new AIConversationSession({
-            accountId: user.userId,
+            accountId: user.id,
             organizationId: user.organizationId,
             turns: [],
             expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
@@ -846,7 +851,7 @@ async function main() {
       try {
         const session = await AIConversationSession.findOne({
           _id: req.params.id,
-          accountId: user.userId,
+          accountId: user.id,
         }).lean();
         if (!session) {
           res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
@@ -869,7 +874,7 @@ async function main() {
       try {
         const result = await AIConversationSession.deleteOne({
           _id: req.params.id,
-          accountId: user.userId,
+          accountId: user.id,
         });
         if (result.deletedCount === 0) {
           res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
@@ -904,7 +909,7 @@ async function main() {
       }
 
       try {
-        const session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.userId });
+        const session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.id });
         if (!session) {
           res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
           return;
@@ -975,7 +980,12 @@ async function main() {
     authenticate,
     requireMinRole("OrgAdmin"),
     async (req, res) => {
-      const { id } = req.params;
+      const rawId = req.params.id;
+      if (typeof rawId !== "string") {
+        res.status(400).json({ error: "INVALID_MODEL_ID" });
+        return;
+      }
+      const id = rawId;
       const { isEnabled } = req.body || {};
 
       if (typeof isEnabled !== "boolean") {
@@ -1003,6 +1013,23 @@ async function main() {
       res.json({ modelId: id, isEnabled, persisted: false });
     }
   );
+
+  app.get("/api/dashboard/stats", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) { res.status(400).json({ error: "BAD_REQUEST" }); return; }
+    try {
+      const orgId = user.organizationId;
+      const totalDevices = await Device.countDocuments({ organizationId: orgId });
+      const onlineDevices = await Device.countDocuments({ organizationId: orgId, status: "online" });
+      const safetyRules = await SafetyRule.countDocuments({ organizationId: orgId, isEnabled: true });
+      const gatewayIds = await Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId");
+      const gateways = await Gateway.countDocuments({ _id: { $in: gatewayIds }, status: "online" });
+      const warningDevices = await Device.countDocuments({ organizationId: orgId, status: "warning" });
+      res.json({ totalDevices, onlineDevices, safetyRules, gateways, warningDevices });
+    } catch (err) {
+      res.status(500).json({ error: "INTERNAL_ERROR" });
+    }
+  });
 
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);

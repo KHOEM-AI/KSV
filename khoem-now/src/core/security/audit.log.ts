@@ -113,11 +113,13 @@ export async function auditDeviceCommand(
   deviceId: string,
   commandType: string,
   result: AuditResult,
+  organizationId?: string | null,
   context?: AuditEntryInput["context"]
 ): Promise<void> {
   return recordAuditEntry({
     userId,
     deviceId,
+    organizationId,
     action: "device:command",
     result,
     context,

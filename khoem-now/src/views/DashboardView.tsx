@@ -20,19 +20,27 @@ import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function DashboardView() {
   const { t, language } = useLanguage();
-  const [liveStats, setLiveStats] = useState<{totalDevices:number;onlineDevices:number;safetyRules:number;gateways:number}|null>(null);
+  const [liveStats, setLiveStats] = useState<{totalDevices:number;onlineDevices:number;safetyRules:number;gateways:number;warningDevices:number}|null>(null);
 
   useEffect(() => {
     getDashboardStats()
       .then(setLiveStats)
-      .catch(() => {});
+      .catch((err) => console.error('Failed to load live dashboard stats, showing fallback data:', err));
   }, []);
 
-  const onlinePct = Math.round((stats.onlineDevices / stats.totalDevices) * 100);
-  const offlineCount = stats.totalDevices - stats.onlineDevices;
+  // Real counts once loaded; mock fallback only while loading or if the
+  // request failed — never silently shown as if it were live.
+  const totalDevices = liveStats?.totalDevices ?? stats.totalDevices;
+  const onlineDevices = liveStats?.onlineDevices ?? stats.onlineDevices;
+  const safetyRulesCount = liveStats?.safetyRules ?? stats.safetyRules;
+  const activeGateways = liveStats?.gateways ?? stats.activeGateways;
+
+  const warningDevices = liveStats?.warningDevices ?? 0;
+  const onlinePct = Math.round((onlineDevices / totalDevices) * 100);
+  const offlineCount = totalDevices - onlineDevices - warningDevices;
   const donutSegments = [
-    { value: stats.onlineDevices, color: '#10b981', label: t('dashboard.health.online') },
-    { value: 645, color: '#f59e0b', label: t('dashboard.health.warning') },
+    { value: onlineDevices, color: '#10b981', label: t('dashboard.health.online') },
+    { value: warningDevices, color: '#f59e0b', label: t('dashboard.health.warning') },
     { value: offlineCount, color: '#3a4666', label: t('dashboard.health.offline') },
   ];
   const topSites = [
@@ -47,9 +55,9 @@ export function DashboardView() {
     <div className="space-y-6">
       {/* Stat row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label={t('dashboard.stat.connectedDevices')} value={stats.totalDevices.toLocaleString()} icon={<Cpu size={20} />} trend={t('dashboard.trend.devicesUp')} trendUp accent="brand" />
-        <StatCard label={t('dashboard.stat.activeSafetyRules')} value={stats.safetyRules} icon={<ShieldAlert size={20} />} trend={t('dashboard.trend.rulesNew')} trendUp accent="warning" />
-        <StatCard label={t('dashboard.stat.edgeGateways')} value={stats.activeGateways} unit={t('dashboard.stat.online')} icon={<Server size={20} />} trend={t('dashboard.trend.gatewayOffline')} trendUp={false} accent="success" />
+        <StatCard label={t('dashboard.stat.connectedDevices')} value={totalDevices.toLocaleString()} icon={<Cpu size={20} />} trend={t('dashboard.trend.devicesUp')} trendUp accent="brand" />
+        <StatCard label={t('dashboard.stat.activeSafetyRules')} value={safetyRulesCount} icon={<ShieldAlert size={20} />} trend={t('dashboard.trend.rulesNew')} trendUp accent="warning" />
+        <StatCard label={t('dashboard.stat.edgeGateways')} value={activeGateways} unit={t('dashboard.stat.online')} icon={<Server size={20} />} trend={t('dashboard.trend.gatewayOffline')} trendUp={false} accent="success" />
         <StatCard label={t('dashboard.stat.countriesDeployed')} value={stats.countries} unit="/ 195" icon={<Globe2 size={20} />} trend={t('dashboard.trend.countriesAdded')} trendUp accent="accent" />
       </div>
 

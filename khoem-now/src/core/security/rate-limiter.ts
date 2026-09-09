@@ -49,10 +49,8 @@ const defaultStore = new InMemoryStore();
 // Periodically clear expired entries so the Map doesn't grow forever.
 setInterval(() => {
   const now = Date.now();
-  // @ts-expect-error - accessing private map for cleanup; fine within this file
   for (const [key, record] of defaultStore["map"].entries()) {
     if (record.resetAt < now) {
-      // @ts-expect-error - same as above
       defaultStore["map"].delete(key);
     }
   }

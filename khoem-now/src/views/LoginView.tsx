@@ -15,7 +15,9 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     setLoading(true);
     try {
       const res = await loginWithPassword({ email, password });
-      localStorage.setItem('ksv_access_token', res.token.accessToken);
+      if (res.token) {
+        localStorage.setItem('ksv_access_token', res.token.accessToken);
+      }
       onLoginSuccess();
     } catch (err: any) {
       setError(err.message || 'Login failed');

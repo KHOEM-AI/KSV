@@ -33,7 +33,7 @@ export type PairingStatus =
 export interface DevicePairingRequest {
   requestId: string;
   accountId: string;
-  discoveredDeviceId: DiscoveredDevice['deviceId'];
+  discoveredDeviceId: DiscoveredDevice['discoveryId'];
   method: PairingMethod;
   proof: string; // QR payload / PIN / manufacturer credential token / cert
 }
