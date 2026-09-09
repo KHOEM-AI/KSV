@@ -84,7 +84,7 @@ async function main() {
   //
   // Flow (per KSV Command Engine, section 14):
   //   Authenticate → Authorize (device:command) → Rate limit
-  //   → Safety check → Execute → Audit → Response
+  //   → Safety check → Create pending command → Dispatch → Audit → Response
   //
   // Request body:
   //   {
@@ -93,12 +93,10 @@ async function main() {
   //     "signals": { "isInsideGeoFence": true, ... } // optional, for safety engine
   //   }
   //
-  // NOTE: this does not yet dispatch to a real gateway/protocol adapter
-  // (that layer — src/core/protocol, src/core/gateway — is future work
-  // per the Controls Wiring Audit doc). Once safety clears a command,
-  // it is recorded as "success" immediately. Swap that line for a real
-  // dispatch call once the gateway layer exists; nothing else in this
-  // route needs to change.
+  // The command is persisted as pending, then dispatched through the
+  // gateway/protocol layer. Success is recorded only after an actual
+  // transport/protocol acknowledgement. If no adapter/transport is
+  // configured, the dispatcher fails closed instead of reporting success.
   // ============================================================
   app.post(
     "/api/devices/:id/commands",
@@ -226,6 +224,10 @@ async function main() {
         }
 
         res.status(201).json({
+          commandId: String(updatedCommand?._id ?? command._id),
+          deviceId,
+          type: commandType,
+          status: updatedCommand?.status ?? "pending",
           command: updatedCommand,
         });
       } catch (err) {

@@ -77,11 +77,14 @@ export interface DispatchCommandInput {
   };
 }
 
+export type CommandStatus = "pending" | "success" | "failed" | "blocked";
+
 export interface DispatchCommandResult {
   commandId: string;
   deviceId: string;
   type: string;
-  status: "pending";
+  status: CommandStatus;
+  command?: CommandHistoryEntry;
 }
 
 export async function dispatchCommand(input: DispatchCommandInput): Promise<DispatchCommandResult> {
@@ -96,7 +99,10 @@ export interface CommandHistoryEntry {
   deviceId: string;
   userId: string;
   type: string;
-  status: string;
+  status: CommandStatus;
+  response?: Record<string, unknown>;
+  sentAt?: string;
+  completedAt?: string;
   createdAt: string;
 }
 
