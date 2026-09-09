@@ -1189,6 +1189,46 @@ async function main() {
     }
   });
 
+
+  // GET /api/v1/ai/usage — AI interpretation usage stats for the account
+  // NOTE: derived from AIConversationSession.turns (no separate usage
+  // table yet). Counts "user" turns as interpretation requests made.
+  app.get(
+    "/api/v1/ai/usage",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const sessions = await AIConversationSession.find({ accountId: user.userId })
+          .select("turns createdAt")
+          .lean();
+
+        let totalRequests = 0;
+        let lastRequestAt = null;
+        for (const session of sessions) {
+          for (const turn of session.turns) {
+            if (turn.role === "user") {
+              totalRequests += 1;
+              if (!lastRequestAt || turn.createdAt > lastRequestAt) {
+                lastRequestAt = turn.createdAt;
+              }
+            }
+          }
+        }
+
+        res.json({
+          accountId: String(user.userId),
+          totalSessions: sessions.length,
+          totalInterpretationRequests: totalRequests,
+          lastRequestAt,
+        });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage stats." });
+      }
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
