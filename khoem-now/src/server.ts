@@ -377,8 +377,16 @@ async function main() {
 
   // GET /api/devices/:id/state — single device current state
   app.get("/api/devices/:id/state", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
     try {
-      const device = await Device.findById(req.params.id).lean();
+      const device = await Device.findOne({
+        _id: req.params.id,
+        organizationId: user.organizationId,
+      }).lean();
       if (!device) {
         res.status(404).json({ error: "DEVICE_NOT_FOUND" });
         return;
@@ -770,8 +778,23 @@ async function main() {
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
       try {
-        const discovered = await Discovery.find().sort({ createdAt: -1 }).limit(50).lean();
+        const deviceIds = await Device.find({
+          organizationId: user.organizationId,
+        }).distinct("_id");
+
+        const discovered = await Discovery.find({
+          deviceId: { $in: deviceIds },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
         res.json({ devices: discovered, total: discovered.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load discovered devices." });
@@ -798,8 +821,23 @@ async function main() {
     authenticate,
     requirePermission("org:read"),
     async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
       try {
-        const events = await SafetyLog.find().sort({ createdAt: -1 }).limit(50).lean();
+        const deviceIds = await Device.find({
+          organizationId: user.organizationId,
+        }).distinct("_id");
+
+        const events = await SafetyLog.find({
+          deviceId: { $in: deviceIds },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
         res.json({ events, total: events.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety events." });
@@ -813,11 +851,29 @@ async function main() {
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
       try {
-        const logs = await DeviceLog.find({ deviceId: req.params.id })
+        const device = await Device.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        })
+          .select({ _id: 1 })
+          .lean();
+
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+
+        const logs = await DeviceLog.find({ deviceId: device._id })
           .sort({ createdAt: -1 })
           .limit(100)
           .lean();
+
         res.json({ logs, total: logs.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device telemetry." });
