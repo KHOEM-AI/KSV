@@ -1229,6 +1229,44 @@ async function main() {
     }
   );
 
+
+  // POST /api/v1/ai/feedback — user feedback on an AI interpretation result
+  // (helps track/improve accuracy over time). Stored as an AuditLog entry
+  // since there is no dedicated feedback table yet.
+  app.post(
+    "/api/v1/ai/feedback",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { sessionId, requestId, rating, comment } = req.body || {};
+
+      if (!requestId || typeof requestId !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "requestId is required." });
+        return;
+      }
+      if (rating !== "positive" && rating !== "negative") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "rating must be 'positive' or 'negative'." });
+        return;
+      }
+
+      try {
+        await AuditLog.create({
+          userId: user.userId,
+          organizationId: user.organizationId,
+          action: "ai.feedback.submitted",
+          result: "SUCCESS",
+          reason: rating,
+          details: JSON.stringify({ requestId, sessionId, comment: comment || null }),
+        });
+
+        res.status(201).json({ recorded: true, requestId, rating });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to record feedback." });
+      }
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
