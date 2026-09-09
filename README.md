@@ -65,3 +65,324 @@ OUTPUT:
 ⚠️ Real Gateway/Protocol dispatch — មិនទាន់មាន ដូច្នេះ command នៅតែជា recorded success មិនមែន device execution ពិតទេ។
 សំខាន់: យើងមិនគួរលុប ឬសរសេរឯកសារទាំងអស់ឡើងវិញទេ។ គោលការណ៍គឺ៖
 កូដពិត → ផ្ទៀងផ្ទាត់ → រកឯកសារដែលផ្ទុយ → កែតែឯកសារដែល outdated។
+
+KSV
+
+KSV is a device-control and management platform focused on secure command execution, organization isolation, safety enforcement, gateway/protocol dispatch, and auditable device operations.
+
+Verified Engineering Progress
+
+The following items have been implemented and verified in the current "main" branch.
+
+1. Secure Device Command Lifecycle
+
+Device commands now follow a controlled lifecycle:
+
+Authenticate
+  ↓
+Authorize
+  ↓
+Rate Limit
+  ↓
+Safety Check
+  ↓
+Create Pending Command
+  ↓
+Gateway / Protocol Dispatch
+  ↓
+Physical / Protocol ACK
+  ↓
+Success or Failure
+  ↓
+Audit
+
+A command is no longer treated as successful merely because the API accepted the request.
+
+The command is initially stored as:
+
+pending
+
+It can become:
+
+success
+failed
+blocked
+
+A successful state requires an acknowledgement from the configured protocol dispatch layer.
+
+If the required gateway, protocol, or adapter is unavailable, the system fails closed instead of reporting a false success.
+
+---
+
+2. Gateway / Protocol Dispatch Layer
+
+The project now contains a protocol and gateway abstraction layer:
+
+src/core/protocol/
+├── protocol.types.ts
+└── protocol.registry.ts
+
+src/core/gateway/
+├── gateway.types.ts
+├── gateway.dispatcher.types.ts
+├── gateway.dispatcher.ts
+└── command.lifecycle.ts
+
+The dispatcher validates:
+
+- Device existence
+- Organization ownership boundary
+- Gateway configuration
+- Gateway existence
+- Gateway online status
+- Protocol configuration
+- Protocol existence
+- Registered protocol adapter availability
+- Protocol acknowledgement
+
+Failure conditions are returned explicitly rather than converted into fake success.
+
+Examples include:
+
+DEVICE_NOT_FOUND
+GATEWAY_NOT_CONFIGURED
+PROTOCOL_NOT_CONFIGURED
+GATEWAY_NOT_FOUND
+GATEWAY_OFFLINE
+PROTOCOL_NOT_FOUND
+PROTOCOL_ADAPTER_UNAVAILABLE
+DEVICE_ACK_NOT_RECEIVED
+TRANSPORT_ERROR
+
+Important Physical-Device Boundary
+
+The current architecture is prepared for real gateway/protocol transport, but a real physical-device connection must not be claimed until an actual transport and protocol adapter are configured.
+
+No fake adapter or fake device acknowledgement is used.
+
+---
+
+3. Safety Enforcement
+
+Device commands pass through the safety engine before dispatch.
+
+The safety layer includes enforcement for the implemented safety rules, including:
+
+- Cold-storage temperature protection
+- Duress-code restrictions
+- HVAC emergency-shutdown restrictions
+- Ignition lock after configured hours for company fleet
+- Other registered safety rules supported by the safety engine
+
+A blocked command is recorded as:
+
+blocked
+
+and a corresponding safety event is recorded.
+
+Safety checks occur before physical dispatch.
+
+---
+
+4. Organization Isolation
+
+Device-related API access has been strengthened so users cannot directly read another organization's device data.
+
+The following routes now enforce organization boundaries:
+
+GET /api/devices/:id/state
+GET /api/discovery/devices
+GET /api/safety/events
+GET /api/telemetry/devices/:id
+
+The organization boundary is based on the authenticated user's "organizationId" and the device's "organizationId".
+
+For device-specific state and telemetry, the device must belong to the authenticated user's organization before its data can be returned.
+
+For discovery and safety logs, the system first resolves devices belonging to the user's organization and then retrieves related records.
+
+This prevents unrestricted global reads from these endpoints.
+
+---
+
+5. Command History Isolation
+
+Command history and command-status access are organization-scoped.
+
+A command belonging to a device outside the authenticated user's organization must not be exposed through the command API.
+
+This keeps command information behind the same organization boundary as the device itself.
+
+---
+
+6. Audit Trail
+
+Device command operations are connected to the audit layer.
+
+The audit result distinguishes important outcomes such as:
+
+SUCCESS
+FAILURE
+BLOCKED
+
+Audit context can include information such as:
+
+ip
+userAgent
+reason
+code
+
+This provides a foundation for traceable command execution rather than treating API responses as the only record of what happened.
+
+---
+
+7. Rate Limiting
+
+Device command requests are protected by a command-specific rate limiter.
+
+This helps prevent uncontrolled command flooding and provides an additional protection layer before command execution.
+
+---
+
+8. Frontend Command State
+
+The frontend command hook now understands the backend command lifecycle.
+
+The UI can move through:
+
+sending
+  ↓
+pending
+  ↓
+success
+
+or:
+
+sending
+  ↓
+pending
+  ↓
+failed
+
+or:
+
+sending
+  ↓
+blocked
+
+When the backend returns "pending", the frontend polls the command status rather than immediately displaying success.
+
+The current polling window is limited so the UI does not wait indefinitely.
+
+---
+
+Verification
+
+The latest organization-isolation changes were verified locally with:
+
+npm run typecheck
+
+Result:
+
+PASS
+
+The Git diff was checked with:
+
+git diff --check
+
+Result:
+
+PASS
+
+The production build was verified with:
+
+npm run build
+
+Result:
+
+PASS
+
+The build successfully transformed:
+
+1593 modules
+
+and generated the production "dist" output.
+
+The build produced only non-blocking warnings about:
+
+- outdated "caniuse-lite"
+- a JavaScript chunk larger than 500 kB
+
+No TypeScript or build error was reported.
+
+---
+
+Git Verification
+
+The organization-isolation change was committed as:
+
+10b3511b fix: enforce organization isolation on device logs
+
+The commit was successfully pushed to:
+
+origin/main
+
+Push result:
+
+7a6e4c64..10b3511b  main -> main
+
+The working tree was clean after the commit.
+
+---
+
+Engineering Principle
+
+KSV development follows a simple rule:
+
+Real
+→ Verifiable
+→ Usable
+→ Extensible
+→ Monetizable
+
+The platform should not claim real devices, gateways, connections, acknowledgements, telemetry, or usage numbers unless those values are backed by actual system data.
+
+Demo/static UI data must not be presented as live production truth.
+
+---
+
+Current Architecture Direction
+
+The intended secure command path is:
+
+UI
+ ↓
+API
+ ↓
+Authentication
+ ↓
+RBAC Authorization
+ ↓
+Organization Boundary
+ ↓
+Device Ownership / Permission
+ ↓
+Safety Engine
+ ↓
+Pending Command
+ ↓
+Gateway Dispatcher
+ ↓
+Protocol Adapter
+ ↓
+Real Gateway / Physical Device
+ ↓
+ACK
+ ↓
+Command Result
+ ↓
+Audit / Realtime Status
+
+The remaining work is to connect the protocol abstraction to real transport implementations and complete the device discovery, pairing, ownership, and permission lifecycle.
+
+Until those physical transport components are configured and verified, KSV should fail closed rather than simulate successful device execution.
