@@ -938,6 +938,51 @@ async function main() {
     }
   );
 
+  // PUT /api/billing/subscriptions/:id — upgrade or downgrade the plan
+  app.put(
+    "/api/billing/subscriptions/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      const { planId } = req.body || {};
+
+      const planDeviceLimits: Record<string, number> = {"free":5,"pro":50,"enterprise":9999};
+      if (!planId || !(planId in planDeviceLimits)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `planId must be one of: ${Object.keys(planDeviceLimits).join(", ")}` });
+        return;
+      }
+
+      try {
+        const subscription = await OrganizationSubscription.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!subscription) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Subscription not found." });
+          return;
+        }
+
+        const newLimit = planDeviceLimits[planId];
+        const deviceCount = await Device.countDocuments({ organizationId: user.organizationId });
+        if (deviceCount > newLimit) {
+          res.status(400).json({
+            error: "DEVICE_LIMIT_EXCEEDED",
+            message: `Cannot downgrade to '${planId}' (limit ${newLimit}): organization has ${deviceCount} devices. Archive/remove devices first.`,
+          });
+          return;
+        }
+
+        subscription.planId = planId;
+        await subscription.save();
+
+        res.json({ subscription });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update subscription." });
+      }
+    }
+  );
+
   // POST /api/billing/subscriptions — subscribe the organization to a plan
   app.post(
     "/api/billing/subscriptions",
