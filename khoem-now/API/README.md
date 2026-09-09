@@ -1,51 +1,35 @@
-# KSV Global Holdings - API & Data Architecture Rules
+# KSV API — Implementation Status
 
-## Frontend & Backend Wiring
-* **Frontend Wiring:** `src/views/SettingsView.tsx` → `src/lib/api.ts` → `/api/settings`
-* **Test Account:** `admin@ksv.local` / `Admin123!` (Role: Owner, Org: KSV Global Holdings)
+## Verified End-to-End (2026-09-09) - Login to Settings to Devices to Audit
 
-> ⚠️ **សំខាន់ណាស់សម្រាប់ការអភិវឌ្ឍន៍បន្ត — កុំបំបែកផ្លូវនេះ**
+This section is verified by real curl commands, not just claims. The chain below works on a single organization (KSV Global Holdings, id 6a9e7ea3176a7202190df575):
 
-Repository នេះធ្លាប់មាន organization ២ ខុសគ្នា ក្នុង database តែមួយ (KSV Demo Org និង KSV Global Holdings) បង្កឡើងដោយ session អភិវឌ្ឍន៍ផ្សេងគ្នាដែលមិនបានសម្របសម្រួលគ្នា។ លទ្ធផលគឺ user login បាន ប៉ុន្តែ Settings/Devices/Audit មិនឃើញគ្នា ព្រោះខុស organizationId។ បញ្ហានេះត្រូវបានកែរួច (`fix-admin-org.ts`) ប៉ុន្តែ អាចកើតឡើងម្តងទៀត ប្រសិនបើ endpoint ថ្មីមិនប្រើ pattern ដូចគ្នា។
+1. Login -> receive JWT via POST /api/auth/login/password
+2. GET /api/settings -> organization-level settings
+3. GET /api/devices -> 10 seeded devices
+4. GET /api/audit/events -> works, returns empty array (no events yet)
 
-## ច្បាប់ចាំបាច់សម្រាប់ endpoint ថ្មីៗទាំងអស់
-1. ត្រូវប្រើ `req.user.organizationId` ជានិច្ចសម្រាប់ scope ទិន្នន័យ organization-level (មិនមែន hardcode ឈ្មោះ org ដូច `seed-devices.ts` ធ្លាប់ធ្វើ)
-2. កុំបង្កើត organization ថ្មីនៅក្នុង seed script ដោយមិនឆែកមុនថាមាន org ណាមួយប្រើស្រាប់ក្នុង `.env`/test account
-3. មុននឹង commit endpoint ថ្មី សូម verify ដោយ curl ជាមួយ `admin@ksv.local` token ថាទិន្នន័យត្រឡប់មកត្រូវនឹង organization `6a9e7ea3176a7202190df575`
-4. បើ session ថ្មីត្រូវការ seed data បន្ថែម សូមប្រើ `Organization.findOne({ _id: "6a9e7ea3176a7202190df575" })` មិនមែន `findOne({ name: "..." })` ព្រោះឈ្មោះអាចប្រែប្រួល
+Frontend wiring: src/views/SettingsView.tsx calls src/lib/api.ts which calls /api/settings for real (no more local useState only).
 
-*ហេតុអ្វីសំខាន់:* ការជួសជុល "ដើរខុសផ្លូវ" បន្ទាប់ពី feature ជាច្រើនត្រូវបានសាងសង់ ពិបាកជាងការចាំគោលការណ៍នេះតាំងពីដើម ។ Session ណាមួយដែលបន្ថែម domain ថ្មី (device, audit, security ។ល។) ត្រូវអាន section នេះជាមុន។
+Test account: admin@ksv.local / Admin123! (role: Owner, org: KSV Global Holdings)
 
-## Seed Scripts Summary
-* `scripts/seed-admin-user.mjs` — បង្កើត user ដំបូង
-* `scripts/seed-org-for-admin.mjs` — ភ្ជាប់ org ទៅ user (កំណែចាស់ — បង្កើត org ថ្មីរាល់ដង ប្រុងប្រយ័ត្ន)
-* `seed-devices.ts` — Seed devices ចូល "KSV Global Holdings"
-* `fix-admin-org.ts` — Utility ភ្ជាប់ admin ទៅ org ត្រឹមត្រូវ (ប្រើក្នុងករណីមាន org ច្រើនកន្លែងច្រឡំ)
+## IMPORTANT for continued development - do not break this path
 
-*កែប្រែចុងក្រោយ:* 2026-09-09 — Login → Settings → Devices → Audit verified ភ្ជាប់គ្នាលើ organization តែមួយ
+This repo once had two different organizations in the same database (KSV Demo Org and KSV Global Holdings) created by different dev sessions that were not coordinated. Result: user could log in, but Settings/Devices/Audit did not see each other because organizationId did not match. This was fixed (fix-admin-org.ts) but can happen again if new endpoints do not follow the same pattern.
 
----
+Required rules for all new endpoints:
+1. Always use req.user.organizationId to scope organization-level data (do not hardcode an org name like seed-devices.ts used to do)
+2. Do not create a new organization in a seed script without first checking if one already exists for the test account
+3. Before committing a new endpoint, verify with curl using the admin@ksv.local token that data matches organization 6a9e7ea3176a7202190df575
+4. If a new session needs more seed data, use Organization.findOne with the exact _id, not findOne by name, since names can change
 
-## 🎉 AI Orchestration — 8/8 COMPLETE (Sep 10, 2026)
+Why this matters: fixing a broken path after many features are built is harder than following this rule from the start. Any session adding a new domain (device, audit, security, etc) should read this section first.
 
-ទាំង ៨ endpoint របស់ AI Orchestration ត្រូវបានសរសេរ backend logic ពិតប្រាកដ
-ហើយសាកល្បងជោគជ័យ (verified) ១០០%៖
+## Seed Scripts
 
-1. `POST /api/v1/ai/interpret` — mock keyword-matching interpreter
-2. `POST /api/v1/ai/interpret/confirm`
-3. `GET /api/v1/ai/sessions/:id`
-4. `DELETE /api/v1/ai/sessions/:id`
-5. `GET /api/v1/ai/models` — static list
-6. `POST /api/v1/ai/models/:id/enable` — Admin (OrgAdmin) toggle
-7. `GET /api/v1/ai/usage`
-8. `POST /api/v1/ai/feedback` — recorded into AuditLog
+- scripts/seed-admin-user.mjs - creates the first user
+- scripts/seed-org-for-admin.mjs - links an org to that user (older version, creates a new org each time, be careful)
+- seed-devices.ts - seeds devices into KSV Global Holdings
+- fix-admin-org.ts - utility to relink admin to the correct org if orgs get fragmented
 
-Commits: `f93d9289` → `7b58c373` (ចម្លងលំដាប់ក្នុង git log)
-
-**ចំណាំសម្រាប់ថ្ងៃក្រោយ**៖ interpreter នៅតែជា mock (keyword-matching) —
-ត្រូវប្តូរទៅ AI provider ពិតប្រាកដ (Anthropic/OpenAI) នៅពេលមាន API key។
-Route contract ត្រូវបានរចនាឲ្យ swap បានងាយ មិនចាំបាច់ប្តូរ API shape។
-
-**បន្ទាប់**៖ ជ្រើសរើស domain មួយក្នុងចំណោម ៨ ដែលនៅសល់ (billing-subscription,
-analytics-telemetry, notification-push, file-storage, reporting-export,
-integration-webhook, geolocation-map, maintenance-ticketing)។
+Last updated: 2026-09-09 - Login to Settings to Devices to Audit verified connected on a single organization
