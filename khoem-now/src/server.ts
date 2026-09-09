@@ -1267,6 +1267,24 @@ async function main() {
     }
   );
 
+
+  // GET /api/billing/plans — list available subscription plans
+  // NOTE: static list for now (no SubscriptionPlan DB table yet — plans
+  // are fixed tiers, not per-organization data).
+  app.get(
+    "/api/billing/plans",
+    authenticate,
+    requirePermission("org:read"),
+    async (_req, res) => {
+      const plans = [
+        { planId: "free", name: "Free", tier: "free", deviceLimit: 5, priceMonthly: 0, currency: "USD" },
+        { planId: "pro", name: "Pro", tier: "pro", deviceLimit: 50, priceMonthly: 49, currency: "USD" },
+        { planId: "enterprise", name: "Enterprise", tier: "enterprise", deviceLimit: 9999, priceMonthly: 499, currency: "USD" },
+      ];
+      res.json({ plans });
+    }
+  );
+
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
