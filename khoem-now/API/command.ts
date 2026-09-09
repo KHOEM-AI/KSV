@@ -55,10 +55,10 @@ export interface AuthCheckResult {
 }
 
 export interface SafetyCheckResult {
-  allowed: boolean;
+  decision: 'ALLOWED' | 'BLOCKED';
   reason?: string;
   ruleId?: string;
-  requiresConfirmation?: boolean;
+  ruleName?: string;
 }
 
 export interface IssueCommandRequest {
