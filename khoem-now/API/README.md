@@ -1,27 +1,25 @@
-# KSV API — Implementation Status
+# KSV Global Holdings - API & Data Architecture Rules
 
-ថតនេះមាន file ជាច្រើនដែលពិពណ៌នា API របស់ KSV Universal Secure Control Platform។ ឯកសារនេះកត់ត្រាថាតើផ្នែកណាដែល **ដំណើរការជាក់ស្តែង** ហើយផ្នែកណានៅតែជា **spec/blueprint** ប៉ុណ្ណោះ។
+## Frontend & Backend Wiring
+* **Frontend Wiring:** `src/views/SettingsView.tsx` → `src/lib/api.ts` → `/api/settings`
+* **Test Account:** `admin@ksv.local` / `Admin123!` (Role: Owner, Org: KSV Global Holdings)
 
-## ✅ ដំណើរការជាក់ស្តែង (verified ដោយ curl)
+> ⚠️ **សំខាន់ណាស់សម្រាប់ការអភិវឌ្ឍន៍បន្ត — កុំបំបែកផ្លូវនេះ**
 
-| Endpoint | Method | ស្ថានភាព |
-|---|---|---|
-| `/api/auth/login/password` | POST | ✅ verified — ត្រឡប់ JWT token ត្រឹមត្រូវ |
-| `/api/settings` | GET/PUT | ✅ verified — organization-level, MongoDB |
-| `/api/certificates` | GET/POST | ✅ verified |
-| `/api/users` | POST | ✅ implemented (Owner only) |
-| `/api/devices/:id/commands` | POST | ✅ implemented |
+Repository នេះធ្លាប់មាន organization ២ ខុសគ្នា ក្នុង database តែមួយ (KSV Demo Org និង KSV Global Holdings) បង្កឡើងដោយ session អភិវឌ្ឍន៍ផ្សេងគ្នាដែលមិនបានសម្របសម្រួលគ្នា។ លទ្ធផលគឺ user login បាន ប៉ុន្តែ Settings/Devices/Audit មិនឃើញគ្នា ព្រោះខុស organizationId។ បញ្ហានេះត្រូវបានកែរួច (`fix-admin-org.ts`) ប៉ុន្តែ អាចកើតឡើងម្តងទៀត ប្រសិនបើ endpoint ថ្មីមិនប្រើ pattern ដូចគ្នា។
 
-**Frontend wiring**: `src/views/SettingsView.tsx` → `src/lib/api.ts` → `/api/settings` ពិតប្រាកដ
+## ច្បាប់ចាំបាច់សម្រាប់ endpoint ថ្មីៗទាំងអស់
+1. ត្រូវប្រើ `req.user.organizationId` ជានិច្ចសម្រាប់ scope ទិន្នន័យ organization-level (មិនមែន hardcode ឈ្មោះ org ដូច `seed-devices.ts` ធ្លាប់ធ្វើ)
+2. កុំបង្កើត organization ថ្មីនៅក្នុង seed script ដោយមិនឆែកមុនថាមាន org ណាមួយប្រើស្រាប់ក្នុង `.env`/test account
+3. មុននឹង commit endpoint ថ្មី សូម verify ដោយ curl ជាមួយ `admin@ksv.local` token ថាទិន្នន័យត្រឡប់មកត្រូវនឹង organization `6a9e7ea3176a7202190df575`
+4. បើ session ថ្មីត្រូវការ seed data បន្ថែម សូមប្រើ `Organization.findOne({ _id: "6a9e7ea3176a7202190df575" })` មិនមែន `findOne({ name: "..." })` ព្រោះឈ្មោះអាចប្រែប្រួល
 
-## ⏳ Spec ប៉ុណ្ណោះ
+*ហេតុអ្វីសំខាន់:* ការជួសជុល "ដើរខុសផ្លូវ" បន្ទាប់ពី feature ជាច្រើនត្រូវបានសាងសង់ ពិបាកជាងការចាំគោលការណ៍នេះតាំងពីដើម ។ Session ណាមួយដែលបន្ថែម domain ថ្មី (device, audit, security ។ល។) ត្រូវអាន section នេះជាមុន។
 
-File ភាគច្រើនក្នុងថតនេះមានតែ `interface`/`type`/route string constant — មិនទាន់ mount ចូល `server.ts` ទេ។
+## Seed Scripts Summary
+* `scripts/seed-admin-user.mjs` — បង្កើត user ដំបូង
+* `scripts/seed-org-for-admin.mjs` — ភ្ជាប់ org ទៅ user (កំណែចាស់ — បង្កើត org ថ្មីរាល់ដង ប្រុងប្រយ័ត្ន)
+* `seed-devices.ts` — Seed devices ចូល "KSV Global Holdings"
+* `fix-admin-org.ts` — Utility ភ្ជាប់ admin ទៅ org ត្រឹមត្រូវ (ប្រើក្នុងករណីមាន org ច្រើនកន្លែងច្រឡំ)
 
-## Seed Scripts
-
-- `scripts/seed-admin-user.mjs`
-- `scripts/seed-org-for-admin.mjs`
-
----
-*កែប្រែចុងក្រោយ: 2026-09-08*
+*កែប្រែចុងក្រោយ:* 2026-09-09 — Login → Settings → Devices → Audit verified ភ្ជាប់គ្នាលើ organization តែមួយ
