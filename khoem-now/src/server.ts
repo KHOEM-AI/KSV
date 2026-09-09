@@ -938,6 +938,50 @@ async function main() {
     }
   );
 
+  // POST /api/billing/subscriptions — subscribe the organization to a plan
+  app.post(
+    "/api/billing/subscriptions",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      const { planId } = req.body || {};
+
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const validPlanIds = ["free","pro","enterprise"];
+      if (!planId || !validPlanIds.includes(planId)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `planId must be one of: ${validPlanIds.join(", ")}` });
+        return;
+      }
+
+      try {
+        const existing = await OrganizationSubscription.findOne({ organizationId: user.organizationId });
+        if (existing) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Organization already has a subscription. Use PUT to change plans." });
+          return;
+        }
+
+        const renewalDate = new Date();
+        renewalDate.setMonth(renewalDate.getMonth() + 1);
+
+        const subscription = await OrganizationSubscription.create({
+          organizationId: user.organizationId,
+          planId,
+          status: "active",
+          renewalDate,
+        });
+
+        res.status(201).json({ subscription });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create subscription." });
+      }
+    }
+  );
+
+
 
   // POST /api/v1/ai/interpret — AI Orchestration (MOCK)
   // NOTE: no AI provider API key is configured yet. This uses a simple
