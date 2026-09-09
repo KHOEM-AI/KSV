@@ -1289,7 +1289,7 @@ async function main() {
     async (req, res) => {
       const user = req.user!;
       try {
-        const sessions = await AIConversationSession.find({ accountId: user.userId })
+        const sessions = await AIConversationSession.find({ accountId: user.id })
           .select("turns createdAt")
           .lean();
 
@@ -1307,7 +1307,7 @@ async function main() {
         }
 
         res.json({
-          accountId: String(user.userId),
+          accountId: String(user.id),
           totalSessions: sessions.length,
           totalInterpretationRequests: totalRequests,
           lastRequestAt,
@@ -1341,7 +1341,7 @@ async function main() {
 
       try {
         await AuditLog.create({
-          userId: user.userId,
+          userId: user.id,
           organizationId: user.organizationId,
           action: "ai.feedback.submitted",
           result: "SUCCESS",

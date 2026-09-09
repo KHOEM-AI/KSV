@@ -461,6 +461,7 @@ const en: Dict = {
   'view.login.title': "KSV Login",
   'view.devices.loadFailed': "Failed to load devices.",
   'view.settings.loadFailed': "Failed to load settings.",
+  'aiChat.subtitle': 'Your assistant',
 };
 
 const km: Dict = {
@@ -850,6 +851,7 @@ const km: Dict = {
   'view.devices.loadFailed': "មិនអាចផ្ទុកឧបករណ៍បានទេ។",
   'view.settings.loadFailed': "មិនអាចផ្ទុកការកំណត់បានទេ។",
 };
+  'aiChat.subtitle': 'ជំនួយការរបស់អ្នក',
 
 
 const ja: Dict = {

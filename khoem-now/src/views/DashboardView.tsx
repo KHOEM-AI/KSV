@@ -55,10 +55,22 @@ export function DashboardView() {
     <div className="space-y-6">
       {/* Stat row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label={t('dashboard.stat.connectedDevices')} value={totalDevices.toLocaleString()} icon={<Cpu size={20} />} trend={t('dashboard.trend.devicesUp')} trendUp accent="brand" />
-        <StatCard label={t('dashboard.stat.activeSafetyRules')} value={safetyRulesCount} icon={<ShieldAlert size={20} />} trend={t('dashboard.trend.rulesNew')} trendUp accent="warning" />
-        <StatCard label={t('dashboard.stat.edgeGateways')} value={activeGateways} unit={t('dashboard.stat.online')} icon={<Server size={20} />} trend={t('dashboard.trend.gatewayOffline')} trendUp={false} accent="success" />
-        <StatCard label={t('dashboard.stat.countriesDeployed')} value={stats.countries} unit="/ 195" icon={<Globe2 size={20} />} trend={t('dashboard.trend.countriesAdded')} trendUp accent="accent" />
+        <div className="group relative overflow-hidden rounded-2xl">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-500/10 blur-2xl transition-all duration-500 group-hover:bg-brand-500/20" />
+          <StatCard label={t('dashboard.stat.connectedDevices')} value={totalDevices.toLocaleString()} icon={<Cpu size={20} />} trend={t('dashboard.trend.devicesUp')} trendUp accent="brand" />
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-warning-500/10 blur-2xl transition-all duration-500 group-hover:bg-warning-500/20" />
+          <StatCard label={t('dashboard.stat.activeSafetyRules')} value={safetyRulesCount} icon={<ShieldAlert size={20} />} trend={t('dashboard.trend.rulesNew')} trendUp accent="warning" />
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-success-500/10 blur-2xl transition-all duration-500 group-hover:bg-success-500/20" />
+          <StatCard label={t('dashboard.stat.edgeGateways')} value={activeGateways} unit={t('dashboard.stat.online')} icon={<Server size={20} />} trend={t('dashboard.trend.gatewayOffline')} trendUp={false} accent="success" />
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-accent-500/10 blur-2xl transition-all duration-500 group-hover:bg-accent-500/20" />
+          <StatCard label={t('dashboard.stat.countriesDeployed')} value={stats.countries} unit="/ 195" icon={<Globe2 size={20} />} trend={t('dashboard.trend.countriesAdded')} trendUp accent="accent" />
+        </div>
       </div>
 
       {/* Main grid */}

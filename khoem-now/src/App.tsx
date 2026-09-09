@@ -38,6 +38,7 @@ const views: Record<ViewId, () => JSX.Element> = {
 function AuthenticatedApp() {
   const [active, setActive] = useState<ViewId>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   // t() is the ONLY source of on-screen text below. Switching language
   // in <LanguageSelector /> updates this same t(), so every string in
   // this file — sidebar, header, buttons — updates in the same render.
@@ -168,6 +169,17 @@ function AuthenticatedApp() {
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[9px] font-bold text-white">{stats.openAlerts}</span>
               </button>
 
+              {/* AI Chat launcher */}
+              <button
+                onClick={() => setIsAIChatOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-brand-500/40 bg-gradient-to-r from-brand-500/20 to-accent-500/20 py-1.5 pl-1.5 pr-3 transition-colors hover:border-brand-400"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-white">
+                  <Sparkles size={15} />
+                </div>
+                <span className="hidden text-xs font-semibold text-white sm:inline">KHOEM-AI</span>
+              </button>
+
               {/* User */}
               <button className="flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-850/60 py-1.5 pl-1.5 pr-2 transition-colors hover:border-ink-600">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-xs font-bold text-white">CS</div>
@@ -191,6 +203,7 @@ function AuthenticatedApp() {
           </div>
         </main>
       </div>
+      <AIChatOverlay open={isAIChatOpen} onClose={() => setIsAIChatOpen(false)} />
     </div>
   );
 }
