@@ -406,3 +406,193 @@ const invoiceSchema = new Schema(
 export const OrganizationSubscription =
   models.OrganizationSubscription || model("OrganizationSubscription", organizationSubscriptionSchema);
 export const Invoice = models.Invoice || model("Invoice", invoiceSchema);
+
+
+
+
+// ============================================================
+// AUTHORIZATION / PERMISSIONS
+// ============================================================
+
+const permissionLocationRestrictionSchema = new Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+      enum: ["site", "building", "gps_radius"],
+    },
+    siteId: String,
+    buildingId: String,
+    gpsLatitude: Number,
+    gpsLongitude: Number,
+    gpsRadiusMeters: Number,
+
+    isSecondaryContextOnly: {
+      type: Boolean,
+      required: true,
+      default: true,
+      validate: {
+        validator: (value: boolean) => value === true,
+        message: "Location restriction must remain secondary context only.",
+      },
+    },
+  },
+  { _id: false }
+);
+
+const permissionConditionsSchema = new Schema(
+  {
+    timeFrom: String,
+    timeTo: String,
+
+    daysOfWeek: {
+      type: [Number],
+      validate: {
+        validator: (days: number[]) =>
+          days.every((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+        message: "daysOfWeek must contain values from 0 (Sunday) to 6 (Saturday).",
+      },
+    },
+
+    locationRestriction: permissionLocationRestrictionSchema,
+
+    requiresApproval: {
+      type: Boolean,
+      default: false,
+    },
+
+    approverAccountId: {
+      type: ObjectId,
+      ref: "User",
+    },
+
+    maxUsageCount: {
+      type: Number,
+      min: 1,
+    },
+
+    currentUsageCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
+const permissionSchema = new Schema(
+  {
+    organizationId: {
+      type: ObjectId,
+      ref: "Organization",
+      required: true,
+      index: true,
+    },
+
+    accountId: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    resourceType: {
+      type: String,
+      required: true,
+      enum: [
+        "device",
+        "device_group",
+        "organization",
+        "site",
+        "building",
+        "room",
+        "gateway",
+        "protocol",
+        "audit_log",
+        "user_management",
+      ],
+    },
+
+    resourceId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    actions: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (actions: string[]) => actions.length > 0,
+        message: "A permission must contain at least one action.",
+      },
+      enum: [
+        "read",
+        "write",
+        "control",
+        "pair",
+        "unpair",
+        "manage_permissions",
+        "delete",
+        "transfer_ownership",
+        "emergency_stop",
+        "view_audit",
+        "manage_organization",
+      ],
+    },
+
+    level: {
+      type: String,
+      required: true,
+      enum: [
+        "owner",
+        "super_admin",
+        "org_admin",
+        "manager",
+        "operator",
+        "controller",
+        "viewer",
+        "guest",
+        "temporary",
+      ],
+    },
+
+    grantedBy: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    grantedAt: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+
+    expiresAt: Date,
+
+    conditions: permissionConditionsSchema,
+
+    isRevoked: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
+permissionSchema.index({
+  organizationId: 1,
+  accountId: 1,
+  isRevoked: 1,
+});
+
+permissionSchema.index({
+  organizationId: 1,
+  resourceType: 1,
+  resourceId: 1,
+  isRevoked: 1,
+});
+
+export const Permission =
+  models.Permission || model("Permission", permissionSchema);

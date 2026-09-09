@@ -601,8 +601,25 @@ async function main() {
     authenticate,
     requirePermission("org:read"),
     async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "No organizationId on user.",
+        });
+        return;
+      }
+
       try {
-        const gateways = await Gateway.find().lean();
+        const gatewayIds = await Device.find({
+          organizationId: user.organizationId,
+          gatewayId: { $ne: null },
+        }).distinct("gatewayId");
+
+        const gateways = await Gateway.find({
+          _id: { $in: gatewayIds },
+        }).lean();
+
         res.json({ gateways, total: gateways.length });
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
