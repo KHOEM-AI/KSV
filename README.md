@@ -386,3 +386,14 @@ Audit / Realtime Status
 The remaining work is to connect the protocol abstraction to real transport implementations and complete the device discovery, pairing, ownership, and permission lifecycle.
 
 Until those physical transport components are configured and verified, KSV should fail closed rather than simulate successful device execution.
+
+## ផ្នែក/សមាសភាគ (Component)ស្ថានភាព (Status)
+Auth / JWT / RBAC✅ មាន និងកំពុងប្រើ
+Devices GET✅ មាន
+Authorization engine✅ មាន
+Authorization service✅ មាន (មិនទាន់ wired ទៅ routes)
+Authorization API client✅ មាន
+AI routes✅ មានផ្នែកសំខាន់ៗ
+Billing✅ មាន
+Dashboard stats✅ មាន
+Safety / Audit / Gateway / Protocol✅ មាន GET endpoints
