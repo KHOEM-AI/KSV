@@ -850,8 +850,8 @@ const km: Dict = {
   'view.login.title': "ចូលប្រព័ន្ធ KSV",
   'view.devices.loadFailed': "មិនអាចផ្ទុកឧបករណ៍បានទេ។",
   'view.settings.loadFailed': "មិនអាចផ្ទុកការកំណត់បានទេ។",
-};
   'aiChat.subtitle': 'ជំនួយការរបស់អ្នក',
+};
 
 
 const ja: Dict = {

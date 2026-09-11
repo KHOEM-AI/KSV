@@ -695,6 +695,41 @@ async function main() {
   );
 
 
+  // GET /api/v1/gateways — organization-scoped Gateway list
+  app.get(
+    "/api/v1/gateways",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "No organizationId on user.",
+        });
+        return;
+      }
+
+      try {
+        const gatewayIds = await Device.find({
+          organizationId: user.organizationId,
+          gatewayId: { $ne: null },
+        }).distinct("gatewayId");
+
+        const gateways = await Gateway.find({
+          _id: { $in: gatewayIds },
+        }).lean();
+
+        res.json({ gateways, total: gateways.length });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: "Failed to load gateways.",
+        });
+      }
+    }
+  );
+
   // GET /api/audit/events — AuditLog entries reshaped for AuditView.tsx
   // (audit.log.ts writes AuditLog docs; this maps them to the
   // { id, actor, action, target, result, category, ip, timestamp }
