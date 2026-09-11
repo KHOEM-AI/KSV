@@ -359,6 +359,15 @@ POST   /api/v1/gateways/:id/connect
 POST   /api/v1/gateways/:id/disconnect
 GET    /api/v1/gateways/:id/status
 
+#### Gateway API Implementation Status
+- 🟢 `GET /api/gateways` — implemented in `src/server.ts`; authenticated and protected by `org:read`.
+- 🟢 Gateway ownership is currently resolved through `Device.organizationId` + `Device.gatewayId`.
+- 🟢 Gateway database model exists in `src/infrastructure/database/models.ts`.
+- 🟡 `/api/v1/gateways/*` — API contract/route map exists, but the v1 Gateway handlers are not yet implemented in `src/server.ts`.
+- 🟡 Gateway contract contains fields such as type, mode, supported protocols, offline policy, heartbeat, sync, local command, and firmware operations that are not currently represented by the existing Gateway MongoDB schema.
+- 🔐 Gateway write/control endpoints must use existing authentication and RBAC; do not create a separate authentication system.
+- 🔒 Organization isolation must be enforced through authenticated `req.user.organizationId` and authorized device/gateway relationships.
+
 🔗 Protocol
 POST   /api/v1/protocols
 GET    /api/v1/protocols
