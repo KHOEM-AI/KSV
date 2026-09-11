@@ -397,3 +397,35 @@ AI routes✅ មានផ្នែកសំខាន់ៗ
 Billing✅ មាន
 Dashboard stats✅ មាន
 Safety / Audit / Gateway / Protocol✅ មាន GET endpoints
+
+DO NOT MODIFY ANY FILE.
+
+Audit only.
+
+Check the command API/spec against:
+src/infrastructure/database/models.ts
+
+Focus only on:
+- Command schema fields
+- Device relationship
+- User relationship
+- organizationId / organization isolation
+- command status lifecycle
+- pending / success / failed / blocked
+- gateway/protocol dispatch
+- real ACK requirement
+- audit integration
+- safety integration
+- permission/RBAC integration
+
+Do NOT rewrite architecture.
+Do NOT create fake gateway/device/ACK.
+Do NOT assume hardware.
+Do NOT change verified files.
+
+Return only:
+1. File path
+2. What is correct
+3. What is outdated/wrong
+4. Exact lines that need changing
+5. Whether a real physical dispatch implementation is still missing
