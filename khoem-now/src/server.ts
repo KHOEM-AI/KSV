@@ -10,7 +10,7 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession } from "./infrastructure/database/models.ts";
-import { User } from "./infrastructure/database/models.ts";
+import { User, Session } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
@@ -20,6 +20,12 @@ import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
+
+function hashRefreshToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -257,6 +263,7 @@ async function main() {
       }
 
       const user = await User.findOne({ email });
+
       if (!user || !user.isActive) {
         res.status(401).json({
           result: "failed",
@@ -265,7 +272,11 @@ async function main() {
         return;
       }
 
-      const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+      const passwordMatches = await bcrypt.compare(
+        password,
+        user.passwordHash
+      );
+
       if (!passwordMatches) {
         res.status(401).json({
           result: "failed",
@@ -274,44 +285,100 @@ async function main() {
         return;
       }
 
+      const now = new Date();
+
       const accessToken = jwt.sign(
         {
           sub: String(user._id),
           role: user.role,
-          organizationId: user.organizationId ? String(user.organizationId) : undefined,
+          organizationId: user.organizationId
+            ? String(user.organizationId)
+            : undefined,
         },
         process.env.JWT_ACCESS_SECRET as string,
-        { expiresIn: "15m" }
+        {
+          expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+        }
       );
 
       const refreshToken = jwt.sign(
-        { sub: String(user._id) },
-        (process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET) as string,
-        { expiresIn: "7d" }
+        {
+          sub: String(user._id),
+          type: "refresh",
+        },
+        process.env.JWT_REFRESH_SECRET as string,
+        {
+          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+        }
       );
 
-      user.lastLoginAt = new Date();
+      const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+      const match = refreshExpiresIn.match(/^(\d+)([smhd])$/);
+
+      if (!match) {
+        throw new Error(
+          "Invalid JWT_REFRESH_EXPIRES_IN format. Use values such as 7d, 24h, 60m."
+        );
+      }
+
+      const amount = Number(match[1]);
+      const unit = match[2];
+
+      const millisecondsPerUnit: Record<string, number> = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+      };
+
+      const expiresAt = new Date(
+        now.getTime() + amount * millisecondsPerUnit[unit]
+      );
+
+      const session = await Session.create({
+        userId: user._id,
+        refreshToken: hashRefreshToken(refreshToken),
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        expiresAt,
+      });
+
+      user.lastLoginAt = now;
       await user.save();
 
       res.json({
         result: "success",
         session: {
-          sessionId: String(user._id) + "-" + Date.now(),
+          sessionId: String(session._id),
           accountId: String(user._id),
           ipAddress: req.ip,
           userAgent: req.headers["user-agent"],
-          createdAt: new Date().toISOString(),
+          createdAt: session.createdAt
+            ? new Date(session.createdAt).toISOString()
+            : now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+          lastActivityAt: now.toISOString(),
+          status: "active",
+          mfaVerified: !user.mfaEnabled,
+          loginMethod: "password",
+          countryCode: undefined,
         },
         token: {
           accessToken,
           refreshToken,
-          expiresIn: 900,
+          expiresIn: 15 * 60,
           tokenType: "Bearer",
         },
         message: "Login successful.",
       });
     } catch (err) {
-      res.status(500).json({ result: "failed", message: "Login failed due to a server error." });
+      console.error("[AUTH] Password login failed:", err);
+
+      res.status(500).json({
+        result: "failed",
+        message: "Login failed due to a server error.",
+      });
     }
   });
 
@@ -1371,6 +1438,37 @@ async function main() {
         { planId: "enterprise", name: "Enterprise", tier: "enterprise", deviceLimit: 9999, priceMonthly: 499, currency: "USD" },
       ];
       res.json({ plans });
+    }
+  );
+
+  // POST /api/authz/check
+  app.post(
+    "/api/authz/check",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      const { resourceType, resourceId, action } = req.body ?? {};
+
+      if (!resourceType || !resourceId || !action) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "resourceType, resourceId, and action are required." });
+        return;
+      }
+
+      let allowed = false;
+      let reason = "Resource not in user's organization.";
+
+      if (resourceType === "organization" && resourceId === user.organizationId) {
+        allowed = true;
+        reason = "Resource belongs to user's organization.";
+      } else if (resourceType === "device") {
+        const device = await Device.findOne({ _id: resourceId, organizationId: user.organizationId }).lean();
+        if (device) {
+          allowed = true;
+          reason = "Device belongs to user's organization.";
+        }
+      }
+
+      res.json({ allowed, reason });
     }
   );
 
