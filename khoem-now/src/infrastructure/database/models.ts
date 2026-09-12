@@ -140,16 +140,66 @@ const automationRuleSchema = new Schema(
 const gatewaySchema = new Schema(
   {
     name: { type: String, required: true }, // e.g. "Frankfurt Edge Controller"
-    ipAddress: { type: String, required: true },
+    organizationId: {
+      type: ObjectId,
+      ref: "Organization",
+      required: true,
+    },
+    type: { type: String, required: true },
+    mode: { type: String, required: true },
+    serialNumber: { type: String },
+    siteId: {
+      type: ObjectId,
+      ref: "Site",
+    },
+    buildingId: {
+      type: ObjectId,
+      ref: "Building",
+    },
+    supportedProtocols: { type: [String], default: [] },
+    isOfflineCapable: { type: Boolean, default: false },
+    offlineAuthEnabled: { type: Boolean, default: false },
+    ipAddress: { type: String },
     status: { type: String, default: "offline" },
     cpuUsage: Number,
     memUsage: Number,
     deviceCount: { type: Number, default: 0 },
-    version: String,
+    firmwareVersion: { type: String, required: true },
     lastPingAt: Date,
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
+
+
+const gatewayProvisioningTokenSchema = new Schema(
+  {
+    gatewayId: {
+      type: ObjectId,
+      ref: "Gateway",
+      required: true,
+    },
+    tokenHash: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+    usedAt: {
+      type: Date,
+    },
+    createdBy: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+gatewayProvisioningTokenSchema.index({ expiresAt: 1 });
 
 const protocolSchema = new Schema({
   name: { type: String, required: true }, // Bluetooth LE | Wi-Fi 6 | MQTT | Infrared | Zigbee
@@ -307,6 +357,11 @@ export const Discovery = models.Discovery || model("Discovery", discoverySchema)
 export const Command = models.Command || model("Command", commandSchema);
 export const AutomationRule = models.AutomationRule || model("AutomationRule", automationRuleSchema);
 export const Gateway = models.Gateway || model("Gateway", gatewaySchema);
+
+export const GatewayProvisioningToken =
+  models.GatewayProvisioningToken ||
+  model("GatewayProvisioningToken", gatewayProvisioningTokenSchema);
+
 export const Protocol = models.Protocol || model("Protocol", protocolSchema);
 export const SafetyRule = models.SafetyRule || model("SafetyRule", safetyRuleSchema);
 export const SafetyLog = models.SafetyLog || model("SafetyLog", safetyLogSchema);

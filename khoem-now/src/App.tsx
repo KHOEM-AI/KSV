@@ -1,7 +1,8 @@
 import ProjectSwitcher from './components/ProjectSwitcher';
 import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
-import { Menu, X, Search, Bell, ChevronDown, Shield } from 'lucide-react';
+import { Menu, X, Search, Bell, ChevronDown, Shield, Sparkles } from 'lucide-react';
+import { AIWelcomeBanner } from '@/components/AIWelcomeBanner';
 import { navGroups, viewMeta, type ViewId } from '@/components/nav';
 import { stats } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -79,7 +80,7 @@ function AuthenticatedApp() {
           </button>
         </div>
 
-        <div className="px-5 pb-3"><ProjectSwitcher /></div>
+        <div className="px-5 pb-3"><ProjectSwitcher onOpenAIChat={() => setIsAIChatOpen(true)} /></div>
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
           {navGroups.map((group) => (
@@ -197,13 +198,13 @@ function AuthenticatedApp() {
         </header>
 
         {/* View content */}
-        <main className="bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6">
+        <main className={`bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6 transition-[padding] ${isAIChatOpen ? 'sm:pr-[380px]' : ''}`}>
           <div key={active} className="animate-fade-in">
             <ActiveView />
           </div>
         </main>
       </div>
-      <AIChatOverlay open={isAIChatOpen} onClose={() => setIsAIChatOpen(false)} />
+      <AIWelcomeBanner open={isAIChatOpen} onClose={() => setIsAIChatOpen(false)} onOpen={() => setIsAIChatOpen(true)} />
     </div>
   );
 }

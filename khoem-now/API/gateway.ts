@@ -66,6 +66,8 @@ export interface OfflinePolicyConfig {
 export interface RegisterGatewayRequest {
   name: string;
   type: GatewayType;
+  mode: GatewayMode;
+  firmwareVersion: string;
   serialNumber?: string;
   orgId?: string;
   siteId?: string;

@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, SafetyRule, Gateway, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession } from "./infrastructure/database/models.ts";
 import { User, Session } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -18,9 +18,11 @@ import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
+import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
+import mongoose from "mongoose";
 
 function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -28,6 +30,7 @@ function hashRefreshToken(token: string): string {
 
 
 const PORT = process.env.PORT || 3000;
+const KSV_CLOUD_ENDPOINT = process.env.KSV_CLOUD_ENDPOINT;
 
 async function main() {
   await connectDatabase();
@@ -297,7 +300,7 @@ async function main() {
         },
         process.env.JWT_ACCESS_SECRET as string,
         {
-          expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+          expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m") as jwt.SignOptions["expiresIn"],
         }
       );
 
@@ -308,7 +311,7 @@ async function main() {
         },
         process.env.JWT_REFRESH_SECRET as string,
         {
-          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+          expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"],
         }
       );
 
@@ -696,7 +699,217 @@ async function main() {
 
 
   // GET /api/v1/gateways — organization-scoped Gateway list
-  app.get(
+  // POST /api/v1/gateways - Register new gateway & issue provisioning token
+  app.post(
+    "/api/v1/gateways",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const organizationId = req.user?.organizationId;
+        if (!organizationId) {
+          return res.status(403).json({
+            error: "Unauthorized: Missing organization context",
+          });
+        }
+
+        const {
+          name,
+          type,
+          mode,
+          firmwareVersion,
+          serialNumber,
+          orgId,
+          siteId,
+          buildingId,
+          supportedProtocols,
+          isOfflineCapable,
+          offlineAuthEnabled,
+        } = req.body || {};
+
+        const allowedTypes = [
+          "home",
+          "building",
+          "industrial",
+          "vehicle",
+          "portable",
+        ];
+
+        const allowedModes = [
+          "cloud_connected",
+          "local_only",
+          "hybrid",
+        ];
+
+        const allowedProtocols = [
+          "bluetooth",
+          "wifi",
+          "mqtt",
+          "http_api",
+          "infrared",
+          "zigbee",
+          "zwave",
+          "lorawan",
+          "modbus",
+          "bacnet",
+          "can_bus",
+          "custom",
+        ];
+
+        if (!name || typeof name !== "string" || !name.trim()) {
+          return res.status(400).json({
+            error: "Validation failed: 'name' is required",
+          });
+        }
+
+        if (!allowedTypes.includes(type)) {
+          return res.status(400).json({
+            error: "Validation failed: invalid 'type'",
+          });
+        }
+
+        if (!allowedModes.includes(mode)) {
+          return res.status(400).json({
+            error: "Validation failed: invalid 'mode'",
+          });
+        }
+
+        if (
+          !firmwareVersion ||
+          typeof firmwareVersion !== "string" ||
+          !firmwareVersion.trim()
+        ) {
+          return res.status(400).json({
+            error: "Validation failed: 'firmwareVersion' is required",
+          });
+        }
+
+        if (
+          !Array.isArray(supportedProtocols) ||
+          supportedProtocols.length === 0 ||
+          supportedProtocols.some(
+            (protocol) => !allowedProtocols.includes(protocol)
+          )
+        ) {
+          return res.status(400).json({
+            error:
+              "Validation failed: 'supportedProtocols' must contain only supported DeviceProtocol values",
+          });
+        }
+
+        if (typeof isOfflineCapable !== "boolean") {
+          return res.status(400).json({
+            error: "Validation failed: 'isOfflineCapable' must be a boolean",
+          });
+        }
+
+        if (typeof offlineAuthEnabled !== "boolean") {
+          return res.status(400).json({
+            error: "Validation failed: 'offlineAuthEnabled' must be a boolean",
+          });
+        }
+
+        if (offlineAuthEnabled && !isOfflineCapable) {
+          return res.status(400).json({
+            error:
+              "Validation failed: offline authentication requires offline capability",
+          });
+        }
+
+        if (orgId && orgId !== organizationId) {
+          return res.status(403).json({
+            error: "Organization mismatch",
+          });
+        }
+
+        if (siteId) {
+          if (!mongoose.Types.ObjectId.isValid(siteId)) {
+            return res.status(400).json({
+              error: "Validation failed: invalid 'siteId'",
+            });
+          }
+
+          const site = await Site.findOne({
+            _id: siteId,
+            organizationId,
+          });
+
+          if (!site) {
+            return res.status(403).json({
+              error: "Site does not belong to the authenticated organization",
+            });
+          }
+        }
+
+      if (!KSV_CLOUD_ENDPOINT) {
+        return res.status(503).json({
+          error: "Service unavailable: KSV_CLOUD_ENDPOINT is not configured",
+        });
+      }
+
+        const gateway = await Gateway.create({
+          name: name.trim(),
+          organizationId,
+          type,
+          mode,
+          firmwareVersion: firmwareVersion.trim(),
+          serialNumber,
+          siteId,
+          buildingId,
+          supportedProtocols,
+          isOfflineCapable,
+          offlineAuthEnabled,
+        });
+
+        const rawToken = generateSecureToken();
+        const tokenHash = hashRefreshToken(rawToken);
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+        await GatewayProvisioningToken.create({
+          gatewayId: gateway._id,
+          tokenHash,
+          expiresAt,
+          createdBy: req.user!.id,
+        });
+
+      return res.status(201).json({
+        success: true,
+        gateway: {
+          gatewayId: gateway._id.toString(),
+          name: gateway.name,
+          type: gateway.type,
+          firmwareVersion: gateway.firmwareVersion,
+          serialNumber: gateway.serialNumber,
+          status: gateway.status,
+          mode: gateway.mode,
+          supportedProtocols: gateway.supportedProtocols,
+          connectedDeviceCount: gateway.deviceCount ?? 0,
+          ownerAccountId: req.user!.id,
+          orgId: gateway.organizationId.toString(),
+          siteId: gateway.siteId?.toString(),
+          buildingId: gateway.buildingId?.toString(),
+          lastSeenAt: gateway.lastPingAt?.toISOString(),
+          isOfflineCapable: gateway.isOfflineCapable,
+          offlineAuthEnabled: gateway.offlineAuthEnabled,
+          ipAddress: gateway.ipAddress,
+          cpuUsage: gateway.cpuUsage,
+          memUsage: gateway.memUsage,
+          createdAt: gateway.createdAt.toISOString(),
+        },
+        provisioningToken: rawToken,
+        cloudEndpoint: KSV_CLOUD_ENDPOINT,
+        message: "Gateway registered successfully",
+      });
+      } catch (err: any) {
+        return res.status(500).json({
+          error: "Internal server error",
+          details: err.message,
+        });
+      }
+    }
+  );
+
+app.get(
     "/api/v1/gateways",
     authenticate,
     requirePermission("org:read"),
