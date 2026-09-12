@@ -1377,6 +1377,34 @@ app.get(
     }
   );
 
+  // GET /api/billing/usage — current usage vs plan limit
+  // NOTE: only "devices" is reported — the only metric with real tracked
+  // data (Device count). "commands" and "storage" usage are not tracked
+  // anywhere in this codebase yet, so they are omitted rather than faked.
+  app.get(
+    "/api/billing/usage",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const planDeviceLimits: Record<string, number> = { free: 5, pro: 50, enterprise: 9999 };
+      try {
+        const subscription = await OrganizationSubscription.findOne({ organizationId: user.organizationId }).lean();
+        const planId = subscription?.planId || "free";
+        const limit = planDeviceLimits[planId] ?? planDeviceLimits.free;
+        const currentValue = await Device.countDocuments({ organizationId: user.organizationId });
+
+        res.json({
+          usage: [
+            { organizationId: String(user.organizationId), metricType: "devices", currentValue, limit },
+          ],
+        });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage." });
+      }
+    }
+  );
+
   // GET /api/billing/subscriptions — current subscription for the organization
   app.get(
     "/api/billing/subscriptions",
