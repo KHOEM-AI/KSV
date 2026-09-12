@@ -442,3 +442,53 @@ Return only:
 3. What is outdated/wrong
 4. Exact lines that need changing
 5. Whether a real physical dispatch implementation is still missing
+
+---
+
+## 📊 KSV Status Consolidated (Sep 12, 2026)
+
+### ✅ DONE & VERIFIED
+
+**Security Core**
+- Auth system (login + JWT), MongoDB schema (`models.ts` = source of truth)
+- `auth.middleware.ts`, `rbac.policy.ts`, `audit.log.ts`, `rate-limiter.ts` — all verified
+- `safety.engine.ts` — basic rules implemented (cold storage, duress code, HVAC emergency, ignition lock after hours)
+
+**Secure Device Command Lifecycle**
+- Full pipeline: authenticate → authorize → rate limit → safety check → pending command → gateway/protocol dispatch → physical ACK → success/failed/blocked → audit
+- Commands start `pending`, only become `success` on a **real** protocol ACK — no fake success
+- New files: `src/core/protocol/` (types, registry), `src/core/gateway/` (types, dispatcher, dispatcher.types, command.lifecycle.ts)
+- Explicit failure codes instead of fake success: `DEVICE_NOT_FOUND`, `GATEWAY_OFFLINE`, `PROTOCOL_ADAPTER_UNAVAILABLE`, `DEVICE_ACK_NOT_RECEIVED`, etc.
+
+**Organization Isolation** (commit `10b3511b`)
+- Enforced on: `GET /api/devices/:id/state`, `GET /api/discovery/devices`, `GET /api/safety/events`, `GET /api/telemetry/devices/:id`, command history
+- Verified: typecheck PASS, `git diff --check` PASS, build PASS (1593 modules), pushed `7a6e4c64..10b3511b`
+
+**Gateway API** (commit `08d5afe1`)
+- `GET /api/v1/gateways` + `GET /api/v1/gateways/:gatewayId`, org-scoped, unauthenticated → 401
+
+**End-to-End Verified Chain** (2026-09-09, real curl, not claims)
+- Login → `GET /api/settings` → `GET /api/devices` (10 seeded) → `GET /api/audit/events`
+- All on one real org: KSV Global Holdings (`6a9e7ea3176a7202190df575`)
+- Test account: `admin@ksv.local` / `Admin123!` (role Owner)
+
+**Extension Domains — Real Backend Logic**
+- 🎉 **AI Orchestration: 8/8 endpoints COMPLETE** (interpret, confirm, sessions, models, usage, feedback)
+- 🎉 **Billing & Subscription: 9/9 endpoints COMPLETE** (plans, subscriptions CRUD, invoices, payment methods, usage)
+- All 9 extension domains wired into `API/index.ts` (route registry only — 7 still need real handlers)
+
+**Frontend**
+- Command state hook understands lifecycle: `sending → pending → success/failed/blocked`, polls status on `pending`
+
+---
+
+### ⚠️ NOT DONE / NOT VERIFIED / KNOWN GAPS
+
+- **Real physical gateway/protocol transport** — architecture ready, but no real adapter connected yet; commands stay `pending`/fail-closed, never claim real device execution
+- **`authorization.engine.ts` + `authorization.service.ts`** — built, typechecks clean, but **not wired into any route** yet (parallel permission system alongside `rbac.policy.ts`)
+- **7 remaining extension domains** need real backend logic (only route definitions exist): Analytics & Telemetry, Push Notification, File & Media Storage, Reporting & Export, Integration & Webhook, Geolocation & Map, Maintenance & Ticketing
+- **`API/command.ts` spec is outdated** — field names (`capability/value/status/source`) don't match real `Command` schema in `models.ts` (`type/payload/status/response/sentAt/completedAt`) — spec needs correcting, not the code
+- **`DOCUMENTATION/controls-wiring-audit.md` is outdated** — says safety engine/command route don't exist, but they do now
+- **No PDF library** — invoice download returns plain text, not a real PDF
+- **No payment processor integration** — `POST /api/billing/payment-methods` correctly returns `503 PAYMENT_PROCESSOR_NOT_CONFIGURED` rather than faking data
+- **⚠️ Recurring risk**: multiple AI sessions work on this repo concurrently — always verify `req.user.organizationId` scoping on new endpoints, never hardcode org names in seed scripts, never create a new `Organization` without checking `findOne` by exact `_id` first (this caused a real bug once — two orgs existed silently, fixed via `fix-admin-org.ts`)
