@@ -18,6 +18,7 @@ import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
+import { selfDefend } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -124,6 +125,23 @@ async function main() {
 
       if (!commandType || typeof commandType !== "string") {
         res.status(400).json({ error: "BAD_REQUEST", message: "commandType is required." });
+        return;
+      }
+
+      // KHOEM-AI Brain — rule-based request pattern check (injection
+      // signatures in the payload). Runs alongside, not instead of,
+      // rbac/rate-limiter/safety.engine. See khoem-ai-brain.ts for scope.
+      const brain = selfDefend({ userId: user.id, action: "device:command", payload });
+      if (!brain.proceed) {
+        await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId ?? ""), {
+          reason: brain.result.reasons.join("; "),
+          matchedSignatures: brain.result.matchedSignatures,
+        });
+        res.status(400).json({
+          error: "REQUEST_PATTERN_BLOCKED",
+          message: "Request blocked by pattern analysis.",
+          reasons: brain.result.reasons,
+        });
         return;
       }
 
@@ -1563,17 +1581,26 @@ app.get(
       try {
         // --- MOCK interpretation logic (keyword match only) ---
         const text = naturalLanguageInput.toLowerCase();
-        const requiresClarification = !(text.includes("turn on") || text.includes("turn off") || text.includes("status"));
+        const rawText = naturalLanguageInput;
+
+        const onWords = ["turn on", "power on", "បើក", "ប៉ុក"];
+        const offWords = ["turn off", "power off", "បិទ", "ដក"];
+        const statusWords = ["status", "ស្ថានភាព", "មើលស្ថានភាព"];
+
+        const hasOn = onWords.some((w) => text.includes(w) || rawText.includes(w));
+        const hasOff = offWords.some((w) => text.includes(w) || rawText.includes(w));
+        const hasStatus = statusWords.some((w) => text.includes(w) || rawText.includes(w));
+        const requiresClarification = !(hasOn || hasOff || hasStatus);
 
         const result = {
           requestId: `mock-${Date.now()}`,
           confidence: requiresClarification ? 0.3 : 0.6,
           structuredCommand: requiresClarification
             ? undefined
-            : { deviceId: "UNKNOWN", commandType: text.includes("turn off") ? "POWER_OFF" : "POWER_ON" },
+            : { deviceId: "UNKNOWN", commandType: hasOff ? "POWER_OFF" : hasStatus ? "STATUS" : "POWER_ON" },
           requiresClarification,
           ambiguityOptions: requiresClarification
-            ? [{ label: "Please specify a device and action.", structuredCommand: null }]
+            ? [{ label: "សូមបញ្ជាក់ញួបករណ់ និងសកម្មភាព (ដូចជា បើក/បិទ/ស្ថានភាព)។", structuredCommand: null }]
             : undefined,
         };
 
