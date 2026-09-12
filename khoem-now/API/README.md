@@ -33,3 +33,20 @@ Why this matters: fixing a broken path after many features are built is harder t
 - fix-admin-org.ts - utility to relink admin to the correct org if orgs get fragmented
 
 Last updated: 2026-09-09 - Login to Settings to Devices to Audit verified connected on a single organization
+
+
+## Update 2026-09-12 — seed-devices.ts made safe (upsert, not delete+insert)
+
+`seed-devices.ts` previously used `Device.deleteMany()` before `insertMany()`.
+This meant running the script again would wipe ALL devices in the org first,
+including any added later outside this seed list — dangerous if run by
+mistake.
+
+Fixed to use `updateOne(..., { upsert: true })` per device, matched by
+`deviceCode` + `organizationId`. Running the script again now:
+- Creates devices that don't exist yet
+- Updates devices that already match by deviceCode
+- Never deletes anything
+
+Verified: ran twice in a row, device count stayed at 20 both times
+(0 created, 20 updated on the second run — no data loss).
