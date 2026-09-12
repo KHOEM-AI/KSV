@@ -198,7 +198,7 @@ function AuthenticatedApp() {
         </header>
 
         {/* View content */}
-        <main className={`bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6 transition-[padding] ${isAIChatOpen ? 'sm:pr-[380px]' : ''}`}>
+        <main className="bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6">
           <div key={active} className="animate-fade-in">
             <ActiveView />
           </div>
