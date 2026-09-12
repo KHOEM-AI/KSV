@@ -18,8 +18,7 @@ const GREETING_TEXT =
 
 const STAR_COLORS = ["#67e8f9", "#c084fc", "#f472b6", "#fbbf24", "#34d399", "#ffffff", "#60a5fa"];
 
-export function AIWelcomeBanner({ open, onClose }: AIWelcomeBannerProps) {
-  // onOpen is accepted for prop compatibility with App.tsx but not used here
+export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps) {
   const [paused, setPaused] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,17 +46,21 @@ export function AIWelcomeBanner({ open, onClose }: AIWelcomeBannerProps) {
     return result;
   }, []);
 
-  if (!open) return null;
-
   function handleSend() {
     if (!input.trim()) return;
     setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", text: input }]);
     setInput("");
   }
 
+  // Two layouts: CLOSED = small idle panel on the right (always visible, shows stars).
+  // OPEN = full-screen overlay covering the entire dashboard.
+  const containerClass = open
+    ? "fixed inset-0 h-full w-full bg-slate-950 z-50 flex flex-col overflow-hidden"
+    : "fixed top-[112px] sm:top-16 bottom-0 right-0 w-[360px] max-w-[360px] bg-slate-950 border-l border-slate-800 z-30 flex flex-col overflow-hidden cursor-pointer";
+
   return (
-    <aside className="fixed top-[112px] sm:top-16 right-0 h-[calc(100dvh-112px)] sm:h-[calc(100dvh-64px)] w-[360px] max-w-[360px] bg-slate-950 border-l border-slate-800 z-30 flex flex-col overflow-hidden">
-      {/* Background layer: starfield fills the WHOLE panel now */}
+    <aside className={containerClass} onClick={!open ? onOpen : undefined}>
+      {/* Background layer: starfield fills the WHOLE panel, always rendered */}
       <div className={`star-field ${paused ? "paused" : ""}`}>
         {stars.map((s) => (
           <span
@@ -77,7 +80,7 @@ export function AIWelcomeBanner({ open, onClose }: AIWelcomeBannerProps) {
         ))}
       </div>
 
-      {/* Background layer: scrolling vertical text fills the WHOLE panel too */}
+      {/* Background layer: scrolling vertical text, always rendered */}
       <div className="absolute inset-0 flex items-start justify-end pr-6 overflow-hidden pointer-events-none">
         <div className={`welcome-scroll-track relative z-10 ${paused ? "paused" : ""}`}>
           {[0, 1].map((copy) => (
@@ -92,64 +95,66 @@ export function AIWelcomeBanner({ open, onClose }: AIWelcomeBannerProps) {
         </div>
       </div>
 
-      {/* Foreground layer: header, chat, input sit on top of the background */}
-      <div className="relative z-10 flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-sm px-4 py-3 shrink-0">
-          <span className="text-sm font-semibold text-white">KHOEM-AI</span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPaused((p) => !p)}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 text-slate-400 hover:text-white transition-colors"
-              aria-label={paused ? "Resume animation" : "Pause animation"}
-            >
-              {paused ? <Play size={12} /> : <Pause size={12} />}
-            </button>
-            <button
-              onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 text-slate-400 hover:text-white transition-colors"
-              aria-label="Close"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Chat stream */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="flex flex-col gap-3">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`rounded-xl px-4 py-2 text-sm max-w-[85%] ${
-                  m.role === "user" ? "ml-auto bg-brand-500 text-white" : "bg-slate-800 text-slate-200"
-                }`}
+      {/* Foreground UI: only rendered when open */}
+      {open && (
+        <div className="relative z-10 flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-sm px-4 py-3 shrink-0">
+            <span className="text-sm font-semibold text-white">KHOEM-AI</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setPaused((p) => !p)}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/80 text-white hover:bg-sky-400 transition-colors"
+                aria-label={paused ? "Resume animation" : "Pause animation"}
               >
-                {m.text}
-              </div>
-            ))}
+                {paused ? <Play size={12} /> : <Pause size={12} />}
+              </button>
+              <button
+                onClick={onClose}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/80 text-white hover:bg-sky-400 transition-colors"
+                aria-label="Close"
+              >
+                <X size={14} />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Input */}
-        <div className="border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm p-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Type a message..."
-              className="flex-1 rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
-            />
-            <button
-              onClick={handleSend}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white transition-colors hover:bg-brand-600 shrink-0"
-            >
-              <Send size={15} />
-            </button>
+          {/* Chat stream */}
+          <div className="flex-1 overflow-y-auto p-4 pr-16">
+            <div className="flex flex-col gap-3">
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`rounded-xl px-4 py-2 text-sm max-w-[85%] ${
+                    m.role === "user" ? "ml-auto bg-sky-500 text-white" : "bg-emerald-800 text-emerald-50"
+                  }`}
+                >
+                  {m.text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm p-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder="Hi! Feel free to ask me anything..."
+                className="flex-1 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-4 text-base text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
+              />
+              <button
+                onClick={handleSend}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white transition-colors hover:bg-brand-600 shrink-0"
+              >
+                <Send size={15} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <style>{`
         .star-field { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
