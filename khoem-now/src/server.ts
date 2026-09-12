@@ -1282,6 +1282,47 @@ app.get(
     }
   );
 
+  // GET /api/billing/invoices/:id/download — download an invoice
+  // NOTE: no PDF library is available in this project yet (checked
+  // package.json). Returns a plain-text invoice summary as a downloadable
+  // file for now — matches the frontend's .blob() contract without
+  // pretending a real PDF exists. Swap for real PDF generation once a
+  // library (e.g. pdfkit) is added.
+  app.get(
+    "/api/billing/invoices/:id/download",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const invoice = await Invoice.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        }).lean();
+        if (!invoice) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Invoice not found." });
+          return;
+        }
+
+        const text = [
+          "KSV Invoice",
+          `Invoice ID: ${invoice._id}`,
+          `Organization: ${invoice.organizationId}`,
+          `Amount: ${invoice.amount} ${invoice.currency}`,
+          `Status: ${invoice.status}`,
+          `Issued: ${invoice.issuedAt}`,
+          `Due: ${invoice.dueAt || "N/A"}`,
+        ].join("\n");
+
+        res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoice._id}.txt"`);
+        res.send(text);
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to download invoice." });
+      }
+    }
+  );
+
   // GET /api/billing/subscriptions — current subscription for the organization
   app.get(
     "/api/billing/subscriptions",
