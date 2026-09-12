@@ -1347,6 +1347,33 @@ app.get(
     }
   );
 
+  // DELETE /api/billing/subscriptions/:id — cancel a subscription
+  app.delete(
+    "/api/billing/subscriptions/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const subscription = await OrganizationSubscription.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!subscription) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Subscription not found." });
+          return;
+        }
+
+        subscription.status = "cancelled";
+        await subscription.save();
+
+        res.json({ subscription });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to cancel subscription." });
+      }
+    }
+  );
+
   // POST /api/billing/subscriptions — subscribe the organization to a plan
   app.post(
     "/api/billing/subscriptions",
