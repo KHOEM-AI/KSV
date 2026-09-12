@@ -458,9 +458,23 @@ const invoiceSchema = new Schema(
   { timestamps: { createdAt: "issuedAt", updatedAt: false } }
 );
 
+const paymentMethodSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    type: { type: String, required: true }, // card | bank | wallet
+    // Only last4 stored — full card number never touches this database
+    // (tokenized by payment processor). "token" from the client is the
+    // processor token, not a card number.
+    last4: { type: String, required: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
 export const OrganizationSubscription =
   models.OrganizationSubscription || model("OrganizationSubscription", organizationSubscriptionSchema);
 export const Invoice = models.Invoice || model("Invoice", invoiceSchema);
+export const PaymentMethod = models.PaymentMethod || model("PaymentMethod", paymentMethodSchema);
 
 
 

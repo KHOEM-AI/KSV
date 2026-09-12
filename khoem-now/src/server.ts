@@ -9,7 +9,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
 import { User, Session } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -1319,6 +1319,60 @@ app.get(
         res.send(text);
       } catch (err) {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to download invoice." });
+      }
+    }
+  );
+
+  // POST /api/billing/payment-methods — add a payment method
+  // "token" is a payment-processor token (e.g. Stripe), never a raw
+  // card number — only last4 is ever stored (FULL_CARD_NUMBER_NEVER_STORED).
+  app.post(
+    "/api/billing/payment-methods",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      const { type, token } = req.body || {};
+
+      const validTypes = ["card", "bank", "wallet"];
+      if (!type || !validTypes.includes(type)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `type must be one of: ${validTypes.join(", ")}` });
+        return;
+      }
+      if (!token || typeof token !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "token (payment processor token) is required." });
+        return;
+      }
+
+      // KSV currently has no payment-processor integration.
+      // Do not derive or invent last4 from an opaque processor token.
+      // A real processor integration must provide the verified last4.
+      res.status(503).json({
+        error: "PAYMENT_PROCESSOR_NOT_CONFIGURED",
+        message: "Payment processor integration is not configured.",
+      });
+    }
+  );
+
+  // DELETE /api/billing/payment-methods/:id — remove a payment method
+  app.delete(
+    "/api/billing/payment-methods/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const result = await PaymentMethod.deleteOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (result.deletedCount === 0) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Payment method not found." });
+          return;
+        }
+        res.json({ success: true });
+      } catch (err) {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove payment method." });
       }
     }
   );
