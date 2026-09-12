@@ -46,6 +46,16 @@ async function seed() {
     { name: "Overhead Crane Controller Bay 1", deviceCode: "DEV-04848", type: "Industrial", status: "maintenance", firmwareVersion: "5.3.1", organizationId: org._id },
     { name: "CNC Machine Monitor Station 5", deviceCode: "DEV-04849", type: "Industrial", status: "online", firmwareVersion: "3.9.7", organizationId: org._id },
     { name: "Smart Garage Door Opener", deviceCode: "DEV-04850", type: "Access", status: "online", firmwareVersion: "2.0.5", organizationId: org._id },
+    { name: "Smart Light Switch Bedroom", deviceCode: "DEV-04851", type: "Access", status: "online", firmwareVersion: "1.8.2", organizationId: org._id },
+    { name: "Smart Doorbell Front", deviceCode: "DEV-04852", type: "Sensor", status: "online", firmwareVersion: "2.3.0", organizationId: org._id },
+    { name: "Smart AC Controller Office", deviceCode: "DEV-04853", type: "Climate", status: "online", firmwareVersion: "2.5.1", organizationId: org._id },
+    { name: "Water Leak Sensor Basement", deviceCode: "DEV-04854", type: "Sensor", status: "online", firmwareVersion: "1.1.3", organizationId: org._id },
+    { name: "Smart Sprinkler Controller", deviceCode: "DEV-04855", type: "Climate", status: "online", firmwareVersion: "1.6.0", organizationId: org._id },
+    { name: "Cafe Refrigerator Monitor", deviceCode: "DEV-04856", type: "Climate", status: "online", firmwareVersion: "2.0.4", organizationId: org._id },
+    { name: "Coffee Machine Sensor Bay 1", deviceCode: "DEV-04857", type: "Sensor", status: "online", firmwareVersion: "1.3.2", organizationId: org._id },
+    { name: "Warehouse Scanner Station 4", deviceCode: "DEV-04858", type: "Network", status: "online", firmwareVersion: "3.2.0", organizationId: org._id },
+    { name: "Automated Packaging Line 2", deviceCode: "DEV-04859", type: "Industrial", status: "online", firmwareVersion: "4.7.1", organizationId: org._id },
+    { name: "Waste Monitoring System A", deviceCode: "DEV-04860", type: "Sensor", status: "online", firmwareVersion: "1.9.0", organizationId: org._id },
   ];
 
   // SAFE: upsert by deviceCode instead of deleteMany + insertMany.
