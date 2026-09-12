@@ -30,13 +30,13 @@ export function DashboardView() {
 
   // Real counts once loaded; mock fallback only while loading or if the
   // request failed — never silently shown as if it were live.
-  const totalDevices = liveStats?.totalDevices ?? stats.totalDevices;
-  const onlineDevices = liveStats?.onlineDevices ?? stats.onlineDevices;
+  const totalDevices = liveStats?.totalDevices ?? 0;
+  const onlineDevices = liveStats?.onlineDevices ?? 0;
   const safetyRulesCount = liveStats?.safetyRules ?? stats.safetyRules;
-  const activeGateways = liveStats?.gateways ?? stats.activeGateways;
+  const activeGateways = liveStats?.gateways ?? 0;
 
   const warningDevices = liveStats?.warningDevices ?? 0;
-  const onlinePct = Math.round((onlineDevices / totalDevices) * 100);
+  const onlinePct = totalDevices > 0 ? Math.round((onlineDevices / totalDevices) * 100) : 0;
   const offlineCount = totalDevices - onlineDevices - warningDevices;
   const donutSegments = [
     { value: onlineDevices, color: '#10b981', label: t('dashboard.health.online') },

@@ -226,3 +226,179 @@ export const capabilityRegistry = [
   { name: 'Badge Reader', devices: 980, category: 'access' },
   { name: 'Force Limit', devices: 520, category: 'industrial' },
 ];
+
+/**
+ * KSV Universal Domain Classification
+ * Separates industry/domain classification from DeviceCategory.
+ */
+export type KsvDomain =
+  | 'vehicles'
+  | 'power_energy'
+  | 'it_telecom'
+  | 'smart_home'
+  | 'industrial'
+  | 'health_safety'
+  | 'agriculture'
+  | 'smart_city'
+  | 'cold_chain'
+  | 'personal_wearable'
+  | 'marine_maritime'
+  | 'aerospace_drone'
+  | 'mining_extraction'
+  | 'construction_heavy'
+  | 'retail_pos'
+  | 'education_campus'
+  | 'hospitality_hotel'
+  | 'banking_atm'
+  | 'fuel_station'
+  | 'water_treatment'
+  | 'solar_renewable'
+  | 'parking_ev_charging'
+  | 'waste_management'
+  | 'logistics_warehouse'
+  | 'livestock_farming'
+  | 'aquaculture_fishing'
+  | 'forestry_environment'
+  | 'defense_security'
+  | 'entertainment_venue'
+  | 'public_transport';
+
+export interface IMarineMaritimePayload {
+  vesselId?: string;
+  vesselType?: string;
+  navigationStatus?: string;
+  location?: { latitude: number; longitude: number };
+}
+
+export interface IAerospaceDronePayload {
+  droneId?: string;
+  flightMode?: string;
+  altitude?: number;
+  location?: { latitude: number; longitude: number };
+}
+
+export interface IMiningExtractionPayload {
+  siteId?: string;
+  equipmentId?: string;
+  extractionType?: string;
+  operationalStatus?: string;
+}
+
+export interface IConstructionHeavyPayload {
+  siteId?: string;
+  equipmentId?: string;
+  equipmentType?: string;
+  operationalStatus?: string;
+}
+
+export interface IRetailPosPayload {
+  storeId?: string;
+  terminalId?: string;
+  transactionStatus?: string;
+  terminalStatus?: string;
+}
+
+export interface IEducationCampusPayload {
+  campusId?: string;
+  buildingId?: string;
+  roomId?: string;
+  occupancy?: number;
+}
+
+export interface IHospitalityHotelPayload {
+  hotelId?: string;
+  roomId?: string;
+  occupancyStatus?: string;
+  serviceStatus?: string;
+}
+
+export interface IBankingAtmPayload {
+  branchId?: string;
+  atmId?: string;
+  operationalStatus?: string;
+  securityStatus?: string;
+}
+
+export interface IFuelStationPayload {
+  stationId?: string;
+  dispenserId?: string;
+  fuelType?: string;
+  operationalStatus?: string;
+}
+
+export interface IWaterTreatmentPayload {
+  facilityId?: string;
+  systemId?: string;
+  waterQualityStatus?: string;
+  operationalStatus?: string;
+}
+
+export interface ISolarRenewablePayload {
+  siteId?: string;
+  inverterId?: string;
+  generationWatts?: number;
+  operationalStatus?: string;
+}
+
+export interface IParkingEvChargingPayload {
+  siteId?: string;
+  parkingSpotId?: string;
+  chargerId?: string;
+  chargingStatus?: string;
+}
+
+export interface IWasteManagementPayload {
+  siteId?: string;
+  containerId?: string;
+  fillLevel?: number;
+  collectionStatus?: string;
+}
+
+export interface ILogisticsWarehousePayload {
+  warehouseId?: string;
+  zoneId?: string;
+  equipmentId?: string;
+  operationalStatus?: string;
+}
+
+export interface ILivestockFarmingPayload {
+  farmId?: string;
+  livestockGroupId?: string;
+  animalCount?: number;
+  environmentalStatus?: string;
+}
+
+export interface IAquacultureFishingPayload {
+  facilityId?: string;
+  pondId?: string;
+  waterQualityStatus?: string;
+  stockCount?: number;
+}
+
+export interface IForestryEnvironmentPayload {
+  siteId?: string;
+  monitoringZoneId?: string;
+  environmentalStatus?: string;
+  alertLevel?: string;
+}
+
+export interface IDefenseSecurityPayload {
+  siteId?: string;
+  assetId?: string;
+  securityStatus?: string;
+  alertLevel?: string;
+}
+
+export interface IEntertainmentVenuePayload {
+  venueId?: string;
+  zoneId?: string;
+  occupancy?: number;
+  operationalStatus?: string;
+}
+
+export interface IPublicTransportPayload {
+  routeId?: string;
+  vehicleId?: string;
+  stationId?: string;
+  operationalStatus?: string;
+}
