@@ -2,12 +2,16 @@ import "dotenv/config";
 import { connectDatabase } from "./src/infrastructure/database/connection.ts";
 import { Device, Organization } from "./src/infrastructure/database/models.ts";
 
+// Uses the exact org _id (not name) — see README "recurring bug class" note:
+// name-based lookups broke once when two orgs existed with different names.
+const ORG_ID = "6a9e7ea3176a7202190df575";
+
 async function seed() {
   await connectDatabase();
 
-  const org = await Organization.findOne({ name: "KSV Global Holdings" });
+  const org = await Organization.findById(ORG_ID);
   if (!org) {
-    console.log("Organization not found. Run seed-admin.ts first.");
+    console.log(`Organization ${ORG_ID} not found. Run seed-admin.ts first.`);
     process.exit(1);
   }
 
@@ -22,11 +26,42 @@ async function seed() {
     { name: "Robot Arm RA-04", deviceCode: "DEV-04828", type: "Industrial", status: "warning", firmwareVersion: "5.0.4", organizationId: org._id },
     { name: "Server Room Door", deviceCode: "DEV-04829", type: "Access", status: "online", firmwareVersion: "4.2.1", organizationId: org._id },
     { name: "Cold Storage Monitor", deviceCode: "DEV-04830", type: "Climate", status: "online", firmwareVersion: "3.8.6", organizationId: org._id },
+    { name: "West Wing Door", deviceCode: "DEV-04831", type: "Access", status: "online", firmwareVersion: "4.2.1", organizationId: org._id },
+    { name: "Warehouse HVAC Unit 1", deviceCode: "DEV-04832", type: "Climate", status: "online", firmwareVersion: "3.8.0", organizationId: org._id },
+    { name: "Conveyor Belt Line 3", deviceCode: "DEV-04833", type: "Industrial", status: "online", firmwareVersion: "5.1.0", organizationId: org._id },
+    { name: "Fleet Truck KR-3110", deviceCode: "DEV-04834", type: "Vehicle", status: "online", firmwareVersion: "2.4.0", organizationId: org._id },
+    { name: "Loading Dock Sensor", deviceCode: "DEV-04835", type: "Sensor", status: "online", firmwareVersion: "1.9.3", organizationId: org._id },
+    { name: "Parking Barrier North", deviceCode: "DEV-04836", type: "Access", status: "offline", firmwareVersion: "4.0.0", organizationId: org._id },
+    { name: "Edge Router Rack-7", deviceCode: "DEV-04837", type: "Network", status: "online", firmwareVersion: "6.2.0", organizationId: org._id },
+    { name: "Welding Robot RA-09", deviceCode: "DEV-04838", type: "Industrial", status: "online", firmwareVersion: "5.0.4", organizationId: org._id },
+    { name: "Lobby Access Door", deviceCode: "DEV-04839", type: "Access", status: "online", firmwareVersion: "4.2.1", organizationId: org._id },
+    { name: "Freezer Unit Monitor", deviceCode: "DEV-04840", type: "Climate", status: "online", firmwareVersion: "3.8.6", organizationId: org._id },
   ];
 
-  await Device.deleteMany({ organizationId: org._id });
-  const created = await Device.insertMany(devices);
-  console.log(`Created ${created.length} devices`);
+  // SAFE: upsert by deviceCode instead of deleteMany + insertMany.
+  // This means running this script again will NEVER wipe existing
+  // devices — it only creates missing ones or updates matching ones
+  // by deviceCode. Any device manually added later (not in this list)
+  // is left untouched.
+  let created = 0;
+  let updated = 0;
+
+  for (const device of devices) {
+    const result = await Device.updateOne(
+      { deviceCode: device.deviceCode, organizationId: org._id },
+      { $set: device },
+      { upsert: true }
+    );
+    if (result.upsertedCount > 0) {
+      created++;
+    } else if (result.modifiedCount > 0) {
+      updated++;
+    }
+  }
+
+  const total = await Device.countDocuments({ organizationId: org._id });
+  console.log(`Upserted seed list: ${created} created, ${updated} updated, ${devices.length - created - updated} unchanged.`);
+  console.log(`Total devices now in org: ${total}`);
   process.exit(0);
 }
 
