@@ -1813,7 +1813,8 @@ app.get(
       const gatewayIds = await Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId");
       const gateways = await Gateway.countDocuments({ _id: { $in: gatewayIds }, status: "online" });
       const warningDevices = await Device.countDocuments({ organizationId: orgId, status: "warning" });
-      res.json({ totalDevices, onlineDevices, safetyRules, gateways, warningDevices });
+      const countriesDeployed = (await Site.distinct("country", { organizationId: orgId, country: { $ne: null } })).length;
+      res.json({ totalDevices, onlineDevices, safetyRules, gateways, warningDevices, countriesDeployed });
     } catch (err) {
       res.status(500).json({ error: "INTERNAL_ERROR" });
     }
