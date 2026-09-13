@@ -2,10 +2,12 @@
  * KSV - Backend Server Entry Point
  * Run with: npm run server
  */
-// MUST be the first import — loads .env into process.env before any
+// MUST load dotenv before modules that read process.env.
+// other modules (connection.ts, auth.middleware.ts, rate-limiter.ts) read process.env.DATABASE_URL / JWT_ACCESS_SECRET / etc.
 // other module (connection.ts, auth.middleware.ts, rate-limiter.ts)
 // reads process.env.DATABASE_URL / JWT_ACCESS_SECRET / etc.
 import "dotenv/config";
+import { interpretIntent } from "./core/ai/khoem-ai-brain.ts";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
@@ -1561,7 +1563,89 @@ app.get(
 
 
 
-  // POST /api/v1/ai/interpret — AI Orchestration (MOCK)
+  // ============================================================
+// AI Device Entity Resolution
+// Resolves a natural-language device reference only inside the
+// authenticated user's organization. No command is executed here.
+// ============================================================
+async function resolveAIDevice(
+  naturalLanguageInput: string,
+  organizationId: unknown,
+) {
+  if (!organizationId) {
+    return {
+      status: "error" as const,
+      reason: "Authenticated user has no organizationId.",
+    };
+  }
+
+  const text = naturalLanguageInput.trim();
+  if (!text) {
+    return {
+      status: "not_found" as const,
+      reason: "No device reference was provided.",
+    };
+  }
+
+  const orgId = String(organizationId);
+
+  // Prefer an explicit device code such as DEV-04821.
+  const codeMatch = text.match(/\bDEV-[A-Z0-9_-]+\b/i);
+
+  if (codeMatch) {
+    const deviceCode = codeMatch[0].toUpperCase();
+
+    const device = await Device.findOne({
+      deviceCode,
+      organizationId,
+    }).lean();
+
+    if (!device) {
+      return {
+        status: "not_found" as const,
+        reason: `Device code ${deviceCode} was not found in the authenticated organization.`,
+      };
+    }
+
+    return {
+      status: "resolved" as const,
+      device,
+      matchedBy: "deviceCode" as const,
+    };
+  }
+
+  // Otherwise match the device name within the authenticated organization.
+  const devices = await Device.find({
+    organizationId,
+    name: { $regex: text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" },
+  })
+    .select("_id name deviceCode type status organizationId")
+    .limit(10)
+    .lean();
+
+  if (devices.length === 1) {
+    return {
+      status: "resolved" as const,
+      device: devices[0],
+      matchedBy: "name" as const,
+    };
+  }
+
+  if (devices.length > 1) {
+    return {
+      status: "ambiguous" as const,
+      devices,
+      reason: `Multiple devices matched the reference inside organization ${orgId}.`,
+    };
+  }
+
+  return {
+    status: "not_found" as const,
+    reason: "No matching device was found in the authenticated organization.",
+  };
+}
+
+// POST /api/v1/ai/interpret — AI Orchestration (MOCK)
   // NOTE: no AI provider API key is configured yet. This uses a simple
   // keyword-matching stub so the pipeline (auth -> session -> audit) can
   // be built and tested now, and swapped for a real model call later
@@ -1580,29 +1664,71 @@ app.get(
       }
 
       try {
-        // --- MOCK interpretation logic (keyword match only) ---
-        const text = naturalLanguageInput.toLowerCase();
-        const rawText = naturalLanguageInput;
+        // --- Deterministic intent interpretation ---
+        // Interpretation produces intent only. It does not execute a device command.
+        // Command types are restricted to the real KSV command contract.
+        const intentResult = interpretIntent(naturalLanguageInput);
 
-        const onWords = ["turn on", "power on", "បើក", "ប៉ុក"];
-        const offWords = ["turn off", "power off", "បិទ", "ដក"];
-        const statusWords = ["status", "ស្ថានភាព", "មើលស្ថានភាព"];
+        let resolvedDevice: Awaited<ReturnType<typeof resolveAIDevice>> | null = null;
+        let deviceResolutionReason: string | undefined;
 
-        const hasOn = onWords.some((w) => text.includes(w) || rawText.includes(w));
-        const hasOff = offWords.some((w) => text.includes(w) || rawText.includes(w));
-        const hasStatus = statusWords.some((w) => text.includes(w) || rawText.includes(w));
-        const requiresClarification = !(hasOn || hasOff || hasStatus);
+        if (intentResult.intent === "DEVICE_COMMAND") {
+          resolvedDevice = await resolveAIDevice(
+            naturalLanguageInput,
+            user.organizationId,
+          );
+
+          if (resolvedDevice.status !== "resolved") {
+            deviceResolutionReason = resolvedDevice.reason;
+          }
+        }
+
+        const resolvedDeviceData =
+          resolvedDevice?.status === "resolved"
+            ? resolvedDevice.device
+            : null;
+
+        const commandReady =
+          intentResult.intent === "DEVICE_COMMAND" &&
+          !!intentResult.commandType &&
+          resolvedDeviceData !== null;
+
+        const requiresClarification =
+          intentResult.requiresClarification ||
+          (intentResult.intent === "DEVICE_COMMAND" && !commandReady);
+
+        const assistantMessage =
+          intentResult.intent === "GREETING"
+            ? "សួស្ដីបង 👋 ខ្ញុំជា KHOEM-AI។ បងអាចសួរខ្ញុំអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើបាន។"
+            : intentResult.intent === "GENERAL_QUESTION"
+              ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
+              : undefined;
 
         const result = {
-          requestId: `mock-${Date.now()}`,
-          confidence: requiresClarification ? 0.3 : 0.6,
-          structuredCommand: requiresClarification
-            ? undefined
-            : { deviceId: "UNKNOWN", commandType: hasOff ? "POWER_OFF" : hasStatus ? "STATUS" : "POWER_ON" },
+          requestId: `ai-${Date.now()}`,
+          confidence: commandReady
+            ? intentResult.confidence
+            : Math.min(intentResult.confidence, 0.2),
+          intent: intentResult.intent,
+          assistantMessage,
+          structuredCommand: commandReady
+            ? {
+                deviceId: String(resolvedDeviceData!._id),
+                commandType: intentResult.commandType,
+              }
+            : undefined,
           requiresClarification,
           ambiguityOptions: requiresClarification
-            ? [{ label: "សូមបញ្ជាក់ញួបករណ់ និងសកម្មភាព (ដូចជា បើក/បិទ/ស្ថានភាព)។", structuredCommand: null }]
+            ? [{
+                label:
+                  deviceResolutionReason ||
+                  "សូមបញ្ជាក់ឧបករណ៍ និងសកម្មភាពដែលបងត្រូវការ។",
+                structuredCommand: null,
+              }]
             : undefined,
+          reasoning: deviceResolutionReason
+            ? `${intentResult.reason} ${deviceResolutionReason}`
+            : intentResult.reason,
         };
 
         // Persist / append to conversation session

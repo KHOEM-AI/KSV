@@ -31,6 +31,24 @@ const DISRESPECT_PATTERNS: RegExp[] = [
   // /ឃើលា|ល្ងង់/,
 ];
 
+
+const UNVERIFIED_THIRD_PARTY_CLAIM_PATTERNS: RegExp[] = [
+  /\b(?:scam|fraud|fraudulent|criminal|corrupt|illegal|cheat|cheating|stole|stealing|defrauded)\b/i,
+  /(?:បោកប្រាស់|ក្លែងបន្លំ|ពុករលួយ|ខុសច្បាប់|លួច|ឆបោក)/u,
+];
+
+const UNVERIFIED_THIRD_PARTY_CLAIM_KM =
+  "ខ្ញុំអាចជួយវិភាគការអះអាងនេះបាន ប៉ុន្តែខ្ញុំមិនអាចបង្ហាញការចោទប្រកាន់អំពីបុគ្គល ឬក្រុមហ៊ុនថាជាការពិត ដោយគ្មានភស្តុតាងដែលអាចផ្ទៀងផ្ទាត់បានទេ។";
+
+const UNVERIFIED_THIRD_PARTY_CLAIM_EN =
+  "I can help assess that claim, but I cannot present an allegation about a person or company as fact without verifiable evidence.";
+
+function containsUnverifiedThirdPartyClaim(text: string): boolean {
+  return UNVERIFIED_THIRD_PARTY_CLAIM_PATTERNS.some((pattern) =>
+    pattern.test(text),
+  );
+}
+
 export function containsDisrespect(text: string): boolean {
   return DISRESPECT_PATTERNS.some((pattern) => pattern.test(text));
 }
@@ -331,19 +349,61 @@ export function applyHonestyDisclosure(
  */
 export function conductGate(
   incomingText: string,
-  message: string,
+  message: ConductMessage,
   status: VerificationStatus,
   language?: ConductLanguage,
-): string {
+): ConductMessage {
   const detectedLanguage = language ?? detectConductLanguage(incomingText);
+  const disclosureLanguage =
+    detectedLanguage === "en" ? "en" : "km";
+
   const respectGuard = guardRespectfulResponse(
     incomingText,
-    detectedLanguage === "en" ? "en" : "km",
+    disclosureLanguage,
   );
 
   if (respectGuard) {
-    return respectGuard;
+    return {
+      text: respectGuard,
+      language: detectedLanguage,
+      stage: "CLARIFICATION_REQUIRED",
+      verificationStatus: "UNVERIFIED",
+      disclosure: applyHonestyDisclosure(
+        "",
+        "UNVERIFIED",
+      ),
+    };
   }
 
-  return applyHonestyDisclosure(message, status);
+  if (
+    status !== "VERIFIED_REAL" &&
+    containsUnverifiedThirdPartyClaim(message.text)
+  ) {
+    const warning =
+      disclosureLanguage === "en"
+        ? UNVERIFIED_THIRD_PARTY_CLAIM_EN
+        : UNVERIFIED_THIRD_PARTY_CLAIM_KM;
+
+    return {
+      text: warning,
+      language: detectedLanguage,
+      stage: "UNVERIFIED",
+      verificationStatus: "UNVERIFIED",
+      disclosure: applyHonestyDisclosure(
+        "",
+        "UNVERIFIED",
+      ),
+    };
+  }
+
+  return {
+    text: applyHonestyDisclosure(
+      message.text,
+      status,
+    ),
+    language: message.language,
+    stage: message.stage,
+    verificationStatus: status,
+    disclosure: message.disclosure,
+  };
 }

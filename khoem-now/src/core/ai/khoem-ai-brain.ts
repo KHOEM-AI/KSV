@@ -202,3 +202,167 @@ export function selfDefend(input: AnalysisInput): { proceed: boolean; result: An
   const result = analyze(input);
   return { proceed: result.decision !== "BLOCK", result };
 }
+
+/* ============================================================
+ * Intent + Command Contract
+ *
+ * The AI may interpret natural language, but it must emit only
+ * command types that the real KSV command pipeline understands.
+ *
+ * STATUS is intentionally a query intent, not a device command.
+ * ============================================================ */
+
+export const AI_COMMAND_TYPES = [
+  "LOCK",
+  "UNLOCK",
+  "OPEN",
+  "CLOSE",
+  "RESET",
+  "SETPOINT",
+  "SPEED_LIMIT",
+  "START",
+  "STOP",
+  "IMMOBILIZE",
+  "RELEASE",
+] as const;
+
+export type AICommandType = (typeof AI_COMMAND_TYPES)[number];
+
+export type AIIntent =
+  | "GREETING"
+  | "GENERAL_QUESTION"
+  | "DEVICE_COMMAND"
+  | "DEVICE_STATUS"
+  | "UNKNOWN";
+
+export interface AIIntentResult {
+  intent: AIIntent;
+  commandType?: AICommandType;
+  confidence: number;
+  requiresClarification: boolean;
+  reason: string;
+}
+
+const COMMAND_ALIASES: Array<{
+  commandType: AICommandType;
+  phrases: string[];
+}> = [
+  { commandType: "LOCK", phrases: ["lock", "ចាក់សោ", "បិទសោ"] },
+  { commandType: "UNLOCK", phrases: ["unlock", "ដោះសោ", "បើកសោ"] },
+  { commandType: "OPEN", phrases: ["open", "បើក"] },
+  { commandType: "CLOSE", phrases: ["close", "បិទ"] },
+  { commandType: "RESET", phrases: ["reset", "កំណត់ឡើងវិញ"] },
+  { commandType: "SETPOINT", phrases: ["setpoint", "set temperature", "កំណត់សីតុណ្ហភាព"] },
+  { commandType: "SPEED_LIMIT", phrases: ["speed limit", "កំណត់ល្បឿន"] },
+  { commandType: "START", phrases: ["start", "ចាប់ផ្តើម"] },
+  { commandType: "STOP", phrases: ["stop", "បញ្ឈប់"] },
+  { commandType: "IMMOBILIZE", phrases: ["immobilize", "បញ្ឈប់ចលនា", "ធ្វើឱ្យឈប់"] },
+  { commandType: "RELEASE", phrases: ["release", "ដោះ", "បញ្ចេញ"] },
+];
+
+const STATUS_ALIASES = [
+  "status",
+  "state",
+  "ស្ថានភាព",
+  "មើលស្ថានភាព",
+  "តើឧបករណ៍មានស្ថានភាពអ្វី",
+];
+
+export function interpretIntent(text: string): AIIntentResult {
+  const normalized = text.trim().toLowerCase();
+
+  if (!normalized) {
+    return {
+      intent: "UNKNOWN",
+      confidence: 0,
+      requiresClarification: true,
+      reason: "Empty input.",
+    };
+  }
+
+  const greetingAliases = [
+    "hello",
+    "hi",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "សួស្តី",
+    "សួស្ដី",
+    "ជំរាបសួរ",
+    "អរុណសួស្តី",
+  ];
+
+  if (greetingAliases.some((phrase) => normalized === phrase)) {
+    return {
+      intent: "GREETING",
+      confidence: 0.98,
+      requiresClarification: false,
+      reason: "Greeting detected.",
+    };
+  }
+
+  const questionMarkers = [
+    "?",
+    "what",
+    "why",
+    "how",
+    "who",
+    "when",
+    "where",
+    "តើ",
+    "អ្វី",
+    "ហេតុអ្វី",
+    "ដូចម្តេច",
+    "យ៉ាងម៉េច",
+    "មែនទេ",
+  ];
+
+  if (questionMarkers.some((marker) => normalized.includes(marker))) {
+    return {
+      intent: "GENERAL_QUESTION",
+      confidence: 0.85,
+      requiresClarification: false,
+      reason: "General conversational question detected.",
+    };
+  }
+
+  const matchedCommands = COMMAND_ALIASES.filter(({ phrases }) =>
+    phrases.some((phrase) => normalized.includes(phrase.toLowerCase()))
+  );
+
+  if (matchedCommands.length > 1) {
+    return {
+      intent: "UNKNOWN",
+      confidence: 0.2,
+      requiresClarification: true,
+      reason: "Multiple command intents matched; clarification is required.",
+    };
+  }
+
+  if (matchedCommands.length === 1) {
+    return {
+      intent: "DEVICE_COMMAND",
+      commandType: matchedCommands[0].commandType,
+      confidence: 0.8,
+      requiresClarification: false,
+      reason: `Matched command intent: ${matchedCommands[0].commandType}.`,
+    };
+  }
+
+  if (STATUS_ALIASES.some((phrase) => normalized.includes(phrase.toLowerCase()))) {
+    return {
+      intent: "DEVICE_STATUS",
+      confidence: 0.8,
+      requiresClarification: false,
+      reason: "Matched device status query.",
+    };
+  }
+
+  return {
+    intent: "UNKNOWN",
+    confidence: 0.2,
+    requiresClarification: true,
+    reason: "No supported KSV intent matched.",
+  };
+}
