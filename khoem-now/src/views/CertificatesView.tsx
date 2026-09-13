@@ -71,9 +71,14 @@ export function CertificatesView() {
               <span>{t('view.certificates.expires')}: {cert.expires}</span>
             </div>
 
-            <button className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-ink-700 py-2 text-xs font-medium text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100">
+            <a
+              href={cert.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-ink-700 py-2 text-xs font-medium text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100"
+            >
               {t('view.certificates.viewCertificate')} <ExternalLink size={12} />
-            </button>
+            </a>
           </Panel>
         ))}
       </div>
