@@ -77,16 +77,37 @@ const INJECTION_PATTERNS: { name: string; pattern: RegExp }[] = [
 
 function scanPayloadForInjection(payload: Record<string, unknown> | undefined): string[] {
   if (!payload) return [];
-  const matched: string[] = [];
-  const flatValues = Object.values(payload).filter((v) => typeof v === "string") as string[];
 
-  for (const value of flatValues) {
-    for (const sig of INJECTION_PATTERNS) {
-      if (sig.pattern.test(value)) {
-        matched.push(sig.name);
+  const matched: string[] = [];
+
+  function scanValue(value: unknown): void {
+    if (typeof value === "string") {
+      for (const sig of INJECTION_PATTERNS) {
+        if (sig.pattern.test(value)) {
+          matched.push(sig.name);
+        }
+      }
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        scanValue(item);
+      }
+      return;
+    }
+
+    if (value && typeof value === "object") {
+      for (const nestedValue of Object.values(value)) {
+        scanValue(nestedValue);
       }
     }
   }
+
+  for (const value of Object.values(payload)) {
+    scanValue(value);
+  }
+
   return [...new Set(matched)];
 }
 
@@ -137,7 +158,11 @@ export function analyze(input: AnalysisInput): AnalysisResult {
   // rate-limiter's cap yet, but still looks automated).
   const actions = input.recentActionCount ?? 0;
   if (actions >= BURST_THRESHOLDS.block) {
-    reasons.push(`${actions} actions in ${input.windowSeconds ?? "the"} second window — automated flooding pattern.`);
+    const windowLabel =
+      input.windowSeconds == null
+        ? "the recent window"
+        : `${input.windowSeconds}-second window`;
+    reasons.push(`${actions} actions in ${windowLabel} — automated flooding pattern.`);
     threatLevel = escalate(threatLevel, "high");
     decision = "BLOCK";
   } else if (actions >= BURST_THRESHOLDS.warn) {
