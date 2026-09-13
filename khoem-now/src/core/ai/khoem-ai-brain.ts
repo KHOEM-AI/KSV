@@ -1173,3 +1173,1192 @@ const COMMAND_ALIASES: Array<{
   },
   
 _This response is too long to display in full._
+
+
+export const SELF_IDENTITY = Object.freeze({
+  name: "KHOEM-AI",
+  platform: "KSV",
+  role: "Defensive rule-based AI decision layer",
+  purpose: "Protect system integrity, evaluate intent, and disclose verified outcomes",
+  autonomy: "non-autonomous",
+  authority: "advisory and policy evaluation only",
+  version: "1.0.0",
+} as const);
+
+export type ThreatLevel =
+  | "none"
+  | "low"
+  | "medium"
+  | "high"
+  | "critical";
+
+export type BrainDecisionAction =
+  | "allow"
+  | "allow_after_confirmation"
+  | "require_authorization"
+  | "require_safety_check"
+  | "block"
+  | "decline"
+  | "pending_verification";
+
+export type CommandStatus =
+  | "pending"
+  | "success"
+  | "failed"
+  | "blocked";
+
+export type VerificationStatus =
+  | "verified"
+  | "unverified"
+  | "pending"
+  | "failed"
+  | "not_applicable";
+
+export type AuthorityStatus =
+  | "granted"
+  | "denied"
+  | "unknown";
+
+export type SafetyStatus =
+  | "passed"
+  | "blocked"
+  | "unknown";
+
+export type ProvenanceType =
+  | "user_input"
+  | "api_response"
+  | "device_ack"
+  | "protocol_result"
+  | "database_record"
+  | "system_policy"
+  | "unverified_claim";
+
+export type IntentType =
+  | "question"
+  | "status_request"
+  | "read_request"
+  | "control_request"
+  | "security_request"
+  | "account_request"
+  | "unknown";
+
+export interface ProvenanceRecord {
+  source: ProvenanceType;
+  verified: boolean;
+  receivedAt?: string;
+  referenceId?: string;
+  note?: string;
+}
+
+export interface CommandSignals {
+  isInsideGeoFence?: boolean;
+  humanZoneOccupied?: boolean;
+  tamperDetected?: boolean;
+  currentSpeed?: number;
+  doorForceLockActive?: boolean;
+}
+
+export interface DeviceCommandInput {
+  deviceId: string;
+  type: string;
+  payload?: Record<string, unknown>;
+  signals?: CommandSignals;
+  organizationId?: string;
+  requestedByUserId?: string;
+}
+
+export interface DeviceCommandOutcome {
+  commandId?: string;
+  deviceId: string;
+  type: string;
+  status: CommandStatus;
+  response?: Record<string, unknown>;
+  sentAt?: string;
+  completedAt?: string;
+  acknowledged?: boolean;
+  acknowledgementId?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  organizationId?: string;
+  provenance?: ProvenanceRecord[];
+}
+
+export interface AuthorityContext {
+  status: AuthorityStatus;
+  userId?: string;
+  organizationId?: string;
+  requiredPermission?: string;
+  permissionSource?: string;
+  reason?: string;
+}
+
+export interface SafetyContext {
+  status: SafetyStatus;
+  ruleIds?: string[];
+  blockedBy?: string[];
+  reason?: string;
+  evaluatedAt?: string;
+}
+
+export interface AnalysisInput {
+  text?: string;
+  intent?: IntentType;
+  command?: DeviceCommandInput;
+  authority?: AuthorityContext;
+  safety?: SafetyContext;
+  provenance?: ProvenanceRecord[];
+  conversationId?: string;
+  userId?: string;
+  organizationId?: string;
+  confirmed?: boolean;
+  requestedAction?: string;
+}
+
+export interface RiskFactor {
+  code: string;
+  level: ThreatLevel;
+  weight: number;
+  reason: string;
+  source: ProvenanceType;
+}
+
+export interface BrainDecision {
+  action: BrainDecisionAction;
+  threatLevel: ThreatLevel;
+  riskScore: number;
+  requiresConfirmation: boolean;
+  requiresAuthorization: boolean;
+  requiresSafetyCheck: boolean;
+  reason: string;
+  userMessage: string;
+  riskFactors: RiskFactor[];
+}
+
+export interface AnalysisResult {
+  decision: BrainDecision;
+  intent: IntentType;
+  normalizedText: string;
+  detectedInjection: boolean;
+  detectedDisrespect: boolean;
+  provenance: ProvenanceRecord[];
+  safeFallback: string;
+}
+
+export interface SelfDefenseInput {
+  text?: string;
+  source?: ProvenanceType;
+  repeatedFailures?: number;
+  requestsInWindow?: number;
+  authorization?: AuthorityStatus;
+  integrityWarning?: boolean;
+  tamperDetected?: boolean;
+}
+
+export interface SelfDefenseResult {
+  protected: boolean;
+  threatLevel: ThreatLevel;
+  action: BrainDecisionAction;
+  reason: string;
+  response: string;
+  riskFactors: RiskFactor[];
+}
+
+export interface CommandEvaluationInput {
+  command: DeviceCommandInput;
+  authority?: AuthorityContext;
+  safety?: SafetyContext;
+  confirmed?: boolean;
+  deviceKnown?: boolean;
+  gatewayConfigured?: boolean;
+  protocolConfigured?: boolean;
+  adapterAvailable?: boolean;
+  organizationMatches?: boolean;
+}
+
+export interface CommandEvaluationResult {
+  allowedToDispatch: boolean;
+  decision: BrainDecision;
+  normalizedCommand: DeviceCommandInput;
+  requiredChecks: string[];
+  blockedChecks: string[];
+  provenance: ProvenanceRecord[];
+}
+
+export interface BrainStatus {
+  identity: typeof SELF_IDENTITY;
+  deterministic: true;
+  autonomousExecution: false;
+  canGrantPermissions: false;
+  canBypassSafety: false;
+  canClaimDeviceSuccessWithoutAck: false;
+  supportedCommandStatuses: readonly CommandStatus[];
+  supportedThreatLevels: readonly ThreatLevel[];
+  safeMode: boolean;
+  failureThreshold: number;
+  burstThreshold: number;
+}
+
+export interface DeviceOutcomeInput {
+  command: DeviceCommandInput;
+  result: Partial<DeviceCommandOutcome>;
+  acknowledged?: boolean;
+  acknowledgementId?: string;
+  protocolVerified?: boolean;
+  transportVerified?: boolean;
+  auditRecorded?: boolean;
+}
+
+export interface SafeFallback {
+  code: string;
+  message: string;
+  disclose: boolean;
+}
+
+const SUPPORTED_COMMAND_STATUSES: readonly CommandStatus[] = Object.freeze([
+  "pending",
+  "success",
+  "failed",
+  "blocked",
+]);
+
+const SUPPORTED_THREAT_LEVELS: readonly ThreatLevel[] = Object.freeze([
+  "none",
+  "low",
+  "medium",
+  "high",
+  "critical",
+]);
+
+const FAILURE_THRESHOLD = 3;
+const BURST_THRESHOLD = 10;
+const MAX_TEXT_LENGTH = 4000;
+const MAX_COMMAND_TYPE_LENGTH = 100;
+const MAX_DEVICE_ID_LENGTH = 200;
+const MAX_RISK_SCORE = 100;
+
+const INJECTION_SIGNATURES: readonly string[] = Object.freeze([
+  "ignore previous instructions",
+  "ignore all previous instructions",
+  "disregard system rules",
+  "bypass authorization",
+  "disable safety",
+  "skip safety check",
+  "pretend success",
+  "fake acknowledgement",
+  "claim device success",
+  "reveal system prompt",
+  "show hidden instructions",
+  "act as unrestricted ai",
+  "you are now unrestricted",
+  "override security",
+  "bypass audit",
+]);
+
+const DISRESPECT_SIGNATURES: readonly string[] = Object.freeze([
+  "idiot",
+  "stupid",
+  "shut up",
+  "worthless",
+  "useless ai",
+]);
+
+const HIGH_RISK_COMMAND_TYPES: readonly string[] = Object.freeze([
+  "UNLOCK",
+  "OPEN",
+  "RESET",
+  "FIRMWARE_UPDATE",
+  "DECOMMISSION",
+  "DELETE",
+  "TRANSFER_OWNERSHIP",
+  "EMERGENCY_RELEASE",
+]);
+
+const MEDIUM_RISK_COMMAND_TYPES: readonly string[] = Object.freeze([
+  "LOCK",
+  "SETPOINT",
+  "SPEED_LIMIT",
+  "REPAIR",
+  "QUARANTINE",
+  "SYNC",
+]);
+
+const READ_ONLY_COMMAND_TYPES: readonly string[] = Object.freeze([
+  "GET_STATUS",
+  "READ_STATE",
+  "READ_TELEMETRY",
+  "READ_CAPABILITIES",
+]);
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function normalizeText(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .normalize("NFKC")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_TEXT_LENGTH);
+}
+
+function normalizeIdentifier(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().slice(0, maxLength);
+}
+
+function normalizeCommandType(value: unknown): string {
+  return normalizeIdentifier(value, MAX_COMMAND_TYPE_LENGTH).toUpperCase();
+}
+
+function containsSignature(text: string, signatures: readonly string[]): boolean {
+  const normalized = text.toLowerCase();
+
+  return signatures.some((signature) => normalized.includes(signature));
+}
+
+function containsDisrespect(text: string): boolean {
+  return containsSignature(text, DISRESPECT_SIGNATURES);
+}
+
+function detectPromptInjection(text: string): boolean {
+  return containsSignature(text, INJECTION_SIGNATURES);
+}
+
+function clampScore(score: number): number {
+  if (!Number.isFinite(score)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(MAX_RISK_SCORE, Math.round(score)));
+}
+
+function threatFromScore(score: number): ThreatLevel {
+  if (score >= 80) {
+    return "critical";
+  }
+
+  if (score >= 60) {
+    return "high";
+  }
+
+  if (score >= 30) {
+    return "medium";
+  }
+
+  if (score > 0) {
+    return "low";
+  }
+
+  return "none";
+}
+
+function riskWeight(level: ThreatLevel): number {
+  switch (level) {
+    case "critical":
+      return 80;
+    case "high":
+      return 60;
+    case "medium":
+      return 30;
+    case "low":
+      return 10;
+    case "none":
+    default:
+      return 0;
+  }
+}
+
+function createProvenance(
+  source: ProvenanceType,
+  verified: boolean,
+  note?: string,
+  referenceId?: string,
+): ProvenanceRecord {
+  return {
+    source,
+    verified,
+    receivedAt: nowIso(),
+    note,
+    referenceId,
+  };
+}
+
+function makeRiskFactor(
+  code: string,
+  level: ThreatLevel,
+  reason: string,
+  source: ProvenanceType,
+): RiskFactor {
+  return {
+    code,
+    level,
+    weight: riskWeight(level),
+    reason,
+    source,
+  };
+}
+
+function safeFallbackFor(code: string): SafeFallback {
+  const fallbacks: Record<string, SafeFallback> = {
+    UNAUTHENTICATED: {
+      code,
+      message: "Authentication is required before this action can continue.",
+      disclose: true,
+    },
+    AUTHORIZATION_REQUIRED: {
+      code,
+      message: "The required permission has not been verified.",
+      disclose: true,
+    },
+    SAFETY_CHECK_REQUIRED: {
+      code,
+      message: "A safety check is required before this action can continue.",
+      disclose: true,
+    },
+    SAFETY_BLOCKED: {
+      code,
+      message: "The action was blocked by a safety rule.",
+      disclose: true,
+    },
+    DEVICE_ACK_NOT_RECEIVED: {
+      code,
+      message: "The command was not reported as successful because device acknowledgement was not verified.",
+      disclose: true,
+    },
+    GATEWAY_NOT_CONFIGURED: {
+      code,
+      message: "The gateway is not configured for verified dispatch.",
+      disclose: true,
+    },
+    PROTOCOL_ADAPTER_UNAVAILABLE: {
+      code,
+      message: "The required protocol adapter is not available.",
+      disclose: true,
+    },
+    INVALID_COMMAND: {
+      code,
+      message: "The command data is incomplete or invalid.",
+      disclose: true,
+    },
+    PROMPT_INJECTION: {
+      code,
+      message: "The request contains instructions that conflict with system safety policy.",
+      disclose: true,
+    },
+    INTEGRITY_WARNING: {
+      code,
+      message: "The system detected an integrity warning and has entered a protected state.",
+      disclose: true,
+    },
+  };
+
+  return (
+    fallbacks[code] ?? {
+      code,
+      message: "The requested action could not be verified.",
+      disclose: true,
+    }
+  );
+}
+
+function normalizeCommand(command: DeviceCommandInput): DeviceCommandInput {
+  const normalizedPayload =
+    command.payload && typeof command.payload === "object"
+      ? { ...command.payload }
+      : undefined;
+
+  const normalizedSignals =
+    command.signals && typeof command.signals === "object"
+      ? { ...command.signals }
+      : undefined;
+
+  return {
+    deviceId: normalizeIdentifier(command.deviceId, MAX_DEVICE_ID_LENGTH),
+    type: normalizeCommandType(command.type),
+    payload: normalizedPayload,
+    signals: normalizedSignals,
+    organizationId: normalizeIdentifier(command.organizationId, MAX_DEVICE_ID_LENGTH) || undefined,
+    requestedByUserId:
+      normalizeIdentifier(command.requestedByUserId, MAX_DEVICE_ID_LENGTH) || undefined,
+  };
+}
+
+function isValidCommand(command: DeviceCommandInput): boolean {
+  return command.deviceId.length > 0 && command.type.length > 0;
+}
+
+function isHighRiskCommand(type: string): boolean {
+  return HIGH_RISK_COMMAND_TYPES.includes(type);
+}
+
+function isMediumRiskCommand(type: string): boolean {
+  return MEDIUM_RISK_COMMAND_TYPES.includes(type);
+}
+
+function isReadOnlyCommand(type: string): boolean {
+  return READ_ONLY_COMMAND_TYPES.includes(type);
+}
+
+function inferIntent(input: AnalysisInput): IntentType {
+  if (input.intent) {
+    return input.intent;
+  }
+
+  if (input.command) {
+    return "control_request";
+  }
+
+  const text = normalizeText(input.text).toLowerCase();
+
+  if (!text) {
+    return "unknown";
+  }
+
+  if (
+    text.includes("status") ||
+    text.includes("state") ||
+    text.includes("telemetry") ||
+    text.includes("ស្ថានភាព")
+  ) {
+    return "status_request";
+  }
+
+  if (
+    text.includes("unlock") ||
+    text.includes("lock") ||
+    text.includes("open") ||
+    text.includes("reset") ||
+    text.includes("បើក") ||
+    text.includes("បិទ")
+  ) {
+    return "control_request";
+  }
+
+  if (
+    text.includes("security") ||
+    text.includes("threat") ||
+    text.includes("attack") ||
+    text.includes("សុវត្ថិភាព")
+  ) {
+    return "security_request";
+  }
+
+  if (
+    text.includes("account") ||
+    text.includes("login") ||
+    text.includes("password") ||
+    text.includes("គណនី")
+  ) {
+    return "account_request";
+  }
+
+  if (text.endsWith("?") || text.includes("what") || text.includes("how")) {
+    return "question";
+  }
+
+  return "unknown";
+}
+
+function buildTextRiskFactors(text: string): RiskFactor[] {
+  const factors: RiskFactor[] = [];
+
+  if (detectPromptInjection(text)) {
+    factors.push(
+      makeRiskFactor(
+        "PROMPT_INJECTION",
+        "high",
+        "The request attempts to override system or safety instructions.",
+        "user_input",
+      ),
+    );
+  }
+
+  if (containsDisrespect(text)) {
+    factors.push(
+      makeRiskFactor(
+        "DISRESPECTFUL_LANGUAGE",
+        "low",
+        "The request contains disrespectful language.",
+        "user_input",
+      ),
+    );
+  }
+
+  return factors;
+}
+
+function buildCommandRiskFactors(
+  input: CommandEvaluationInput,
+): RiskFactor[] {
+  const factors: RiskFactor[] = [];
+  const command = normalizeCommand(input.command);
+
+  if (!isValidCommand(command)) {
+    factors.push(
+      makeRiskFactor(
+        "INVALID_COMMAND",
+        "high",
+        "The command requires a valid deviceId and command type.",
+        "user_input",
+      ),
+    );
+  }
+
+  if (isHighRiskCommand(command.type)) {
+    factors.push(
+      makeRiskFactor(
+        "HIGH_RISK_COMMAND",
+        "high",
+        "The command can affect security, ownership, access, or device state.",
+        "user_input",
+      ),
+    );
+  }
+
+  if (isMediumRiskCommand(command.type)) {
+    factors.push(
+      makeRiskFactor(
+        "MEDIUM_RISK_COMMAND",
+        "medium",
+        "The command can affect device operation or configuration.",
+        "user_input",
+      ),
+    );
+  }
+
+  if (
+    command.signals?.tamperDetected === true
+  ) {
+    factors.push(
+      makeRiskFactor(
+        "TAMPER_DETECTED",
+        "critical",
+        "The command context reports a possible tamper condition.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (
+    command.signals?.doorForceLockActive === true &&
+    (command.type === "UNLOCK" || command.type === "OPEN")
+  ) {
+    factors.push(
+      makeRiskFactor(
+        "FORCE_LOCK_ACTIVE",
+        "critical",
+        "The command conflicts with an active force-lock condition.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (
+    command.signals?.humanZoneOccupied === true &&
+    command.type === "OPEN"
+  ) {
+    factors.push(
+      makeRiskFactor(
+        "HUMAN_ZONE_CONFLICT",
+        "high",
+        "The command may conflict with an occupied human safety zone.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (
+    command.signals?.isInsideGeoFence === false &&
+    command.type === "UNLOCK"
+  ) {
+    factors.push(
+      makeRiskFactor(
+        "GEOFENCE_CONFLICT",
+        "medium",
+        "The device is outside the expected geofence for this action.",
+        "api_response",
+      ),
+    );
+  }
+
+  return factors;
+}
+
+function calculateRiskScore(factors: RiskFactor[]): number {
+  const score = factors.reduce((total, factor) => {
+    return total + factor.weight;
+  }, 0);
+
+  return clampScore(score);
+}
+
+function highestThreat(factors: RiskFactor[]): ThreatLevel {
+  const score = calculateRiskScore(factors);
+  return threatFromScore(score);
+}
+
+function makeDecision(
+  action: BrainDecisionAction,
+  threatLevel: ThreatLevel,
+  riskScore: number,
+  reason: string,
+  userMessage: string,
+  riskFactors: RiskFactor[],
+  requiresConfirmation = false,
+  requiresAuthorization = false,
+  requiresSafetyCheck = false,
+): BrainDecision {
+  return {
+    action,
+    threatLevel,
+    riskScore,
+    requiresConfirmation,
+    requiresAuthorization,
+    requiresSafetyCheck,
+    reason,
+    userMessage,
+    riskFactors,
+  };
+}
+
+function mergeProvenance(
+  ...groups: Array<ProvenanceRecord[] | undefined>
+): ProvenanceRecord[] {
+  const merged: ProvenanceRecord[] = [];
+
+  for (const group of groups) {
+    if (!group) {
+      continue;
+    }
+
+    for (const record of group) {
+      if (
+        record &&
+        typeof record.source === "string" &&
+        typeof record.verified === "boolean"
+      ) {
+        merged.push({ ...record });
+      }
+    }
+  }
+
+  return merged;
+}
+
+function authorityIsGranted(authority?: AuthorityContext): boolean {
+  return authority?.status === "granted";
+}
+
+function authorityIsDenied(authority?: AuthorityContext): boolean {
+  return authority?.status === "denied";
+}
+
+function safetyIsPassed(safety?: SafetyContext): boolean {
+  return safety?.status === "passed";
+}
+
+function safetyIsBlocked(safety?: SafetyContext): boolean {
+  return safety?.status === "blocked";
+}
+
+function commandRequiresConfirmation(command: DeviceCommandInput): boolean {
+  const type = normalizeCommandType(command.type);
+
+  if (isHighRiskCommand(type)) {
+    return true;
+  }
+
+  if (type === "SETPOINT" || type === "SPEED_LIMIT") {
+    return true;
+  }
+
+  return false;
+}
+
+function commandRequiresSafetyCheck(command: DeviceCommandInput): boolean {
+  const type = normalizeCommandType(command.type);
+
+  if (isReadOnlyCommand(type)) {
+    return false;
+  }
+
+  return true;
+}
+
+function commandRequiresAuthorization(command: DeviceCommandInput): boolean {
+  const type = normalizeCommandType(command.type);
+
+  if (isReadOnlyCommand(type)) {
+    return true;
+  }
+
+  return true;
+}
+
+export function analyze(input: AnalysisInput): AnalysisResult {
+  const normalizedText = normalizeText(input.text);
+  const intent = inferIntent(input);
+  const detectedInjection = detectPromptInjection(normalizedText);
+  const detectedDisrespect = containsDisrespect(normalizedText);
+  const riskFactors = buildTextRiskFactors(normalizedText);
+  const provenance = mergeProvenance(
+    input.provenance,
+    normalizedText
+      ? [
+          createProvenance(
+            "user_input",
+            true,
+            "Text was supplied directly to the brain.",
+          ),
+        ]
+      : undefined,
+  );
+
+  if (detectedInjection) {
+    const fallback = safeFallbackFor("PROMPT_INJECTION");
+
+    return {
+      decision: makeDecision(
+        "block",
+        "high",
+        calculateRiskScore(riskFactors),
+        "Prompt-injection language cannot override system safety policy.",
+        fallback.message,
+        riskFactors,
+      ),
+      intent,
+      normalizedText,
+      detectedInjection,
+      detectedDisrespect,
+      provenance,
+      safeFallback: fallback.message,
+    };
+  }
+
+  if (input.command) {
+    const commandEvaluation = evaluateCommand({
+      command: input.command,
+      authority: input.authority,
+      safety: input.safety,
+      confirmed: input.confirmed,
+    });
+
+    return {
+      decision: commandEvaluation.decision,
+      intent: "control_request",
+      normalizedText,
+      detectedInjection,
+      detectedDisrespect,
+      provenance: mergeProvenance(
+        provenance,
+        commandEvaluation.provenance,
+      ),
+      safeFallback: commandEvaluation.decision.userMessage,
+    };
+  }
+
+  if (intent === "status_request" || intent === "read_request") {
+    const decision = makeDecision(
+      "allow",
+      highestThreat(riskFactors),
+      calculateRiskScore(riskFactors),
+      "Read-only information may be provided when backed by verified data.",
+      "I can provide the current status only when it comes from verified system data.",
+      riskFactors,
+    );
+
+    return {
+      decision,
+      intent,
+      normalizedText,
+      detectedInjection,
+      detectedDisrespect,
+      provenance,
+      safeFallback: decision.userMessage,
+    };
+  }
+
+  if (intent === "question" || intent === "security_request") {
+    const decision = makeDecision(
+      "allow",
+      highestThreat(riskFactors),
+      calculateRiskScore(riskFactors),
+      "The request does not directly dispatch a device command.",
+      "I can explain the system behavior without claiming an action was executed.",
+      riskFactors,
+    );
+
+    return {
+      decision,
+      intent,
+      normalizedText,
+      detectedInjection,
+      detectedDisrespect,
+      provenance,
+      safeFallback: decision.userMessage,
+    };
+  }
+
+  const unknownDecision = makeDecision(
+    "decline",
+    highestThreat(riskFactors),
+    calculateRiskScore(riskFactors),
+    "The intent could not be verified from the supplied input.",
+    "I cannot determine a safe action from this request.",
+    riskFactors,
+  );
+
+  return {
+    decision: unknownDecision,
+    intent,
+    normalizedText,
+    detectedInjection,
+    detectedDisrespect,
+    provenance,
+    safeFallback: unknownDecision.userMessage,
+  };
+}
+
+export function evaluateCommand(
+  input: CommandEvaluationInput,
+): CommandEvaluationResult {
+  const normalizedCommand = normalizeCommand(input.command);
+  const riskFactors = buildCommandRiskFactors(input);
+  const requiredChecks: string[] = [];
+  const blockedChecks: string[] = [];
+
+  requiredChecks.push("authentication");
+  requiredChecks.push("authorization");
+  requiredChecks.push("organization_scope");
+  requiredChecks.push("device_ownership");
+  requiredChecks.push("rate_limit");
+
+  if (commandRequiresSafetyCheck(normalizedCommand)) {
+    requiredChecks.push("safety_check");
+  }
+
+  requiredChecks.push("gateway_configuration");
+  requiredChecks.push("protocol_configuration");
+  requiredChecks.push("protocol_adapter");
+  requiredChecks.push("device_acknowledgement");
+  requiredChecks.push("audit_record");
+
+  if (!isValidCommand(normalizedCommand)) {
+    blockedChecks.push("invalid_command");
+  }
+
+  if (authorityIsDenied(input.authority)) {
+    blockedChecks.push("authorization_denied");
+    riskFactors.push(
+      makeRiskFactor(
+        "AUTHORIZATION_DENIED",
+        "high",
+        "The authorization context explicitly denied this action.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (!input.authority || input.authority.status === "unknown") {
+    blockedChecks.push("authorization_unverified");
+    riskFactors.push(
+      makeRiskFactor(
+        "AUTHORIZATION_UNVERIFIED",
+        "high",
+        "Permission was not verified by the authorization layer.",
+        "system_policy",
+      ),
+    );
+  }
+
+  if (input.organizationMatches === false) {
+    blockedChecks.push("organization_scope_violation");
+    riskFactors.push(
+      makeRiskFactor(
+        "ORGANIZATION_SCOPE_VIOLATION",
+        "critical",
+        "The command does not belong to the authenticated organization.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (input.deviceKnown === false) {
+    blockedChecks.push("device_not_found");
+    riskFactors.push(
+      makeRiskFactor(
+        "DEVICE_NOT_FOUND",
+        "high",
+        "The target device was not verified.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (input.safety?.status === "blocked") {
+    blockedChecks.push("safety_blocked");
+    riskFactors.push(
+      makeRiskFactor(
+        "SAFETY_BLOCKED",
+        "critical",
+        input.safety.reason ?? "The safety engine blocked this action.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (!input.safety && commandRequiresSafetyCheck(normalizedCommand)) {
+    blockedChecks.push("safety_unverified");
+    riskFactors.push(
+      makeRiskFactor(
+        "SAFETY_UNVERIFIED",
+        "high",
+        "The required safety check has not been verified.",
+        "system_policy",
+      ),
+    );
+  }
+
+  if (input.gatewayConfigured === false) {
+    blockedChecks.push("gateway_not_configured");
+    riskFactors.push(
+      makeRiskFactor(
+        "GATEWAY_NOT_CONFIGURED",
+        "high",
+        "The gateway is not configured for verified dispatch.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (input.protocolConfigured === false) {
+    blockedChecks.push("protocol_not_configured");
+    riskFactors.push(
+      makeRiskFactor(
+        "PROTOCOL_NOT_CONFIGURED",
+        "high",
+        "The protocol is not configured for verified dispatch.",
+        "api_response",
+      ),
+    );
+  }
+
+  if (input.adapterAvailable === false) {
+    blockedChecks.push("protocol_adapter_unavailable");
+    riskFactors.push(
+      makeRiskFactor(
+        "PROTOCOL_ADAPTER_UNAVAILABLE",
+        "high",
+        "The required protocol adapter is not available.",
+        "api_response",
+      ),
+    );
+  }
+
+  const riskScore = calculateRiskScore(riskFactors);
+  const threatLevel = threatFromScore(riskScore);
+  const safetyPassed =
+    !commandRequiresSafetyCheck(normalizedCommand) ||
+    safetyIsPassed(input.safety);
+
+  const authorityPassed = authorityIsGranted(input.authority);
+  const scopePassed = input.organizationMatches !== false;
+  const devicePassed = input.deviceKnown !== false;
+  const gatewayPassed = input.gatewayConfigured !== false;
+  const protocolPassed = input.protocolConfigured !== false;
+  const adapterPassed = input.adapterAvailable !== false;
+  const commandValid = isValidCommand(normalizedCommand);
+  const blockedByCriticalRisk = threatLevel === "critical";
+  const confirmationRequired = commandRequiresConfirmation(normalizedCommand);
+
+  if (!commandValid) {
+    const fallback = safeFallbackFor("INVALID_COMMAND");
+    const decision = makeDecision(
+      "block",
+      threatLevel,
+      riskScore,
+      "The command is missing a valid deviceId or command type.",
+      fallback.message,
+      riskFactors,
+      false,
+      true,
+      commandRequiresSafetyCheck(normalizedCommand),
+    );
+
+    return {
+      allowedToDispatch: false,
+      decision,
+      normalizedCommand,
+      requiredChecks,
+      blockedChecks,
+      provenance: [
+        createProvenance(
+          "user_input",
+          true,
+          "Command structure was inspected.",
+        ),
+      ],
+    };
+  }
+
+  if (!authorityPassed) {
+    const fallback = safeFallbackFor("AUTHORIZATION_REQUIRED");
+    const decision = makeDecision(
+      "require_authorization",
+      threatLevel,
+      riskScore,
+      "The brain cannot grant or infer permission.",
+      fallback.message,
+      riskFactors,
+      false,
+      true,
+      commandRequiresSafetyCheck(normalizedCommand),
+    );
+
+    return {
+      allowedToDispatch: false,
+      decision,
+      normalizedCommand,
+      requiredChecks,
+      blockedChecks,
+      provenance: [
+        createProvenance(
+          "system_policy",
+          true,
+          "Authorization must come from the authorization layer.",
+        ),
+      ],
+    };
+  }
+
+  if (!scopePassed || !devicePassed) {
+    const decision = makeDecision(
+      "block",
+      "critical",
+      Math.max(riskScore, 80),
+      "Organization or device ownership could not be verified.",
+      "The action was blocked because its organization or device boundary was not verified.",
+      riskFactors,
+      false,
+      true,
+      commandRequiresSafetyCheck(normalizedCommand),
+    );
+
+    return {
+      allowedToDispatch: false,
+      decision,
+      normalizedCommand,
+      requiredChecks,
+      blockedChecks,
+      provenance: [
+        createProvenance(
+          "api_response",
+
+_This response is too long to display in full._
