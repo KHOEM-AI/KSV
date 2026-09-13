@@ -302,6 +302,45 @@ export function interpretIntent(text: string): AIIntentResult {
     };
   }
 
+  const matchedCommands = COMMAND_ALIASES.flatMap(
+    ({ commandType, phrases }) =>
+      phrases
+        .filter((phrase) => normalized.includes(phrase.toLowerCase()))
+        .map((phrase) => ({ commandType, phrase })),
+  );
+
+  // Prefer the most specific/longest command phrase.
+  matchedCommands.sort((a, b) => b.phrase.length - a.phrase.length);
+
+  if (matchedCommands.length > 0) {
+    const best = matchedCommands[0];
+
+    const sameLengthMatches = matchedCommands.filter(
+      (match) => match.phrase.length === best.phrase.length,
+    );
+
+    const commandTypes = [
+      ...new Set(sameLengthMatches.map((match) => match.commandType)),
+    ];
+
+    if (commandTypes.length > 1) {
+      return {
+        intent: "UNKNOWN",
+        confidence: 0.2,
+        requiresClarification: true,
+        reason: "Multiple equally specific command intents matched; clarification is required.",
+      };
+    }
+
+    return {
+      intent: "DEVICE_COMMAND",
+      commandType: best.commandType,
+      confidence: best.phrase.length >= 5 ? 0.9 : 0.8,
+      requiresClarification: false,
+      reason: `Matched command intent: ${best.commandType}.`,
+    };
+  }
+
   const questionMarkers = [
     "?",
     "what",
@@ -324,29 +363,6 @@ export function interpretIntent(text: string): AIIntentResult {
       confidence: 0.85,
       requiresClarification: false,
       reason: "General conversational question detected.",
-    };
-  }
-
-  const matchedCommands = COMMAND_ALIASES.filter(({ phrases }) =>
-    phrases.some((phrase) => normalized.includes(phrase.toLowerCase()))
-  );
-
-  if (matchedCommands.length > 1) {
-    return {
-      intent: "UNKNOWN",
-      confidence: 0.2,
-      requiresClarification: true,
-      reason: "Multiple command intents matched; clarification is required.",
-    };
-  }
-
-  if (matchedCommands.length === 1) {
-    return {
-      intent: "DEVICE_COMMAND",
-      commandType: matchedCommands[0].commandType,
-      confidence: 0.8,
-      requiresClarification: false,
-      reason: `Matched command intent: ${matchedCommands[0].commandType}.`,
     };
   }
 

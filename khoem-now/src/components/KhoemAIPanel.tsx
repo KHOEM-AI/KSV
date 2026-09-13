@@ -13,7 +13,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { SELF_IDENTITY } from "../core/ai/khoem-ai-brain";
+import {
+  AI_COMMAND_TYPES,
+  SELF_IDENTITY,
+} from "../core/ai/khoem-ai-brain";
 import {
   INTERACTION_STAGE_LABEL_KM,
   type AIInteractionStage,
@@ -161,6 +164,28 @@ export function KhoemAIPanel() {
         <p className="mt-2 text-[11px] leading-5 text-ink-300">
           KHOEM-AI អាចវិភាគសំណើ និងសញ្ញាសុវត្ថិភាពតាម rules ដែលបានកំណត់។
           វាមិនអះអាងថា device បានអនុវត្តទេ លុះត្រាតែមានលទ្ធផលពិតដែលបានផ្ទៀងផ្ទាត់។
+        </p>
+      </div>
+
+      {/* Supported commands */}
+      <div className="mt-4 rounded-xl border border-ink-700/60 bg-ink-950/30 p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+          Supported AI Commands
+        </p>
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {AI_COMMAND_TYPES.map((commandType) => (
+            <span
+              key={commandType}
+              className="rounded-full border border-ink-700 bg-ink-900/60 px-2 py-1 text-[10px] font-medium text-ink-300"
+            >
+              {commandType}
+            </span>
+          ))}
+        </div>
+
+        <p className="mt-2 text-[10px] leading-5 text-ink-500">
+          បញ្ជីនេះយកពី command contract របស់ Brain ផ្ទាល់ មិនមែនបង្កើតឡើងសម្រាប់ UI ទេ។
         </p>
       </div>
 
