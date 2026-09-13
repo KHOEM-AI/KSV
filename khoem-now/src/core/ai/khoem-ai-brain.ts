@@ -1171,6 +1171,5 @@ const COMMAND_ALIASES: Array<{
       "បិទដំណើរការ",
     ],
   },
-  { **…**
-
+  
 _This response is too long to display in full._
