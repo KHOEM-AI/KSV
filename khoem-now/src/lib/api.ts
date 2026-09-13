@@ -1985,6 +1985,7 @@ export async function getDashboardStats() {
     safetyRules: number;
     gateways: number;
     warningDevices: number;
+    countriesDeployed: number;
   }>("/dashboard/stats");
 }
 

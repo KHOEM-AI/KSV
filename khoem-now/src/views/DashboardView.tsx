@@ -20,7 +20,7 @@ import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function DashboardView() {
   const { t, language } = useLanguage();
-  const [liveStats, setLiveStats] = useState<{totalDevices:number;onlineDevices:number;safetyRules:number;gateways:number;warningDevices:number}|null>(null);
+  const [liveStats, setLiveStats] = useState<{totalDevices:number;onlineDevices:number;safetyRules:number;gateways:number;warningDevices:number;countriesDeployed:number}|null>(null);
 
   useEffect(() => {
     getDashboardStats()
@@ -36,6 +36,7 @@ export function DashboardView() {
   const activeGateways = liveStats?.gateways ?? 0;
 
   const warningDevices = liveStats?.warningDevices ?? 0;
+  const countriesDeployed = liveStats?.countriesDeployed ?? stats.countries;
   const onlinePct = totalDevices > 0 ? Math.round((onlineDevices / totalDevices) * 100) : 0;
   const offlineCount = totalDevices - onlineDevices - warningDevices;
   const donutSegments = [
@@ -69,7 +70,7 @@ export function DashboardView() {
         </div>
         <div className="group relative overflow-hidden rounded-2xl">
           <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-accent-500/10 blur-2xl transition-all duration-500 group-hover:bg-accent-500/20" />
-          <StatCard label={t('dashboard.stat.countriesDeployed')} value={stats.countries} unit="/ 195" icon={<Globe2 size={20} />} trend={t('dashboard.trend.countriesAdded')} trendUp accent="accent" />
+          <StatCard label={t('dashboard.stat.countriesDeployed')} value={countriesDeployed} unit="/ 195" icon={<Globe2 size={20} />} trend={t('dashboard.trend.countriesAdded')} trendUp accent="accent" />
         </div>
       </div>
 
