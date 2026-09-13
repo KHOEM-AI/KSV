@@ -135,6 +135,7 @@ async function main() {
       if (!brain.proceed) {
         await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId ?? ""), {
           reason: brain.result.reasons.join("; "),
+        }, {
           matchedSignatures: brain.result.matchedSignatures,
         });
         res.status(400).json({

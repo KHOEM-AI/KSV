@@ -115,7 +115,8 @@ export async function auditDeviceCommand(
   commandType: string,
   result: AuditResult,
   organizationId?: string | null,
-  context?: AuditEntryInput["context"]
+  context?: AuditEntryInput["context"],
+  extraDetails?: Record<string, unknown>
 ): Promise<void> {
   return recordAuditEntry({
     userId,
@@ -124,7 +125,7 @@ export async function auditDeviceCommand(
     action: "device:command",
     result,
     context,
-    details: { commandType },
+    details: { commandType, ...extraDetails },
   });
 }
 
