@@ -1172,9 +1172,6 @@ const COMMAND_ALIASES: Array<{
     ],
   },
 
-_This response is too long to display in full._
-
-
 export const SELF_IDENTITY = Object.freeze({
   name: "KHOEM-AI",
   platform: "KSV",
@@ -2359,35 +2356,4 @@ export function evaluateCommand(
       blockedChecks,
       provenance: [
         createProvenance
-          "api_response", 
-
-_This response is too long to display in full._
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          "api_response",            
