@@ -1,23 +1,27 @@
-/**
- * KHOEM NOW — Global 195 Language / Vocabulary Data Layer
- * ------------------------------------------------------------------
- * This module contains data and small lookup/validation helpers only.
- *
- * Intent interpretation, reasoning, safety, authorization, and device
- * behavior belong in the Brain and service layers. This file must not:
- *   - dispatch commands;
- *   - grant permissions;
- *   - claim that a device is online;
- *   - infer physical execution; or
- *   - silently create a language-specific source file.
- *
- * Country codes use ISO 3166-1 alpha-2 style codes.
- * Language codes use ISO 639-1 where available.
- */
-
-// =====================================================================
-// 1. Public types
-// =====================================================================
+// ============================================================
+// KHOEM NOW — GLOBAL 195 LANGUAGE / VOCABULARY STANDARD
+// ============================================================
+// Purpose:
+//   Single global language + vocabulary data layer.
+//
+// Architecture:
+//   195 countries
+//      ↓
+//   Global languages / locales
+//      ↓
+//   Vocabulary categories
+//      ↓
+//   Terms + aliases
+//
+// IMPORTANT:
+//   This file contains DATA only.
+//   Intent / reasoning / behavior belongs in:
+//     - khoem-ai-brain.ts
+//     - khoem-ai-conduct.ts
+//
+// Do NOT create separate language files such as:
+//   khmer.ts, english.ts, thai.ts, etc.
+// ============================================================
 
 export type GlobalVocabularyCategory =
   | "greeting"
@@ -49,45 +53,40 @@ export type GlobalVocabularyCategory =
   | "common"
   | "slang";
 
-export interface GlobalCountryEntry {
-  code: string;
-  name: string;
-  languages: readonly string[];
-}
-
-export interface GlobalLanguageEntry {
+export type GlobalLanguageEntry = {
   code: string;
   name: string;
   nativeName: string;
   countries: readonly string[];
-}
+};
 
-export interface GlobalVocabularyEntry {
+export type GlobalVocabularyEntry = {
   term: string;
   language: string;
   countries: readonly string[];
   category: GlobalVocabularyCategory;
   aliases?: readonly string[];
-}
+};
 
-export interface VocabularyValidationResult {
-  valid: boolean;
-  count: number;
-  duplicateKeys: string[];
-  invalidCountryCodes: string[];
-  invalidLanguageCodes: string[];
-  reason: string;
-}
+//
+// ============================================================
+// GLOBAL LANGUAGE REGISTRY
+// ============================================================
+//
+// Country codes use ISO 3166-1 alpha-2 style codes.
+// Language codes use ISO 639-1 where available.
+//
+// One country can have multiple languages.
+// One language can exist across multiple countries.
+//
 
-export interface VocabularyMatch {
-  entry: GlobalVocabularyEntry;
-  matchedText: string;
-  matchedBy: "term" | "alias";
-}
 
-// =====================================================================
-// 2. Global country registry — exactly 195 entries
-// =====================================================================
+
+export type GlobalCountryEntry = {
+  code: string;
+  name: string;
+  languages: readonly string[];
+};
 
 export const GLOBAL_195_COUNTRIES: readonly GlobalCountryEntry[] = [
   { code: "AF", name: "Afghanistan", languages: ["ps", "fa"] },
@@ -289,191 +288,6 @@ export const GLOBAL_195_COUNTRIES: readonly GlobalCountryEntry[] = [
 
 export const GLOBAL_195_COUNTRY_COUNT = 195 as const;
 
-// =====================================================================
-// 3. Global language registry
-// =====================================================================
-
-type GlobalLanguageRow = readonly [
-  code: string,
-  name: string,
-  nativeName: string,
-  countries: readonly string[],
-];
-
-export const GLOBAL_LANGUAGES: readonly GlobalLanguageEntry[] = ([
-  ["km", "Khmer", "ខ្មែរ", ["KH"]],
-  ["en", "English", "English", ["US", "GB", "CA", "AU", "NZ", "IE", "ZA", "SG", "PH"]],
-  ["zh", "Chinese", "中文", ["CN", "TW", "SG", "MY"]],
-  ["es", "Spanish", "Español", ["ES", "MX", "GT", "HN", "SV", "NI", "CR", "PA", "CU", "DO", "CO", "VE", "EC", "PE", "BO", "PY", "CL", "AR", "UY"]],
-  ["fr", "French", "Français", ["FR", "BE", "CH", "CA", "LU", "MC", "SN", "CI", "CM"]],
-  ["ar", "Arabic", "العربية", ["SA", "AE", "EG", "IQ", "JO", "LB", "SY", "YE", "OM", "QA", "KW", "BH", "MA", "DZ", "TN", "LY", "SD", "SO", "DJ", "KM", "MR", "PS"]],
-  ["pt", "Portuguese", "Português", ["PT", "BR", "AO", "MZ", "CV", "GW", "ST", "TL"]],
-  ["ru", "Russian", "Русский", ["RU", "BY", "KZ", "KG"]],
-  ["de", "German", "Deutsch", ["DE", "AT", "CH", "LI", "LU"]],
-  ["it", "Italian", "Italiano", ["IT", "CH", "SM", "VA"]],
-  ["ja", "Japanese", "日本語", ["JP"]],
-  ["ko", "Korean", "한국어", ["KR", "KP"]],
-  ["vi", "Vietnamese", "Tiếng Việt", ["VN"]],
-  ["th", "Thai", "ไทย", ["TH"]],
-  ["lo", "Lao", "ລາວ", ["LA"]],
-  ["my", "Burmese", "မြန်မာ", ["MM"]],
-  ["id", "Indonesian", "Bahasa Indonesia", ["ID"]],
-  ["ms", "Malay", "Bahasa Melayu", ["MY", "BN", "SG"]],
-  ["tl", "Filipino", "Filipino", ["PH"]],
-  ["hi", "Hindi", "हिन्दी", ["IN"]],
-  ["bn", "Bengali", "বাংলা", ["BD", "IN"]],
-  ["ur", "Urdu", "اردو", ["PK", "IN"]],
-  ["pa", "Punjabi", "ਪੰਜਾਬੀ", ["PK", "IN"]],
-  ["ne", "Nepali", "नेपाली", ["NP", "IN"]],
-  ["si", "Sinhala", "සිංහල", ["LK"]],
-  ["ta", "Tamil", "தமிழ்", ["IN", "LK", "SG"]],
-  ["te", "Telugu", "తెలుగు", ["IN"]],
-  ["mr", "Marathi", "मराठी", ["IN"]],
-  ["gu", "Gujarati", "ગુજરાતી", ["IN"]],
-  ["kn", "Kannada", "ಕನ್ನಡ", ["IN"]],
-  ["ml", "Malayalam", "മലയാളം", ["IN"]],
-  ["tr", "Turkish", "Türkçe", ["TR", "CY"]],
-  ["fa", "Persian", "فارسی", ["IR", "AF", "TJ"]],
-  ["he", "Hebrew", "עברית", ["IL"]],
-  ["sw", "Swahili", "Kiswahili", ["TZ", "KE", "UG", "RW", "BI", "CD"]],
-  ["am", "Amharic", "አማርኛ", ["ET"]],
-  ["so", "Somali", "Soomaali", ["SO", "DJ", "ET", "KE"]],
-  ["ha", "Hausa", "Hausa", ["NG", "NE", "GH"]],
-  ["yo", "Yoruba", "Yorùbá", ["NG", "BJ"]],
-  ["ig", "Igbo", "Igbo", ["NG"]],
-  ["zu", "Zulu", "isiZulu", ["ZA"]],
-  ["af", "Afrikaans", "Afrikaans", ["ZA", "NA"]],
-  ["nl", "Dutch", "Nederlands", ["NL", "BE", "SR"]],
-  ["pl", "Polish", "Polski", ["PL"]],
-  ["uk", "Ukrainian", "Українська", ["UA"]],
-  ["cs", "Czech", "Čeština", ["CZ"]],
-  ["sk", "Slovak", "Slovenčina", ["SK"]],
-  ["hu", "Hungarian", "Magyar", ["HU"]],
-  ["ro", "Romanian", "Română", ["RO", "MD"]],
-  ["bg", "Bulgarian", "Български", ["BG"]],
-  ["sr", "Serbian", "Српски", ["RS", "BA", "ME"]],
-  ["hr", "Croatian", "Hrvatski", ["HR", "BA"]],
-  ["sl", "Slovenian", "Slovenščina", ["SI"]],
-  ["el", "Greek", "Ελληνικά", ["GR", "CY"]],
-  ["sv", "Swedish", "Svenska", ["SE", "FI"]],
-  ["no", "Norwegian", "Norsk", ["NO"]],
-  ["da", "Danish", "Dansk", ["DK"]],
-  ["fi", "Finnish", "Suomi", ["FI"]],
-  ["et", "Estonian", "Eesti", ["EE"]],
-  ["lv", "Latvian", "Latviešu", ["LV"]],
-  ["lt", "Lithuanian", "Lietuvių", ["LT"]],
-  ["is", "Icelandic", "Íslenska", ["IS"]],
-  ["ga", "Irish", "Gaeilge", ["IE"]],
-  ["mt", "Maltese", "Malti", ["MT"]],
-  ["sq", "Albanian", "Shqip", ["AL", "XK"]],
-  ["mk", "Macedonian", "Македонски", ["MK"]],
-  ["bs", "Bosnian", "Bosanski", ["BA"]],
-  ["ka", "Georgian", "ქართული", ["GE"]],
-  ["hy", "Armenian", "Հայերեն", ["AM"]],
-  ["az", "Azerbaijani", "Azərbaycan dili", ["AZ"]],
-  ["kk", "Kazakh", "Қазақша", ["KZ"]],
-  ["uz", "Uzbek", "Oʻzbekcha", ["UZ"]],
-  ["tk", "Turkmen", "Türkmençe", ["TM"]],
-  ["ky", "Kyrgyz", "Кыргызча", ["KG"]],
-  ["tg", "Tajik", "Тоҷикӣ", ["TJ"]],
-  ["mn", "Mongolian", "Монгол", ["MN"]],
-  ["ps", "Pashto", "پښتو", ["AF", "PK"]],
-  ["ku", "Kurdish", "Kurdî", ["TR", "IQ", "IR", "SY"]],
-  ["la", "Latin", "Latina", ["VA"]],
-  ["ca", "Catalan", "Català", ["AD"]],
-  ["be", "Belarusian", "Беларуская", ["BY"]],
-  ["dz", "Dzongkha", "རྫོང་ཁ", ["BT"]],
-  ["rn", "Kirundi", "Ikirundi", ["BI"]],
-  ["sg", "Sango", "Sängö", ["CF"]],
-  ["fj", "Fijian", "Na Vosa Vakaviti", ["FJ"]],
-  ["ss", "Swazi", "siSwati", ["SZ"]],
-  ["gil", "Gilbertese", "Taetae ni Kiribati", ["KI"]],
-  ["ht", "Haitian Creole", "Kreyòl ayisyen", ["HT"]],
-  ["st", "Southern Sotho", "Sesotho", ["LS"]],
-  ["lb", "Luxembourgish", "Lëtzebuergesch", ["LU"]],
-  ["mg", "Malagasy", "Malagasy", ["MG"]],
-  ["ny", "Chichewa", "Chichewa", ["MW"]],
-  ["dv", "Dhivehi", "ދިވެހި", ["MV"]],
-  ["mh", "Marshallese", "Kajin M̧ajeļ", ["MH"]],
-  ["na", "Nauruan", "Dorerin Naoero", ["NR"]],
-  ["mi", "Māori", "Māori", ["NZ"]],
-  ["tpi", "Tok Pisin", "Tok Pisin", ["PG"]],
-  ["ho", "Hiri Motu", "Hiri Motu", ["PG"]],
-  ["gn", "Guarani", "Avañe'ẽ", ["PY"]],
-  ["rw", "Kinyarwanda", "Ikinyarwanda", ["RW"]],
-  ["sm", "Samoan", "Gagana Samoa", ["WS"]],
-  ["tet", "Tetum", "Tetun", ["TL"]],
-  ["to", "Tongan", "Lea faka-Tonga", ["TO"]],
-  ["bi", "Bislama", "Bislama", ["VU"]],
-  ["sn", "Shona", "chiShona", ["ZW"]],
- ] as readonly GlobalLanguageRow[]).map(([code, name, nativeName, countries]) => ({
-  code,
-  name,
-  nativeName,
-  countries,
-})) as readonly GlobalLanguageEntry[];
-
-// =====================================================================
-// 4. Vocabulary seed
-// =====================================================================
-
-export const GLOBAL_195_VOCABULARY: readonly GlobalVocabularyEntry[] = [
-  // Khmer
-  { term: "សួស្តី", language: "km", countries: ["KH"], category: "greeting", aliases: ["សួស្ដី"] },
-  { term: "អរគុណ", language: "km", countries: ["KH"], category: "common" },
-  { term: "បាទ", language: "km", countries: ["KH"], category: "answer" },
-  { term: "ចាស", language: "km", countries: ["KH"], category: "answer" },
-  { term: "សូម", language: "km", countries: ["KH"], category: "common" },
-  { term: "ជួយ", language: "km", countries: ["KH"], category: "command" },
-
-  // English
-  { term: "hello", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "greeting", aliases: ["hi", "hey"] },
-  { term: "thanks", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "common", aliases: ["thank you"] },
-  { term: "yes", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "answer" },
-  { term: "no", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "answer" },
-  { term: "please", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "common" },
-  { term: "help", language: "en", countries: ["US", "GB", "CA", "AU", "NZ"], category: "command" },
-
-  // Common seed terms from the recovered document
-  { term: "สวัสดี", language: "th", countries: ["TH"], category: "greeting" },
-  { term: "xin chào", language: "vi", countries: ["VN"], category: "greeting" },
-  { term: "你好", language: "zh", countries: ["CN", "TW", "SG", "MY"], category: "greeting" },
-  { term: "こんにちは", language: "ja", countries: ["JP"], category: "greeting" },
-  { term: "안녕하세요", language: "ko", countries: ["KR", "KP"], category: "greeting" },
-  { term: "hola", language: "es", countries: ["ES", "MX", "AR", "CO", "CL", "PE"], category: "greeting" },
-  { term: "bonjour", language: "fr", countries: ["FR", "BE", "CH", "CA"], category: "greeting" },
-  { term: "hallo", language: "de", countries: ["DE", "AT", "CH"], category: "greeting" },
-  { term: "ciao", language: "it", countries: ["IT", "CH"], category: "greeting" },
-  { term: "olá", language: "pt", countries: ["PT", "BR", "AO", "MZ"], category: "greeting" },
-  { term: "привет", language: "ru", countries: ["RU", "BY", "KZ", "KG"], category: "greeting" },
-  { term: "مرحبا", language: "ar", countries: ["SA", "AE", "EG", "JO", "LB"], category: "greeting" },
-  { term: "halo", language: "id", countries: ["ID"], category: "greeting" },
-  { term: "selamat", language: "ms", countries: ["MY", "BN", "SG"], category: "greeting" },
-  { term: "kumusta", language: "tl", countries: ["PH"], category: "greeting" },
-  { term: "नमस्ते", language: "hi", countries: ["IN"], category: "greeting" },
-  { term: "হ্যালো", language: "bn", countries: ["BD", "IN"], category: "greeting" },
-  { term: "merhaba", language: "tr", countries: ["TR", "CY"], category: "greeting" },
-  { term: "سلام", language: "fa", countries: ["IR", "AF", "TJ"], category: "greeting" },
-  { term: "habari", language: "sw", countries: ["TZ", "KE", "UG", "RW", "BI", "CD"], category: "greeting" },
-  { term: "ሰላም", language: "am", countries: ["ET"], category: "greeting" },
-] as const;
-
-// =====================================================================
-// 5. Country and language lookup helpers
-// =====================================================================
-
-function normalizeCode(value: string): string {
-  return value.trim().toUpperCase();
-}
-
-function normalizeLanguage(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function normalizeSearchText(value: string): string {
-  return value.normalize("NFKC").trim().toLocaleLowerCase();
-}
-
 export function getGlobalCountries(): readonly GlobalCountryEntry[] {
   return GLOBAL_195_COUNTRIES;
 }
@@ -481,164 +295,31 @@ export function getGlobalCountries(): readonly GlobalCountryEntry[] {
 export function getCountryByCode(
   code: string,
 ): GlobalCountryEntry | undefined {
-  const normalizedCode = normalizeCode(code);
-  return GLOBAL_195_COUNTRIES.find((country) => country.code === normalizedCode);
+  const normalizedCode = code.trim().toUpperCase();
+  return GLOBAL_195_COUNTRIES.find(
+    (country) => country.code === normalizedCode,
+  );
 }
 
 export function isGlobal195CountryCode(code: string): boolean {
   return getCountryByCode(code) !== undefined;
 }
 
-export function getCountryCodes(): readonly string[] {
-  return GLOBAL_195_COUNTRIES.map((country) => country.code);
-}
-
 export function getCountriesByLanguage(
   language: string,
 ): readonly GlobalCountryEntry[] {
-  const normalizedLanguage = normalizeLanguage(language);
+  const normalizedLanguage = language.trim().toLowerCase();
   return GLOBAL_195_COUNTRIES.filter((country) =>
-    country.languages.includes(normalizedLanguage),
+    country.languages.some(
+      (countryLanguage) =>
+        countryLanguage.toLowerCase() === normalizedLanguage,
+    ),
   );
 }
 
-export function getGlobalLanguages(): readonly GlobalLanguageEntry[] {
-  return GLOBAL_LANGUAGES;
+export function getCountryCodes(): readonly string[] {
+  return GLOBAL_195_COUNTRIES.map((country) => country.code);
 }
-
-export function getLanguageByCode(
-  language: string,
-): GlobalLanguageEntry | undefined {
-  const normalizedLanguage = normalizeLanguage(language);
-  return GLOBAL_LANGUAGES.find((entry) => entry.code === normalizedLanguage);
-}
-
-export function isSupportedLanguage(language: string): boolean {
-  return getLanguageByCode(language) !== undefined;
-}
-
-export function getLanguagesForCountry(
-  countryCode: string,
-): readonly GlobalLanguageEntry[] {
-  const normalizedCountry = normalizeCode(countryCode);
-  return GLOBAL_LANGUAGES.filter((language) =>
-    language.countries.includes(normalizedCountry),
-  );
-}
-
-// =====================================================================
-// 6. Vocabulary lookup helpers
-// =====================================================================
-
-export function getVocabularyByLanguage(
-  language: string,
-): readonly GlobalVocabularyEntry[] {
-  const normalizedLanguage = normalizeLanguage(language);
-  return GLOBAL_195_VOCABULARY.filter(
-    (entry) => entry.language === normalizedLanguage,
-  );
-}
-
-export function getVocabularyByCategory(
-  category: GlobalVocabularyCategory,
-): readonly GlobalVocabularyEntry[] {
-  return GLOBAL_195_VOCABULARY.filter((entry) => entry.category === category);
-}
-
-export function getVocabularyByCountry(
-  countryCode: string,
-): readonly GlobalVocabularyEntry[] {
-  const normalizedCountry = normalizeCode(countryCode);
-  return GLOBAL_195_VOCABULARY.filter((entry) =>
-    entry.countries.includes(normalizedCountry),
-  );
-}
-
-export function searchGlobalVocabulary(
-  query: string,
-  options: {
-    language?: string;
-    category?: GlobalVocabularyCategory;
-    countryCode?: string;
-  } = {},
-): readonly VocabularyMatch[] {
-  const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return [];
-
-  const language = options.language
-    ? normalizeLanguage(options.language)
-    : undefined;
-  const countryCode = options.countryCode
-    ? normalizeCode(options.countryCode)
-    : undefined;
-
-  const matches: VocabularyMatch[] = [];
-
-  for (const entry of GLOBAL_195_VOCABULARY) {
-    if (language && entry.language !== language) continue;
-    if (options.category && entry.category !== options.category) continue;
-    if (countryCode && !entry.countries.includes(countryCode)) continue;
-
-    const candidates = [
-      { text: entry.term, matchedBy: "term" as const },
-      ...(entry.aliases ?? []).map((text) => ({
-        text,
-        matchedBy: "alias" as const,
-      })),
-    ];
-
-    for (const candidate of candidates) {
-      if (normalizeSearchText(candidate.text).includes(normalizedQuery)) {
-        matches.push({
-          entry,
-          matchedText: candidate.text,
-          matchedBy: candidate.matchedBy,
-        });
-      }
-    }
-  }
-
-  return matches;
-}
-
-export function findVocabularyForText(
-  text: string,
-  language?: string,
-): readonly VocabularyMatch[] {
-  const normalizedText = normalizeSearchText(text);
-  if (!normalizedText) return [];
-
-  const languageFilter = language ? normalizeLanguage(language) : undefined;
-  const matches: VocabularyMatch[] = [];
-
-  for (const entry of GLOBAL_195_VOCABULARY) {
-    if (languageFilter && entry.language !== languageFilter) continue;
-
-    const candidates = [
-      { text: entry.term, matchedBy: "term" as const },
-      ...(entry.aliases ?? []).map((candidate) => ({
-        text: candidate,
-        matchedBy: "alias" as const,
-      })),
-    ];
-
-    for (const candidate of candidates) {
-      if (normalizedText.includes(normalizeSearchText(candidate.text))) {
-        matches.push({
-          entry,
-          matchedText: candidate.text,
-          matchedBy: candidate.matchedBy,
-        });
-      }
-    }
-  }
-
-  return matches;
-}
-
-// =====================================================================
-// 7. Registry validation
-// =====================================================================
 
 export function validateGlobal195CountryRegistry(): {
   valid: boolean;
@@ -647,66 +328,789 @@ export function validateGlobal195CountryRegistry(): {
   reason: string;
 } {
   const codes = GLOBAL_195_COUNTRIES.map((country) => country.code);
-  const duplicateCodes = [
-    ...new Set(
-      codes.filter((code, index) => codes.indexOf(code) !== index),
-    ),
-  ];
-  const countIsCorrect = GLOBAL_195_COUNTRIES.length === GLOBAL_195_COUNTRY_COUNT;
-  const valid = countIsCorrect && duplicateCodes.length === 0;
+  const duplicateCodes = codes.filter(
+    (code, index) => codes.indexOf(code) !== index,
+  );
+  const uniqueDuplicateCodes = [...new Set(duplicateCodes)];
+  const countIsCorrect = GLOBAL_195_COUNTRIES.length === 195;
+  const hasDuplicates = uniqueDuplicateCodes.length > 0;
 
   return {
-    valid,
+    valid: countIsCorrect && !hasDuplicates,
     count: GLOBAL_195_COUNTRIES.length,
-    duplicateCodes,
-    reason: valid
-      ? "The country registry contains 195 unique country codes."
-      : "The country registry requires correction.",
+    duplicateCodes: uniqueDuplicateCodes,
+    reason:
+      countIsCorrect && !hasDuplicates
+        ? "The country registry contains 195 unique country codes."
+        : "The country registry requires correction.",
   };
 }
 
-export function validateVocabularyRegistry(): VocabularyValidationResult {
-  const countryCodes = new Set(getCountryCodes());
-  const languageCodes = new Set(GLOBAL_LANGUAGES.map((entry) => entry.code));
-  const keySet = new Set<string>();
-  const duplicateKeys: string[] = [];
-  const invalidCountryCodes: string[] = [];
-  const invalidLanguageCodes: string[] = [];
+export const GLOBAL_LANGUAGES: readonly GlobalLanguageEntry[] = [
+  {
+    code: "km",
+    name: "Khmer",
+    nativeName: "ខ្មែរ",
+    countries: ["KH"],
+  },
+  {
+    code: "en",
+    name: "English",
+    nativeName: "English",
+    countries: ["US", "GB", "CA", "AU", "NZ", "IE", "ZA", "SG", "PH"],
+  },
+  {
+    code: "zh",
+    name: "Chinese",
+    nativeName: "中文",
+    countries: ["CN", "TW", "SG", "MY"],
+  },
+  {
+    code: "es",
+    name: "Spanish",
+    nativeName: "Español",
+    countries: [
+      "ES", "MX", "GT", "HN", "SV", "NI", "CR", "PA",
+      "CU", "DO", "PR", "CO", "VE", "EC", "PE", "BO",
+      "PY", "CL", "AR", "UY"
+    ],
+  },
+  {
+    code: "fr",
+    name: "French",
+    nativeName: "Français",
+    countries: ["FR", "BE", "CH", "CA", "LU", "MC", "SN", "CI", "CM"],
+  },
+  {
+    code: "ar",
+    name: "Arabic",
+    nativeName: "العربية",
+    countries: [
+      "SA", "AE", "EG", "IQ", "JO", "LB", "SY", "YE",
+      "OM", "QA", "KW", "BH", "MA", "DZ", "TN", "LY",
+      "SD", "SO", "DJ", "KM", "MR", "PS"
+    ],
+  },
+  {
+    code: "pt",
+    name: "Portuguese",
+    nativeName: "Português",
+    countries: ["PT", "BR", "AO", "MZ", "CV", "GW", "ST", "TL"],
+  },
+  {
+    code: "ru",
+    name: "Russian",
+    nativeName: "Русский",
+    countries: ["RU", "BY", "KZ", "KG"],
+  },
+  {
+    code: "de",
+    name: "German",
+    nativeName: "Deutsch",
+    countries: ["DE", "AT", "CH", "LI", "LU"],
+  },
+  {
+    code: "it",
+    name: "Italian",
+    nativeName: "Italiano",
+    countries: ["IT", "CH", "SM", "VA"],
+  },
+  {
+    code: "ja",
+    name: "Japanese",
+    nativeName: "日本語",
+    countries: ["JP"],
+  },
+  {
+    code: "ko",
+    name: "Korean",
+    nativeName: "한국어",
+    countries: ["KR", "KP"],
+  },
+  {
+    code: "vi",
+    name: "Vietnamese",
+    nativeName: "Tiếng Việt",
+    countries: ["VN"],
+  },
+  {
+    code: "th",
+    name: "Thai",
+    nativeName: "ไทย",
+    countries: ["TH"],
+  },
+  {
+    code: "lo",
+    name: "Lao",
+    nativeName: "ລາວ",
+    countries: ["LA"],
+  },
+  {
+    code: "my",
+    name: "Burmese",
+    nativeName: "မြန်မာ",
+    countries: ["MM"],
+  },
+  {
+    code: "id",
+    name: "Indonesian",
+    nativeName: "Bahasa Indonesia",
+    countries: ["ID"],
+  },
+  {
+    code: "ms",
+    name: "Malay",
+    nativeName: "Bahasa Melayu",
+    countries: ["MY", "BN", "SG"],
+  },
+  {
+    code: "tl",
+    name: "Filipino",
+    nativeName: "Filipino",
+    countries: ["PH"],
+  },
+  {
+    code: "hi",
+    name: "Hindi",
+    nativeName: "हिन्दी",
+    countries: ["IN"],
+  },
+  {
+    code: "bn",
+    name: "Bengali",
+    nativeName: "বাংলা",
+    countries: ["BD", "IN"],
+  },
+  {
+    code: "ur",
+    name: "Urdu",
+    nativeName: "اردو",
+    countries: ["PK", "IN"],
+  },
+  {
+    code: "pa",
+    name: "Punjabi",
+    nativeName: "ਪੰਜਾਬੀ",
+    countries: ["PK", "IN"],
+  },
+  {
+    code: "ne",
+    name: "Nepali",
+    nativeName: "नेपाली",
+    countries: ["NP", "IN"],
+  },
+  {
+    code: "si",
+    name: "Sinhala",
+    nativeName: "සිංහල",
+    countries: ["LK"],
+  },
+  {
+    code: "ta",
+    name: "Tamil",
+    nativeName: "தமிழ்",
+    countries: ["IN", "LK", "SG"],
+  },
+  {
+    code: "te",
+    name: "Telugu",
+    nativeName: "తెలుగు",
+    countries: ["IN"],
+  },
+  {
+    code: "mr",
+    name: "Marathi",
+    nativeName: "मराठी",
+    countries: ["IN"],
+  },
+  {
+    code: "gu",
+    name: "Gujarati",
+    nativeName: "ગુજરાતી",
+    countries: ["IN"],
+  },
+  {
+    code: "kn",
+    name: "Kannada",
+    nativeName: "ಕನ್ನಡ",
+    countries: ["IN"],
+  },
+  {
+    code: "ml",
+    name: "Malayalam",
+    nativeName: "മലയാളം",
+    countries: ["IN"],
+  },
+  {
+    code: "tr",
+    name: "Turkish",
+    nativeName: "Türkçe",
+    countries: ["TR", "CY"],
+  },
+  {
+    code: "fa",
+    name: "Persian",
+    nativeName: "فارسی",
+    countries: ["IR", "AF", "TJ"],
+  },
+  {
+    code: "he",
+    name: "Hebrew",
+    nativeName: "עברית",
+    countries: ["IL"],
+  },
+  {
+    code: "sw",
+    name: "Swahili",
+    nativeName: "Kiswahili",
+    countries: ["TZ", "KE", "UG", "RW", "BI", "CD"],
+  },
+  {
+    code: "am",
+    name: "Amharic",
+    nativeName: "አማርኛ",
+    countries: ["ET"],
+  },
+  {
+    code: "so",
+    name: "Somali",
+    nativeName: "Soomaali",
+    countries: ["SO", "DJ", "ET", "KE"],
+  },
+  {
+    code: "ha",
+    name: "Hausa",
+    nativeName: "Hausa",
+    countries: ["NG", "NE", "GH"],
+  },
+  {
+    code: "yo",
+    name: "Yoruba",
+    nativeName: "Yorùbá",
+    countries: ["NG", "BJ"],
+  },
+  {
+    code: "ig",
+    name: "Igbo",
+    nativeName: "Igbo",
+    countries: ["NG"],
+  },
+  {
+    code: "zu",
+    name: "Zulu",
+    nativeName: "isiZulu",
+    countries: ["ZA"],
+  },
+  {
+    code: "af",
+    name: "Afrikaans",
+    nativeName: "Afrikaans",
+    countries: ["ZA", "NA"],
+  },
+  {
+    code: "nl",
+    name: "Dutch",
+    nativeName: "Nederlands",
+    countries: ["NL", "BE", "SR"],
+  },
+  {
+    code: "pl",
+    name: "Polish",
+    nativeName: "Polski",
+    countries: ["PL"],
+  },
+  {
+    code: "uk",
+    name: "Ukrainian",
+    nativeName: "Українська",
+    countries: ["UA"],
+  },
+  {
+    code: "cs",
+    name: "Czech",
+    nativeName: "Čeština",
+    countries: ["CZ"],
+  },
+  {
+    code: "sk",
+    name: "Slovak",
+    nativeName: "Slovenčina",
+    countries: ["SK"],
+  },
+  {
+    code: "hu",
+    name: "Hungarian",
+    nativeName: "Magyar",
+    countries: ["HU"],
+  },
+  {
+    code: "ro",
+    name: "Romanian",
+    nativeName: "Română",
+    countries: ["RO", "MD"],
+  },
+  {
+    code: "bg",
+    name: "Bulgarian",
+    nativeName: "Български",
+    countries: ["BG"],
+  },
+  {
+    code: "sr",
+    name: "Serbian",
+    nativeName: "Српски",
+    countries: ["RS", "BA", "ME"],
+  },
+  {
+    code: "hr",
+    name: "Croatian",
+    nativeName: "Hrvatski",
+    countries: ["HR", "BA"],
+  },
+  {
+    code: "sl",
+    name: "Slovenian",
+    nativeName: "Slovenščina",
+    countries: ["SI"],
+  },
+  {
+    code: "el",
+    name: "Greek",
+    nativeName: "Ελληνικά",
+    countries: ["GR", "CY"],
+  },
+  {
+    code: "sv",
+    name: "Swedish",
+    nativeName: "Svenska",
+    countries: ["SE", "FI"],
+  },
+  {
+    code: "no",
+    name: "Norwegian",
+    nativeName: "Norsk",
+    countries: ["NO"],
+  },
+  {
+    code: "da",
+    name: "Danish",
+    nativeName: "Dansk",
+    countries: ["DK"],
+  },
+  {
+    code: "fi",
+    name: "Finnish",
+    nativeName: "Suomi",
+    countries: ["FI"],
+  },
+  {
+    code: "et",
+    name: "Estonian",
+    nativeName: "Eesti",
+    countries: ["EE"],
+  },
+  {
+    code: "lv",
+    name: "Latvian",
+    nativeName: "Latviešu",
+    countries: ["LV"],
+  },
+  {
+    code: "lt",
+    name: "Lithuanian",
+    nativeName: "Lietuvių",
+    countries: ["LT"],
+  },
+  {
+    code: "is",
+    name: "Icelandic",
+    nativeName: "Íslenska",
+    countries: ["IS"],
+  },
+  {
+    code: "ga",
+    name: "Irish",
+    nativeName: "Gaeilge",
+    countries: ["IE"],
+  },
+  {
+    code: "mt",
+    name: "Maltese",
+    nativeName: "Malti",
+    countries: ["MT"],
+  },
+  {
+    code: "sq",
+    name: "Albanian",
+    nativeName: "Shqip",
+    countries: ["AL", "XK"],
+  },
+  {
+    code: "mk",
+    name: "Macedonian",
+    nativeName: "Македонски",
+    countries: ["MK"],
+  },
+  {
+    code: "bs",
+    name: "Bosnian",
+    nativeName: "Bosanski",
+    countries: ["BA"],
+  },
+  {
+    code: "ka",
+    name: "Georgian",
+    nativeName: "ქართული",
+    countries: ["GE"],
+  },
+  {
+    code: "hy",
+    name: "Armenian",
+    nativeName: "Հայերեն",
+    countries: ["AM"],
+  },
+  {
+    code: "az",
+    name: "Azerbaijani",
+    nativeName: "Azərbaycan dili",
+    countries: ["AZ"],
+  },
+  {
+    code: "kk",
+    name: "Kazakh",
+    nativeName: "Қазақша",
+    countries: ["KZ"],
+  },
+  {
+    code: "uz",
+    name: "Uzbek",
+    nativeName: "Oʻzbekcha",
+    countries: ["UZ"],
+  },
+  {
+    code: "tk",
+    name: "Turkmen",
+    nativeName: "Türkmençe",
+    countries: ["TM"],
+  },
+  {
+    code: "ky",
+    name: "Kyrgyz",
+    nativeName: "Кыргызча",
+    countries: ["KG"],
+  },
+  {
+    code: "tg",
+    name: "Tajik",
+    nativeName: "Тоҷикӣ",
+    countries: ["TJ"],
+  },
+  {
+    code: "mn",
+    name: "Mongolian",
+    nativeName: "Монгол",
+    countries: ["MN"],
+  },
 
-  for (const entry of GLOBAL_195_VOCABULARY) {
-    const key = `${entry.language}:${entry.category}:${entry.term}`;
-    if (keySet.has(key)) duplicateKeys.push(key);
-    keySet.add(key);
+  {
+    code: "ps",
+    name: "Pashto",
+    nativeName: "پښتو",
+    countries: ["AF", "PK"],
+  },
+  {
+    code: "ku",
+    name: "Kurdish",
+    nativeName: "Kurdî",
+    countries: ["TR", "IQ", "IR", "SY"],
+  },
 
-    if (!languageCodes.has(entry.language)) {
-      invalidLanguageCodes.push(entry.language);
-    }
+  {
+    code: "la",
+    name: "Latin",
+    nativeName: "Latina",
+    countries: ["VA"],
+  },
+] as const;
 
-    for (const country of entry.countries) {
-      if (!countryCodes.has(country)) invalidCountryCodes.push(country);
-    }
-  }
+//
+// ============================================================
+// GLOBAL VOCABULARY SEED
+// ============================================================
+// This is the initial seed.
+// The architecture is intentionally expandable.
+// Do not place intent logic here.
+//
 
-  const uniqueInvalidCountries = [...new Set(invalidCountryCodes)];
-  const uniqueInvalidLanguages = [...new Set(invalidLanguageCodes)];
-  const uniqueDuplicates = [...new Set(duplicateKeys)];
-  const valid =
-    uniqueDuplicates.length === 0 &&
-    uniqueInvalidCountries.length === 0 &&
-    uniqueInvalidLanguages.length === 0;
+export const GLOBAL_195_VOCABULARY: readonly GlobalVocabularyEntry[] = [
+  // Khmer
+  {
+    term: "សួស្តី",
+    language: "km",
+    countries: ["KH"],
+    category: "greeting",
+    aliases: ["សួស្ដី"],
+  },
+  {
+    term: "អរគុណ",
+    language: "km",
+    countries: ["KH"],
+    category: "common",
+  },
+  {
+    term: "បាទ",
+    language: "km",
+    countries: ["KH"],
+    category: "answer",
+  },
+  {
+    term: "ចាស",
+    language: "km",
+    countries: ["KH"],
+    category: "answer",
+  },
+  {
+    term: "សូម",
+    language: "km",
+    countries: ["KH"],
+    category: "common",
+  },
+  {
+    term: "ជួយ",
+    language: "km",
+    countries: ["KH"],
+    category: "command",
+  },
 
-  return {
-    valid,
-    count: GLOBAL_195_VOCABULARY.length,
-    duplicateKeys: uniqueDuplicates,
-    invalidCountryCodes: uniqueInvalidCountries,
-    invalidLanguageCodes: uniqueInvalidLanguages,
-    reason: valid
-      ? "The vocabulary seed has unique keys and valid country/language references."
-      : "The vocabulary seed requires correction.",
-  };
+  // English
+  {
+    term: "hello",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "greeting",
+    aliases: ["hi", "hey"],
+  },
+  {
+    term: "thanks",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "common",
+    aliases: ["thank you"],
+  },
+  {
+    term: "yes",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "answer",
+  },
+  {
+    term: "no",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "answer",
+  },
+  {
+    term: "please",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "common",
+  },
+  {
+    term: "help",
+    language: "en",
+    countries: ["US", "GB", "CA", "AU", "NZ"],
+    category: "command",
+  },
+
+  // Thai
+  {
+    term: "สวัสดี",
+    language: "th",
+    countries: ["TH"],
+    category: "greeting",
+  },
+
+  // Vietnamese
+  {
+    term: "xin chào",
+    language: "vi",
+    countries: ["VN"],
+    category: "greeting",
+  },
+
+  // Chinese
+  {
+    term: "你好",
+    language: "zh",
+    countries: ["CN", "TW", "SG", "MY"],
+    category: "greeting",
+  },
+
+  // Japanese
+  {
+    term: "こんにちは",
+    language: "ja",
+    countries: ["JP"],
+    category: "greeting",
+  },
+
+  // Korean
+  {
+    term: "안녕하세요",
+    language: "ko",
+    countries: ["KR", "KP"],
+    category: "greeting",
+  },
+
+  // Spanish
+  {
+    term: "hola",
+    language: "es",
+    countries: ["ES", "MX", "AR", "CO", "CL", "PE"],
+    category: "greeting",
+  },
+
+  // French
+  {
+    term: "bonjour",
+    language: "fr",
+    countries: ["FR", "BE", "CH", "CA"],
+    category: "greeting",
+  },
+
+  // German
+  {
+    term: "hallo",
+    language: "de",
+    countries: ["DE", "AT", "CH"],
+    category: "greeting",
+  },
+
+  // Italian
+  {
+    term: "ciao",
+    language: "it",
+    countries: ["IT", "CH"],
+    category: "greeting",
+  },
+
+  // Portuguese
+  {
+    term: "olá",
+    language: "pt",
+    countries: ["PT", "BR", "AO", "MZ"],
+    category: "greeting",
+  },
+
+  // Russian
+  {
+    term: "привет",
+    language: "ru",
+    countries: ["RU", "BY", "KZ", "KG"],
+    category: "greeting",
+  },
+
+  // Arabic
+  {
+    term: "مرحبا",
+    language: "ar",
+    countries: ["SA", "AE", "EG", "JO", "LB"],
+    category: "greeting",
+  },
+
+  // Indonesian
+  {
+    term: "halo",
+    language: "id",
+    countries: ["ID"],
+    category: "greeting",
+  },
+
+  // Malay
+  {
+    term: "selamat",
+    language: "ms",
+    countries: ["MY", "BN", "SG"],
+    category: "greeting",
+  },
+
+  // Filipino
+  {
+    term: "kumusta",
+    language: "tl",
+    countries: ["PH"],
+    category: "greeting",
+  },
+
+  // Hindi
+  {
+    term: "नमस्ते",
+    language: "hi",
+    countries: ["IN"],
+    category: "greeting",
+  },
+
+  // Bengali
+  {
+    term: "হ্যালো",
+    language: "bn",
+    countries: ["BD", "IN"],
+    category: "greeting",
+  },
+
+  // Turkish
+  {
+    term: "merhaba",
+    language: "tr",
+    countries: ["TR", "CY"],
+    category: "greeting",
+  },
+
+  // Persian
+  {
+    term: "سلام",
+    language: "fa",
+    countries: ["IR", "AF", "TJ"],
+    category: "greeting",
+  },
+
+  // Swahili
+  {
+    term: "habari",
+    language: "sw",
+    countries: ["TZ", "KE", "UG", "RW", "BI", "CD"],
+    category: "greeting",
+  },
+
+  // Amharic
+  {
+    term: "ሰላም",
+    language: "am",
+    countries: ["ET"],
+    category: "greeting",
+  },
+] as const;
+
+// ============================================================
+// Helpers
+// ============================================================
+
+export function getGlobalLanguages(): readonly GlobalLanguageEntry[] {
+  return GLOBAL_LANGUAGES;
 }
 
-export const GLOBAL_LANGUAGE_COUNT = GLOBAL_LANGUAGES.length as number;
-export const GLOBAL_VOCABULARY_SEED_COUNT =
-  GLOBAL_195_VOCABULARY.length as number;
+export function getVocabularyByLanguage(
+  language: string,
+): readonly GlobalVocabularyEntry[] {
+  return GLOBAL_195_VOCABULARY.filter(
+    (entry) => entry.language.toLowerCase() === language.toLowerCase(),
+  );
+}
+
+export function getVocabularyByCategory(
+  category: GlobalVocabularyCategory,
+): readonly GlobalVocabularyEntry[] {
+  return GLOBAL_195_VOCABULARY.filter(
+    (entry) => entry.category === category,
+  );
+}
