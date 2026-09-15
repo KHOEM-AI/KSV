@@ -1022,6 +1022,19 @@ export function interpretIntent(input: {
     };
   }
 
+  const greetingPattern =
+    /(?:\b(?:hello|hi|hey|howdy|good morning|good afternoon|good evening)\b|សួស្តី|សួស្ដី|សួរស្តី|សួរស្ដី|ជំរាបសួរ|អរុណសួស្តី|你好|您好|嗨|hola|bonjour|salut|hallo|ciao|olá|привет|नमस्ते|안녕하세요)/iu;
+
+  if (greetingPattern.test(lowered)) {
+    return {
+      intent: "greeting",
+      confidence: 0.99,
+      requiresClarification: false,
+      reason: "A greeting was detected.",
+      matchedPhrases: ["greeting"],
+    };
+  }
+
   if (alias.commandType) {
     const readOnly = READ_ONLY_COMMANDS.has(alias.commandType);
     return {
@@ -1701,6 +1714,19 @@ export function analyze(input: AnalysisInput): AnalysisResult {
       useKhmerReply
         ? "ខ្ញុំមិនអាចកំណត់សកម្មភាពសុវត្ថិភាពពីសំណើនេះបានទេ។"
         : "I cannot determine a safe action from this request.",
+      factors,
+    );
+  }
+
+  if (intentResult.intent === "greeting") {
+    decision = makeDecision(
+      "allow",
+      threatFromScore(score),
+      score,
+      "A greeting was detected.",
+      useKhmerReply
+        ? "សួស្តីបង! ខ្ញុំជា KHOEM-AI។ ខ្ញុំអាចជួយពន្យល់ស្ថានភាព និងសំណួររបស់បងបាន។"
+        : "Hello! I’m KHOEM-AI. I can help explain your system and answer your questions.",
       factors,
     );
   }
