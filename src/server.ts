@@ -20,7 +20,7 @@ import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
-import { selfDefend } from "./core/ai/khoem-ai-brain.ts";
+import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -133,17 +133,17 @@ async function main() {
       // KHOEM-AI Brain — rule-based request pattern check (injection
       // signatures in the payload). Runs alongside, not instead of,
       // rbac/rate-limiter/safety.engine. See khoem-ai-brain.ts for scope.
-      const brain = selfDefend({ userId: user.id, action: "device:command", payload });
-      if (!brain.proceed) {
+      const brain = evaluateSelfDefense({ text: JSON.stringify(payload ?? {}), source: "user_input" });
+      if (brain.protected) {
         await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId ?? ""), {
-          reason: brain.result.reasons.join("; "),
+          reason: brain.reason,
         }, {
-          matchedSignatures: brain.result.matchedSignatures,
+          matchedSignatures: brain.riskFactors.map((f) => f.code),
         });
         res.status(400).json({
           error: "REQUEST_PATTERN_BLOCKED",
           message: "Request blocked by pattern analysis.",
-          reasons: brain.result.reasons,
+          reasons: [brain.reason],
         });
         return;
       }

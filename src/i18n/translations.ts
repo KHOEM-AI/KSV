@@ -66,6 +66,8 @@ export const LANGUAGES: LanguageInfo[] = [
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  'aiChat.emptyState': 'Start a conversation with KHOEM-AI',
+  'aiChat.placeholder': 'Type a command or question…',
   'app.title': "KSV Universal Secure Control",
   'nav.dashboard': "Dashboard",
   'nav.devices': "Devices",
@@ -465,6 +467,8 @@ const en: Dict = {
 };
 
 const km: Dict = {
+  'aiChat.emptyState': 'ចាប់ផ្តើមសន្ទនាជាមួយ KHOEM-AI',
+  'aiChat.placeholder': 'វាយពាក្យបញ្ជា ឬសំណួរ…',
   'app.title': "KSV ប្រព័ន្ធបញ្ជាសុវត្ថិភាពសកល",
   'nav.dashboard': "ផ្ទាំងគ្រប់គ្រង",
   'nav.devices': "ឧបករណ៍",

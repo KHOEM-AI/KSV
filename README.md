@@ -1,765 +1,923 @@
-### 🌐 KHOEM-AI
+### 🌐 KSV
 
-## KSV
+# KSV — Project Documentation (Organized & De-duplicated)
 
+---
+
+## 1. KSV Mission & Core Principles
+KSV គឺជា Universal Secure Control Platform អន្តរជាតិ សម្រាប់គ្រប់គ្រង និងបញ្ជាឧបករណ៍អេឡិចត្រូនិកគ្រប់ប្រភេទ (ផ្ទះ អគារ រថយន្ត ឃ្លាំង រោងចក្រ) តាមរយៈ interface ដែលមានការអនុញ្ញាតត្រឹមត្រូវប៉ុណ្ណោះ។
+
+គោលការណ៍ស្នូល៖
+- Security First
+- Privacy First
+- Safety First
+- Authorization First
+- Device Ownership
+- Least Privilege
+- No Unauthorized Control
+- Every Important Action Is Auditable
+- Fail Securely
+- International by Design
+
+> **គោលការណ៍មូលដ្ឋាន:** A user may discover a device, but discovery never means authorization.
+
+KSV មិនត្រូវបានរចនាឡើងសម្រាប់ hack ឬចូលប្រើប្រាស់ដោយគ្មានការអនុញ្ញាតឡើយ។ វាជាស្ពានសុវត្ថិភាពរវាងអ្នកប្រើប្រាស់ដែលមានការអនុញ្ញាត និងបច្ចេកវិទ្យាដែលត្រូវគ្នា។
+
+---
+
+## 2. Global Platform Layer
+ស្រទាប់ខាងលើបំផុតរបស់ KSV ត្រូវគ្រប់គ្រង៖
+Global platform identity, Global configuration, Countries, Regions, Languages, Time zones, Currencies, Regional settings, Service availability, Global policies, Platform status.
+
+---
+
+## 3. Identity System
+"អ្នកណា?" — គ្រប់គ្រងគណនី KSV របស់អ្នកប្រើប្រាស់៖
+- KSV Account, User ID
+- Email / Phone identity
+- Google / Facebook / TikTok / Identity Providers ផ្សេងទៀត
+- Account linking / unlinking
+- Identity verification
+- Account status, suspension, deletion
+
+**គោលការណ៍:** One KSV Account → Multiple Verified Identities.
+KSV ត្រូវបំបែក user identity ចេញពី authentication provider ហើយមិនត្រូវទាមទារ password ខាងក្រៅរបស់អ្នកប្រើប្រាស់ឡើយ។
+
+---
+
+## 4. Authentication System
+"តើអ្នកណាកំពុង Login?" — ត្រូវមាន៖
+Password authentication, Secure password hashing, MFA, Email/Phone verification, OTP, Session management, Refresh tokens, Login history, Failed-login protection, Brute-force protection, Suspicious-login detection, Device/session revocation.
+
+---
+
+## 5. Password Privacy (គោលការណ៍សំខាន់)
+- KSV administrators មិនត្រូវមានសិទ្ធិមើល password ដើមរបស់អ្នកប្រើប្រាស់ជាដាច់ខាត — សូម្បីតែក្នុង dashboard, logs, API, database ក៏ដោយ។
+- ការបែងចែកទំនួលខុសត្រូវ៖ **Platform Owner ≠ System Administrator ≠ User**
+  - User Password → User-controlled secret
+  - Platform secrets → KSV-controlled secrets
+  - Device credentials → Device/Owner-controlled credentials
+- សម្រាប់ Identity Provider ខាងក្រៅ ត្រូវប្រើ OAuth 2.0 / OpenID Connect មិនមែនប្រមូល password ដោយផ្ទាល់ទេ។
+
+---
+
+## 6. Account Recovery
+- Forgot Password → ផ្ទៀងផ្ទាត់អត្តសញ្ញាណតាម Email / Phone / Identity Provider / MFA / OTP
+- លេខកូដ 6-ខ្ទង់ (OTP) ត្រូវ៖ ផុតកំណត់លឿន, ប្រើបានតែម្តង, កំណត់ចំនួនព្យាយាម, ការពារ brute-force
+- លទ្ធផលនៃការសង្គ្រោះគណនីគឺការបង្កើត **password ថ្មី** មិនមែនបង្ហាញ password ចាស់ឡើយ
+- ត្រូវ revoke session ចាស់ៗបន្ទាប់ពី recovery ជោគជ័យ
+
+---
+
+## 7. Authorization System
+Authentication = "អ្នកណា", Authorization = "អាចធ្វើអ្វីបាន" — ត្រូវបំបែកជាពីរប្រព័ន្ធដាច់ដោយឡែក។
+
+កម្រិតសិទ្ធិដែលអាចមាន៖ Owner, Super Administrator, Organization Administrator, Manager, Operator, Controller, Viewer, Guest, Temporary Permission។
+
+គោលការណ៍ត្រូវឆ្លើយសំណួរ៖
+**Who + What + Which Device + Where + When + Under What Conditions**
+(ឧទាហរណ៍៖ Operator អាចបើកម៉ាស៊ីន A បានតែម៉ោង 8AM–5PM និងតែនៅ Factory A — នេះហៅថា Policy-Based Access Control)
+
+ត្រូវមានផងដែរ៖ Permission expiration, Permission revocation, Approval workflow។
+
+---
+
+## 8. Organization & Enterprise System
+រចនាសម្ព័ន្ធសម្រាប់ក្រុមហ៊ុន/សហគ្រាស៖
+```
+Organization
+ ├── Users
+ ├── Roles
+ ├── Sites
+ │    ├── Buildings
+ │    ├── Rooms
+ │    └── Devices
+ ├── Policies
+ └── Audit
+```
+ត្រូវមាន៖ Organization, Company, Department, Site, Building, Room/Zone, Team, Employee, Organization roles, Organization policies។
+
+---
+
+## 9. Device Identity
+KSV ត្រូវស្គាល់ព័ត៌មានឧបករណ៍នីមួយៗឱ្យច្បាស់៖
+Device ID, Manufacturer, Brand, Model, Serial number, Device type, Firmware/Hardware version, Device owner, Organization owner, Device status, Device capabilities, Device security state។
+
+---
+
+## 10. Device Capability System
+KSV មិនគួរដឹងតែថា "នេះជាទូរទស្សន៍" ប៉ុណ្ណោះទេ — ត្រូវដឹងថា **វាអាចធ្វើអ្វីបានខ្លះ** (Power, Volume, Channel, Input, Display, Network...)។ នេះជា Device Capability System ដែលកំណត់ថា action មួយណាត្រូវការសិទ្ធិកម្រិតខ្ពស់ជាងគេ។
+
+---
+
+## 11. Device Discovery
+ស្វែងរកឧបករណ៍តាម៖ Bluetooth, Wi-Fi, Local Network, QR, NFC, Manufacturer discovery, Cloud/Gateway-connected devices។
+
+> **គោលការណ៍:** Discovery ≠ Permission — ការរកឃើញឧបករណ៍មិនមែនមានន័យថាមានសិទ្ធិបញ្ជាវាឡើយ។
+
+---
+
+## 12. Device Pairing
+លំដាប់ត្រឹមត្រូវ៖
+```
+SCAN → DEVICE FOUND → IDENTITY VERIFIED → OWNER VERIFIED
+→ PAIRING → PERMISSION → SECURE CONNECTION → READY
+```
+វិធីផ្ទៀងផ្ទាត់៖ Device codes, QR codes, PINs, Secure pairing procedures, Manufacturer credentials, Certificates/cryptographic keys, Owner approval។ ត្រូវអាច Unpair, Re-pair, Revoke ផងដែរ។
+
+---
+
+## 13. Device Ownership
+ឧបករណ៍អាចជាកម្មសិទ្ធិរបស់៖ Individual, Family, Company, Building, Warehouse, Factory ឬអង្គភាពដែលមានការអនុញ្ញាតផ្សេងទៀត។ ម្ចាស់អាច grant, modify, revoke សិទ្ធិបានគ្រប់ពេល រួមទាំង Ownership transfer និង Permission delegation។
+
+---
+
+## 14. Universal Protocol Layer
+ស្រទាប់បកប្រែរវាង KSV និងឧបករណ៍ (មិនបង្ខំគ្រប់ឧបករណ៍ឱ្យប្រើ protocol ដូចគ្នា)៖
+```
+KSV Command → Protocol Adapter → Bluetooth / Wi-Fi / API / MQTT / IR → Manufacturer Device
+```
+ត្រូវរៀបជាស្រទាប់៖ Device Type → Manufacturer → Protocol → Authentication → Authorization → Command។ នេះជាមូលដ្ឋានដែលធ្វើឱ្យ "Universal Control" អាចកើតឡើងបាន ដោយមិនចាំបាច់ពឹងលើក្រុមហ៊ុនតែមួយ (Sony, Samsung, LG, JBL, Panasonic...)។
+
+---
+
+## 15. KSV Gateway / Edge System
+សម្រាប់ឧបករណ៍ដែលមិនអាចភ្ជាប់ Cloud ដោយផ្ទាល់ (ក្នុងផ្ទះ រោងចក្រ ឃ្លាំង)៖
+```
+KSV Cloud → KSV Gateway → Local Network (Bluetooth / IR / Wi-Fi / MQTT / Local Devices)
+```
+Gateway ជាស្ពាន មិនមែនជា Security bypass ទេ។ វាជួយសម្រាប់ local automation, offline operation, local discovery, local security។
+
+---
+
+## 16. Command Engine
+Flow ត្រឹមត្រូវសម្រាប់ការបញ្ជាឧបករណ៍៖
+```
+User Command → Authentication → Authorization → Device Capability
+→ Safety Policy → Execute → Result → Audit
+```
+ត្រូវមាន៖ Command parser, validation, capability check, permission check, safety check, execution, error handling, timeout, retry policy។
+
+---
+
+## 17. AI Command Layer
+ប្រសិនបើអនុញ្ញាតឱ្យ User និយាយភាសាធម្មតា ("Turn on the living room fan"):
+```
+Natural Language → AI Interpretation → Structured Command
+→ Authorization → Safety → Execution
+```
+AI មានតួនាទីត្រឹមតែ **បកស្រាយ** ប៉ុណ្ណោះ មិនមែនជាអ្នករំលង Security ឡើយ។
+
+---
+
+## 18. Automation Engine
+ក្រោយពី Manual Control ធ្វើការបានស្ថិតស្ថេរ អាចបន្ថែម logic ប្រភេទ IF-THEN (Time-based, Sensor-based, Location-based, Device-state-based, Schedule, Event-based)។ Automation ត្រូវឆ្លងកាត់ Permission + Safety Policy ដូចគ្នានឹង Manual Command ដែរ ហើយមិនត្រូវមានសិទ្ធិខ្ពស់ជាង Owner Policy ឡើយ។
+
+---
+
+## 19. Safety Engine
+Security ≠ Safety។ សម្រាប់ Door, Gate, Machine, Motor, Industrial Equipment, Vehicle, Electrical Systems ត្រូវការ Safety Engine ដាច់ដោយឡែក៖
+```
+User Authorized ✓ → Security Check ✓ → Safety Check ✗ → COMMAND BLOCKED
+```
+មានសិទ្ធិប្រើប្រាស់ មិនមានន័យថាគ្រប់ពេលអាចបញ្ជាបានទេ។ ត្រូវមាន Safety policies, Operating limits, Interlocks, Emergency stop integration, Conflict detection, Human confirmation where required។
+
+---
+
+## 20. Security Core
+បន្ទាយការពាររបស់ KSV៖ Encryption, TLS, Secure secrets management, Key/Certificate management, Token & Session security, API security, Rate limiting, Abuse prevention, Network segmentation, Zero-trust principles, Device trust, Security policies។
+
+Defense-in-depth architecture — គ្មាន mechanism តែមួយត្រូវចាត់ទុកថាគ្រប់គ្រាន់ដោយខ្លួនឯងឡើយ។
+
+> **កំណត់សម្គាល់:** GPS មិនគួរជា Security Core ទេ — GPS គួរជា context signal មួយប៉ុណ្ណោះក្នុងការសម្រេចចិត្ត។ Security Core ត្រូវផ្អែកលើ Identity + Cryptographic Credentials + Authorization + Device Trust + Policy + Safety។
+
+---
+
+## 21. Key & Secret Management
+ត្រូវដាច់ដោយឡែកពី Application Database ធម្មតា។ គ្រប់គ្រង៖ API keys, Device keys, Certificates, Encryption keys, OAuth secrets, Service credentials, Key rotation/expiration/revocation។ Password និង Secret មិនត្រូវបង្ហាញក្នុង Admin Dashboard ឬ Logs ឡើយ។
+
+---
+
+## 22. Security Monitoring
+KSV ត្រូវតាមដានស្វែងរក៖ Suspicious login, Repeated failed login, Abnormal device commands, Unusual locations/time, Account takeover indicators, Device compromise indicators។
+```
+Detect → Alert → Block → Investigate → Recover
+```
+
+---
+
+## 23. Audit System
+រាល់សកម្មភាពសំខាន់ៗត្រូវអាចត្រួតពិនិត្យត្រឡប់ក្រោយបាន៖ Who, What, Which Device, When, Where/Context, Authorized?, Result។ **Password និង Secret មិនត្រូវរក្សាទុកក្នុង Audit Log ជាដាច់ខាត។**
+
+---
+
+## 24. Incident Response
+ពេលមានបញ្ហា KSV ត្រូវអាច៖ Disable account, Revoke session/device/permission, Rotate keys, Block suspicious activity, Isolate affected device/gateway, Alert administrators, Preserve evidence, Recover service។
+
+---
+
+## 25. Offline & Local Operation
+ត្រូវគិតដល់ករណី Internet/Cloud ដាច់ — ជាពិសេសសម្រាប់ Door និង Industrial Systems។ ត្រូវមាន៖ Cloud Control, Local Control, Offline authorization, Reconnection synchronization។ Cloud failure មិនគួរធ្វើឱ្យប្រព័ន្ធសុវត្ថិភាពក្លាយជាគ្រោះថ្នាក់ឡើយ។
+
+---
+
+## 26. Device Lifecycle
+```
+Discovered → Verified → Paired → Active → Updated
+→ Suspended → Revoked → Removed
+```
+
+---
+
+## 27. Firmware & Software Updates
+ត្រូវមាន៖ Version management, Compatibility check, Signed updates, Update authorization, Rollback, Failed-update recovery, Update history។ ប្រព័ន្ធ Update ខ្លួនឯងគឺជាចំណុចវាយប្រហារធំមួយ ដូច្នេះត្រូវការការពារខ្លាំង។
+
+---
+
+## 28. Device Categories (Registry)
+ត្រូវអាចពង្រីកបានទៅតាមប្រភេទ៖
+- **Home:** Light, Fan, AC, TV, Speaker, Refrigerator, Washing Machine, Smart Lock
+- **Building:** Gate, Garage, Door, Elevator, Access Control, Parking, HVAC, Lighting, Security
+- **Vehicle:** Car, EV, Fleet, Authorized vehicle systems
+- **Industrial:** Machine, Motor, Pump, Sensor, Controller, Robot, PLC, Conveyor, Factory automation
+- **Warehouse:** Door, Scanner, Conveyor, Sensors, Automation equipment
+- **Energy:** Solar, Inverter, Battery, Meter, Energy controller
+
+---
+
+## 29. International System (Localization)
+ត្រូវមាន៖ Country registry, Country codes, Languages, Time zones, Date/Number formats, Measurement units, Regional settings, Translation management។ គោលដៅ~195 ប្រទេស។
+
+> **គោលការណ៍:** Country ≠ Language ≠ Time Zone — ប្រទេសមួយអាចមានភាសាច្រើន និង Time Zone ច្រើន។ វាគួរតែជាប្រព័ន្ធ Configuration មិនមែនសរសេរ `if country === ...` រាប់រយកន្លែងទេ។
+
+---
+
+## 30. Privacy & Data Governance
+ត្រូវកំណត់ច្បាស់៖ What data is collected, Why, Retention period, Who can access, User consent, Data deletion/export, Regional data requirements, Data residency where required។ KSV គួរប្រកាន់ខ្ជាប់ Minimum-Access Principle។
+
+---
+
+## 31. Legal & Compliance Layer
+195 ប្រទេស = 195 បរិយាកាសបទប្បញ្ញត្តិខុសៗគ្នា មិនមែនត្រឹមតែ 195 ប៊ូតុងភាសាទេ។ ត្រូវមាន៖ Terms of Service, Privacy Policy, Acceptable Use Policy, Device Authorization Agreement, Organization agreements, Regional compliance, Industry-specific requirements។ ផ្នែកនេះត្រូវឱ្យអ្នកជំនាញច្បាប់ពិនិត្យតាមប្រទេស/ទីផ្សារនីមួយៗ។
+
+---
+
+## 32. Notification System
+ជូនដំណឹងតាម App / Email / SMS / Push សម្រាប់៖ Security alerts, Login alerts, Device online/offline, Permission changes, Command failures, Emergency alerts, Account recovery notifications។
+
+---
+
+## 33. Dashboard / User Interface
+ទំព័រសំខាន់ៗសម្រាប់ User៖ Home, Devices, Rooms, Scenes, Automation, Security, Permissions, Activity, Notifications, Account, Language, Country, Time Zone។ UI ជា Presentation Layer ប៉ុណ្ណោះ — មិនត្រូវមានសិទ្ធិទៅបញ្ជា Device ដោយរំលង Security/API ឡើយ។
+
+---
+
+## 34. Administration Console
+Admin អាចគ្រប់គ្រង Platform ប៉ុន្តែ **គ្មានសិទ្ធិមើល User Password ដាច់ខាត**។ ត្រូវមាន៖ User/Organization/Device/Permission management, Security monitoring, Audit, System health, Incident management, Configuration។ Admin គ្រប់គ្រង Account State និង Security Operations មិនមែនអាថ៌កំបាំងផ្ទាល់ខ្លួនរបស់ User ឡើយ។
+
+---
+
+## 35. API Architecture (Domain-based)
+API មិនគួរជា file ធំតែមួយ (`master-api.ts`) — ត្រូវបែងចែកតាម Domain៖
+Identity, Authentication, Account, Authorization, Organization, Device, Discovery, Pairing, Protocol, Gateway, Command, Automation, Safety, Security, Audit, Notification, International, Administration API។
+
+### Global Route Design Rule
+```
+/api/v1/{module}/{resource}
+```
+Versioning (v1) ចាំបាច់ត្រូវមាន។
+
+### Route Grouping Rules
+- ត្រូវ៖ `/resource`, `/resource/:id`, `/resource/:id/action`
+- ❌ កុំធ្វើ៖ `/getAllDevices`, `/createDevice`, `/deleteDevice`
+- ✅ ធ្វើ៖ `GET /devices`, `POST /devices`, `DELETE /devices/:id`
+- Nested routes ប្រើតែពេលមានទំនាក់ទំនងពិត (ឧ. `/orgs/:orgId/members`, `/devices/:id/commands`)
+
+### Route Map (v1)
+```
+🔐 Identity
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout
+POST   /api/v1/auth/refresh-token
+POST   /api/v1/auth/recover-password
+POST   /api/v1/auth/reset-password
+GET    /api/v1/auth/me
+
+GET    /api/v1/users
+GET    /api/v1/users/:id
+PATCH  /api/v1/users/:id
+DELETE /api/v1/users/:id
+
+🏢 Organization
+POST   /api/v1/orgs
+GET    /api/v1/orgs
+GET    /api/v1/orgs/:id
+PATCH  /api/v1/orgs/:id
+DELETE /api/v1/orgs/:id
+POST   /api/v1/orgs/:orgId/members
+GET    /api/v1/orgs/:orgId/members
+DELETE /api/v1/orgs/:orgId/members/:userId
+
+📱 Device
+POST   /api/v1/devices
+GET    /api/v1/devices
+GET    /api/v1/devices/:id
+PATCH  /api/v1/devices/:id
+DELETE /api/v1/devices/:id
+GET    /api/v1/devices/:id/status
+GET    /api/v1/devices/:id/health
+GET    /api/v1/devices/:id/logs
+POST   /api/v1/devices/:id/logs/query
+POST   /api/v1/devices/:id/commands
+GET    /api/v1/devices/:id/commands
+
+🔍 Discovery
+POST   /api/v1/discovery/scan
+GET    /api/v1/discovery/results
+GET    /api/v1/discovery/:id
+DELETE /api/v1/discovery/:id
+POST   /api/v1/discovery/start
+POST   /api/v1/discovery/stop
+GET    /api/v1/discovery/status
+
+⚙️ Command
+POST   /api/v1/commands
+GET    /api/v1/commands
+GET    /api/v1/commands/:id
+GET    /api/v1/commands/:id/status
+POST   /api/v1/commands/:id/retry
+POST   /api/v1/commands/:id/cancel
+
+🌐 Gateway
+POST   /api/v1/gateways
+GET    /api/v1/gateways
+GET    /api/v1/gateways/:id
+PATCH  /api/v1/gateways/:id
+DELETE /api/v1/gateways/:id
+POST   /api/v1/gateways/:id/connect
+POST   /api/v1/gateways/:id/disconnect
+GET    /api/v1/gateways/:id/status
+
+#### Gateway API Implementation Status
+- 🟢 `GET /api/gateways` — implemented in `src/server.ts`; authenticated and protected by `org:read`.
+- 🟢 Gateway ownership is currently resolved through `Device.organizationId` + `Device.gatewayId`.
+- 🟢 Gateway database model exists in `src/infrastructure/database/models.ts`.
+- 🟡 `/api/v1/gateways/*` — API contract/route map exists, but the v1 Gateway handlers are not yet implemented in `src/server.ts`.
+- 🟡 Gateway contract contains fields such as type, mode, supported protocols, offline policy, heartbeat, sync, local command, and firmware operations that are not currently represented by the existing Gateway MongoDB schema.
+- 🔐 Gateway write/control endpoints must use existing authentication and RBAC; do not create a separate authentication system.
+- 🔒 Organization isolation must be enforced through authenticated `req.user.organizationId` and authorized device/gateway relationships.
+
+🔗 Protocol
+POST   /api/v1/protocols
+GET    /api/v1/protocols
+GET    /api/v1/protocols/:id
+PATCH  /api/v1/protocols/:id
+DELETE /api/v1/protocols/:id
+POST   /api/v1/protocols/test
+POST   /api/v1/protocols/:id/validate
+
+🛡️ Safety
+GET    /api/v1/safety/logs
+GET    /api/v1/safety/logs/:id
+POST   /api/v1/safety/report
+GET    /api/v1/safety/rules
+POST   /api/v1/safety/rules
+PATCH  /api/v1/safety/rules/:id
+DELETE /api/v1/safety/rules/:id
+GET    /api/v1/safety/alerts
+POST   /api/v1/safety/alerts/ack
+
+📊 Monitoring / Events
+GET    /api/v1/events
+GET    /api/v1/events/:id
+POST   /api/v1/events/publish
+
+🔐 Sessions
+GET    /api/v1/sessions
+DELETE /api/v1/sessions/:id
+DELETE /api/v1/sessions/revoke-all
+```
+
+---
+
+## 36. Database & Data Architecture
+Database ត្រូវបែងចែកទិន្នន័យតាម Domain (កុំដាក់អ្វីទាំងអស់ក្នុង Table មួយ)៖
+Users, Identities, Organizations, Devices, Device capabilities, Credentials references, Permissions, Policies, Commands, Events, Audit logs, Security events, Notifications, Countries, Languages, Time zones។ Credentials/Secrets ត្រូវគ្រប់គ្រងដោយ dedicated secret/key management មិនមែនដាក់ plain text ក្នុង database ទេ។
+
+### Prisma Schema (MongoDB) — គំរូ Data Model
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  passwordHash  String
+  role          String
+  createdAt     DateTime @default(now())
+  organizations Organization[]
+  sessions      Session[]
+}
+
+model Organization {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  ownerId   String   @db.ObjectId
+  createdAt DateTime @default(now())
+  devices   Device[]
+}
+
+model Device {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  type            String
+  status          String
+  organizationId  String   @db.ObjectId
+  gatewayId       String?  @db.ObjectId
+  protocolId      String?  @db.ObjectId
+  lastSeenAt      DateTime?
+  createdAt       DateTime @default(now())
+  commands        Command[]
+  logs            DeviceLog[]
+  discoveries     Discovery[]
+}
+
+model Discovery {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId   String   @db.ObjectId
+  ipAddress  String
+  macAddress String
+  createdAt  DateTime @default(now())
+}
+
+model Command {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId  String   @db.ObjectId
+  type      String
+  payload   Json
+  status    String
+  response  Json?
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+}
+
+model Gateway {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  ipAddress String
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model Protocol {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  config Json
+}
+
+model DeviceLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId  String   @db.ObjectId
+  data      Json
+  createdAt DateTime @default(now())
+}
+
+model SafetyLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId  String   @db.ObjectId
+  eventType String
+  severity  String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String
+  expiresAt DateTime
+}
+
+model Event {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String
+  source    String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+```
+
+**Relationship Summary:**
+User → Organization (1:N) · Organization → Device (1:N) · Device → Command (1:N) · Device → Logs (1:N) · Device → Discovery (1:N) · Device → SafetyLog (1:N) · User → Session (1:N)
+
+### Entity Relationship Diagram (Mermaid)
+```mermaid
+erDiagram
+USER ||--o{ ORGANIZATION : owns
+USER ||--o{ SESSION : has
+ORGANIZATION ||--o{ DEVICE : contains
+DEVICE ||--o{ COMMAND : executes
+DEVICE ||--o{ DEVICE_LOG : generates
+DEVICE ||--o{ DISCOVERY : discovered_by
+DEVICE ||--o{ SAFETY_LOG : triggers
+DEVICE }o--|| GATEWAY : connects_via
+DEVICE }o--|| PROTOCOL : uses
+EVENT ||--o{ DEVICE : relates_to
+```
+
+---
+
+## 37. Reliability & Scalability
+ត្រូវគិតពី៖ Load balancing, Horizontal scaling, Queue systems, Caching, Database scaling, Service redundancy, Health checks, Failover, Regional infrastructure, Disaster recovery — ជាពិសេសពេលមាន User/Device រាប់លាន។
+
+---
+
+## 38. Backup & Disaster Recovery
+ត្រូវមាន៖ Encrypted backups, Backup verification, Recovery testing, Disaster recovery plan, Service/Database/Configuration restoration, Key recovery strategy, Recovery Point/Time Objective, Multi-region strategy (កម្រិត Enterprise)។
+
+---
+
+## 39. Testing Strategy
+មុនចេញប្រើប្រាស់ត្រូវមាន៖ Unit, Integration, API, Device compatibility, Authentication, Authorization, Security, Load, Failure, Recovery, International-settings testing។
+
+---
+
+## 40. Security Testing
+ដោយសារ Security ជាអាទិភាពទី 1៖ Vulnerability scanning, Dependency scanning, Secure code review, Penetration testing, Threat modeling, Security architecture review, Incident simulation, Continuous security monitoring, និង Independent security assessment មុន deployment ដែលមានហានិភ័យខ្ពស់។
+
+គោលដៅមិនមែននិយាយថា "Hack មិនបាន" ទេ — គោលដៅគឺ **"Assume breach, minimize impact, detect quickly, recover safely."**
+
+---
+
+## 41. Developer / Engineering Governance
+ត្រូវមាន៖ Source-code repository, Branch protection, Code review, CI/CD, Secrets protection, Dependency management, Release management, Versioning, Change approval, Production access control។
+
+---
+
+## 42. KSV Emergency Architecture
+Emergency Control Plane ត្រូវអាច៖ Suspend dangerous commands, Revoke compromised credentials, Disable compromised devices, Lock down affected organization, Require re-authentication, Trigger alerts, Preserve security logs, Restore trusted configuration។
+
+---
+
+## 43. The Most Important Security Rule
+> No single credential, account, API, administrator, device, or security layer should automatically have unlimited control over the entire platform.
+
+មានន័យថា បើចំណុចមួយត្រូវបាន compromise វាមិនគួរបើកផ្លូវទៅគ្រប់អ្វីទាំងអស់ឡើយ។
+
+---
+
+## 44. KSV Final Architecture (Diagram)
+```
+                         KSV
+                          │
+        ┌─────────────────┴─────────────────┐
+        │                                   │
+   INTERNATIONAL                       GOVERNANCE
+        │                                   │
+ Country / Language / Timezone       Legal / Privacy / Compliance
+        │
+        ▼
+   IDENTITY & ACCOUNT
+        │
+        ▼
+   AUTHENTICATION
+        │
+        ▼
+   AUTHORIZATION
+        │
+        ▼
+   ORGANIZATION / OWNERSHIP
+        │
+        ▼
+   DEVICE IDENTITY
+        │
+        ▼
+   DEVICE DISCOVERY / PAIRING
+        │
+        ▼
+   PROTOCOL / GATEWAY LAYER
+        │
+        ▼
+   COMMAND ENGINE
+        │
+        ├──────────────┐
+        ▼              ▼
+     SAFETY         AUTOMATION
+        │              │
+        └──────┬───────┘
+               ▼
+          DEVICE CONTROL
+               │
+               ▼
+        AUDIT / MONITORING
+               │
+               ▼
+       INCIDENT / RECOVERY
+```
+
+### 12 Master Domains (Summary)
+1. Global & International
+2. Identity & Account
+3. Authentication & Recovery
+4. Authorization & Ownership
+5. Organization & Enterprise
+6. Device Intelligence
+7. Connectivity & Protocols
+8. Command & Automation
+9. Security & Key Management
+10. Safety & Emergency
+11. Monitoring, Audit & Recovery
+12. Infrastructure, Compliance & Scalability
+
+> **គោលការណ៍សំខាន់:** កុំចាប់ផ្តើមដោយបង្កើត API រាប់រយ Endpoint មុន។ ត្រូវកំណត់ Security Model + Identity + Permission + Device Model + Protocol Model ជាមុន ព្រោះទាំង 5 នេះជាគ្រឹះដែល API ទាំងមូលនឹងពឹងផ្អែក។
+
+---
+
+## 45. Project Root & Folder Structure (`khoem-now/`)
+**គោលការណ៍:** `KSV/khoem-now/` ជា Project Root តែមួយគត់ និងជាប្រភពប្រព័ន្ធទាំងមូល។ មិនបង្កើត Root ច្រើន (មិនមាន `KSV/project1`, `KSV/backend2`, `KSV/frontend2` ...)។ ក្នុងនោះអាចមាន subfolders តាមផ្នែកប្រព័ន្ធ។
+
+```
+KSV/
+└── khoem-now/
+    ├── API
+    ├── APP
+    ├── AUTH
+    ├── SECURITY
+    ├── DEVICES
+    ├── GATEWAY
+    ├── PROTOCOLS
+    ├── COMMAND
+    ├── AUTOMATION
+    ├── SAFETY
+    ├── USERS
+    ├── ORGANIZATION
+    ├── INTERNATIONAL
+    ├── AUDIT
+    ├── NOTIFICATION
+    ├── DATABASE
+    ├── CONFIG
+    ├── TESTS
+    └── DOCUMENTATION
+```
+
+### Production-Ready Structure (Clean Architecture)
+```
+src/
+├── app/                        # Express app setup
+│   └── app.ts
+├── server/                     # Entry point
+│   └── server.ts
+├── modules/                    # BUSINESS DOMAINS
+│   ├── identity/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── repositories/
+│   │   ├── routes/
+│   │   ├── models/
+│   │   ├── dto/
+│   │   └── index.ts
+│   ├── organization/
+│   ├── device/
+│   ├── discovery/
+│   ├── command/
+│   ├── communication/
+│   │   ├── gateway/
+│   │   └── protocol/
+│   └── safety/
+├── core/                       # GLOBAL SYSTEM
+│   ├── auth/                   # JWT, guards
+│   ├── middleware/              # validation, error handler
+│   ├── errors/
+│   ├── logger/
+│   └── security/               # audit, monitoring
+├── infrastructure/             # EXTERNAL SYSTEMS
+│   ├── database/                # Prisma / Mongo client
+│   ├── cache/                   # Redis (future)
+│   ├── messaging/                # queue (future)
+│   └── integrations/             # external APIs
+├── shared/                     # REUSABLE
+│   ├── utils/
+│   ├── constants/
+│   └── types/
+├── config/                     # CONFIG
+│   ├── env.ts
+│   ├── database.ts
+│   └── app.ts
+└── routes/                     # MAIN ROUTER
+    └── index.ts
+
+docs/                           # DESIGN DOCS (split per module)
+```
+
+### File → Module Mapping (ប្រវត្តិការរៀបចំ)
+```
+authentication.ts, authorization.ts, account-recovery.ts → identity/
+organization.ts                                          → organization/
+device.ts, discovery.ts                                  → device/
+command.ts                                                → control/
+gateway.ts                                                → communication/gateway/
+protocol.ts                                                → communication/protocol/
+safety.ts                                                  → security/
+```
+
+Design documentation (~1500+ lines) ក៏ត្រូវបំបែកតាម domain ដូចគ្នា មិនមែនដាក់ក្នុង file ធំតែមួយ៖
+```
+docs/
+├── identity.md
+├── device.md
+├── command.md
+├── gateway.md
+├── protocol.md
+├── safety.md
+```
+**Rule:** Design (doc) → Module → File → Code (មិនមែន Design → File → File → File ដោយចៃដន្យ)
+
+---
+
+## 46. Module Internal Structure (Standard)
+រាល់ Module ត្រូវមានរូបរាងដូចគ្នា៖
+```
+device/
+├── controllers/
+│   └── device.controller.ts
+├── services/
+│   └── device.service.ts
+├── repositories/
+│   └── device.repository.ts
+├── routes/
+│   └── device.routes.ts
+├── models/
+│   └── device.model.ts
+├── dto/
+│   └── device.dto.ts
+└── index.ts
+```
+
+---
+
+## 47. Clean Architecture Flow (Controller → Service → Repository)
+```
+Route → Controller → Service → Repository → Database (Prisma/MongoDB)
+```
+- **Routes:** ត្រឹមតែ endpoint mapping (គ្មាន logic)
+- **Controller:** ត្រឹមតែ HTTP layer (read request → call service → return response); មិនត្រូវ query database ដោយផ្ទាល់
+- **Service:** ជា "brain" — business logic, validation, orchestration
+- **Repository:** ត្រឹមតែ database query (Prisma/Mongo) មិនមានអ្វីផ្សេងទៀត
+- **Model:** Schema/Entity definition
+
+**Real flow example (POST /devices):**
+```
+device.routes → controller.createDevice → service.createDevice
+→ repository.create → MongoDB
+```
+
+**❌ NEVER:**
+```
+controller → prisma.device.create()  // ដោយផ្ទាល់
+```
+**✅ ALWAYS:**
+```
+controller → service → repository
+```
+
+---
+
+## 48. Postman Collection — Setup Guide
+### Global Setup
+```
+base_url = http://localhost:3000/api/v1
+token    = <JWT_TOKEN>
+```
+Auto-apply header៖
+```
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
+Pre-request Script (auto-attach token):
+```javascript
+pm.request.headers.add({
+  key: "Authorization",
+  value: "Bearer " + pm.environment.get("token")
+});
+```
+
+### Collection Folder Structure
+```
+IoT System API
+├── Identity
+├── Organization
+├── Device
+├── Discovery
+├── Command
+├── Gateway
+├── Protocol
+├── Safety
+```
+(សូមមើលផ្នែក "API Route Map" ខាងលើសម្រាប់ endpoints ពេញលេញ និង example request bodies អាចរៀបតាមរចនាសម្ព័ន្ធ resource ដូចគ្នា — ឧ. Create Device: `POST /devices` ជាមួយ `{ "name", "type", "organizationId" }`; Send Command: `POST /commands` ជាមួយ `{ "deviceId", "type", "payload" }`)
+
+---
 
 <details>
 <summary>📜 <b>ចុចទីនេះដើម្បីមើល វិញ្ញាបនបត្រ Sololearn ទាំងអស់ (Sololearn Certificates)</b></summary>
-Certificate #1 https://api2.sololearn.com/v2/certificates/CC-4WMNT8MZ/image/png?t=639211314186882960 Certificate #2 https://api2.sololearn.com/v2/certificates/CC-FQXPSLUW/image/png?t=639114126319491590 Certificate #3 https://api2.sololearn.com/v2/certificates/CC-T1WYSOHU/image/png?t=639218531599541850 Certificate #4 https://api2.sololearn.com/v2/certificates/CC-I6OFSBAU/image/png?t=639221583443257000 Certificate #5 https://api2.sololearn.com/v2/certificates/CC-IXX7OEVL/image/png?t=639129089670279240 Certificate #6 https://api2.sololearn.com/v2/certificates/CC-AYYCWFZD/image/png?t=639213017982820410 Certificate #7 https://api2.sololearn.com/v2/certificates/CC-3LIHOX01/image/png?t=639149755075790680 Certificate #8 https://api2.sololearn.com/v2/certificates/CC-HAW7ZIH5/image/png?t=639127071272290510 Certificate #9 https://api2.sololearn.com/v2/certificates/CC-U8DL49ZZ/image/png?t=639128642579113120 Certificate #10 https://api2.sololearn.com/v2/certificates/CC-SI2WZX43/image/png?t=639128879870325970 Certificate #11 https://api2.sololearn.com/v2/certificates/CC-SUOWGF8T/image/png?t=639129397891636970 Certificate #12 https://api2.sololearn.com/v2/certificates/CC-I4TIACOI/image/png?t=639129633525792890 Certificate #13 https://api2.sololearn.com/v2/certificates/CC-GT2PAJTL/image/png?t=639130145139061920 Certificate #14 https://api2.sololearn.com/v2/certificates/CC-CCYNOT2R/image/png?t=639130171535224370 Certificate #15 https://api2.sololearn.com/v2/certificates/CC-ZYSDAZM8/image/png?t=639130228680226390 Certificate #16 https://api2.sololearn.com/v2/certificates/CC-7ABADG4R/image/png?t=639130271146365570 Certificate #17 https://api2.sololearn.com/v2/certificates/CC-DBRL4YLD/image/png?t=639131460155620180 Certificate #18 https://api2.sololearn.com/v2/certificates/CC-033EXHKA/image/png?t=639132345227292480 Certificate #19 https://api2.sololearn.com/v2/certificates/CC-UYFGANZQ/image/png?t=639132373592160560 Certificate #20 https://api2.sololearn.com/v2/certificates/CC-2M47YBCR/image/png?t=639132404731128520 Certificate #21 https://api2.sololearn.com/v2/certificates/CC-WKCFVLYI/image/png?t=639132438814129950 Certificate #22 https://api2.sololearn.com/v2/certificates/CC-CRBRNFSO/image/png?t=639132486370977210 Certificate #23 https://api2.sololearn.com/v2/certificates/CC-SUEHSLUF/image/png?t=639132518202129160 Certificate #24 https://api2.sololearn.com/v2/certificates/CC-SI4N5SIB/image/png?t=639132552000527100 Certificate #25 https://api2.sololearn.com/v2/certificates/CC-ZTIH8SKI/image/png?t=639132624414342210 Certificate #26 https://api2.sololearn.com/v2/certificates/CC-OFASKCAF/image/png?t=639136631237077950 Certificate #27 https://api2.sololearn.com/v2/certificates/CC-SCJHQBG0/image/png?t=639133282834683540 Certificate #28 https://api2.sololearn.com/v2/certificates/CC-JAJVCQCJ/image/png?t=639133319713608600 Certificate #29 https://api2.sololearn.com/v2/certificates/CC-DJ9YJOG5/image/png?t=639133354278903030 Certificate #30 https://api2.sololearn.com/v2/certificates/CC-FYISPG0F/image/png?t=639139227658362860 Certificate #31 https://api2.sololearn.com/v2/certificates/CC-AXMQ8X3Q/image/png?t=639138317832565410 Certificate #32 https://api2.sololearn.com/v2/certificates/CC-OU33MLMF/image/png?t=639142032442792440 Certificate #33 https://api2.sololearn.com/v2/certificates/CC-K47BIVEI/image/png?t=639147137885562720 Certificate #34 https://api2.sololearn.com/v2/certificates/CC-AREK9EJE/image/png?t=639154446519468340 Certificate #35 https://api2.sololearn.com/v2/certificates/CC-6ZXHTBFA/image/png?t=639158173295795190 Certificate #36 https://api2.sololearn.com/v2/certificates/CC-ZDBUNAIR/image/png?t=639156230587386000 Certificate #37 https://api2.sololearn.com/v2/certificates/CC-2SCXNBZ6/image/png?t=639220875861304820 Certificate #38 https://api2.sololearn.com/v2/certificates/CC-CAZPORAO/image/png?t=639214762709896540 Certificate #39 https://api2.sololearn.com/v2/certificates/CC-S072WEWW/image/png?t=639220816092789140 Certificate #40 https://api2.sololearn.com/v2/certificates/CC-OP1HINXS/image/png?t=639222163892448310 Certificate #41 https://api2.sololearn.com/v2/certificates/CC-GPX6LLCC/image/png?t=639222232281084110 Certificate #42 https://api2.sololearn.com/v2/certificates/CC-8VRSVYY8/image/png?t=639223768700061080 Certificate #43 https://api2.sololearn.com/v2/certificates/CC-IGJZ5ICG/image/png?t=639224674159806284 Certificate #44 https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png?t=639224739175951367 Certificate #45 https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png?t=639224766824092049 Certificate #46 https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png?t=639225729535120880 Certificate​ #47 https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png?t=639227517866924285
-
-
-## KSV 
-Master API & Secure Device Architecture
-1. Document Purpose
-ឯកសារនេះកំណត់ស្ថាបត្យកម្ម API និងសុវត្ថិភាពរបស់ KSV។
-
-KSV គឺជា platform សម្រាប់គ្រប់គ្រង device, gateway, protocol និង command។
-
-ប្រព័ន្ធផ្តោតលើ៖
-
-Authentication
-Authorization
-Organization isolation
-Device ownership
-Safety enforcement
-Gateway dispatch
-Protocol adapter
-Physical acknowledgement
-Command lifecycle
-Audit logging
-Fail-closed behavior
-ឯកសារនេះមិនត្រូវប្រើដើម្បីអះអាងថា hardware ឬ physical gateway មានរួចទេ លុះត្រាតែមាន evidence ពី transport ពិត។
-
-2. Source of Truth
-Source of truth សម្រាប់ database fields គឺ៖
-
-src/infrastructure/database/models.ts
-Source of truth សម្រាប់ authentication និង organization identity គឺ៖
-
-req.user.organizationId
-Source of truth សម្រាប់ command execution គឺ៖
-
-Actual server route
-Actual command model
-Actual gateway dispatcher
-Actual protocol adapter
-Actual acknowledgement
-Documentation មិនអាច override code ពិតបានទេ។
-
-ប្រសិនបើ documentation ផ្ទុយនឹង models.ts៖
-
-models.ts wins
-ប្រសិនបើ documentation និយាយថា feature មាន ប៉ុន្តែ route ឬ service មិនមាន៖
-
-Feature = NOT VERIFIED
-ប្រសិនបើ API ទទួល request បាន ប៉ុន្តែ device មិនបាន ACK៖
-
-Command = NOT SUCCESS
-3. Status Vocabulary
-ប្រើស្ថានភាពខាងក្រោមឱ្យមានន័យច្បាស់៖
-
-VERIFIED
-មានភស្តុតាងពី code test ឬ runtime verification។
-
-IMPLEMENTED
-មាន code ប៉ុន្តែមិនទាន់មាន end-to-end verification គ្រប់គ្រាន់។
-
-REPORTED
-មានការរាយការណ៍ក្នុង status document ប៉ុន្តែមិនទាន់ផ្ទៀងផ្ទាត់ឡើងវិញក្នុង context បច្ចុប្បន្ន។
-
-PLANNED
-មានក្នុង architecture ឬ plan ប៉ុន្តែមិនទាន់មាន implementation ពិត។
-
-NOT VERIFIED
-មិនទាន់មាន evidence គ្រប់គ្រាន់។
-
-KNOWN GAP
-ដឹងច្បាស់ថានៅខ្វះ ឬមាន mismatch។
-
-FAIL-CLOSED
-ប្រព័ន្ធបដិសេធ ឬបញ្ឈប់សកម្មភាព នៅពេល verification មិនគ្រប់គ្រាន់។
-
-4. Gateway API
-4.1 Gateway List
-Endpoint
-GET /api/v1/gateways
-Purpose
-បង្ហាញ gateway ដែលស្ថិតនៅក្នុង organization របស់ user។
-
-Required Authentication
-Authenticated user required
-Required Permission
-org:read
-Organization Scope
-Request ត្រូវប្រើ organization របស់ authenticated user។
-
-req.user.organizationId
-មិនត្រូវបង្ហាញ gateway របស់ organization ផ្សេងទេ។
-
-Expected Security Behavior
-Authenticated + org:read
-→ return gateways from same organization
-Authenticated without org:read
-→ reject request
-Unauthenticated
-→ 401 Unauthorized
-User from Organization A
-→ must not read Organization B gateways
-Status
-REPORTED VERIFIED
-ការអះអាងនេះយោងតាម Gateway status ដែលបានផ្ញើ។ មុនពេល production release គួររត់ test ម្តងទៀតនៅលើ server និង database ពិត។
-
-4.2 Gateway Detail
-Endpoint
-GET /api/v1/gateways/:gatewayId
-Purpose
-បង្ហាញព័ត៌មានលម្អិតរបស់ gateway មួយ។
-
-Required Authentication
-Authenticated user required
-Required Permission
-org:read
-Ownership Rule
-Gateway ត្រូវតែជារបស់ organization របស់ authenticated user។
-
-gateway.organizationId === req.user.organizationId
-ប្រសិនបើ gateway មិនស្ថិតក្នុង organization របស់ user៖
-
-Do not return gateway data
-អាចឆ្លើយតបជា៖
-
-404 Not Found
-ឬ៖
-
-403 Forbidden
-ការជ្រើសរើស status code ត្រូវស្របតាម policy របស់ project។
-
-Security Requirement
-មិនត្រូវប្រើតែ gatewayId ដើម្បីស្វែងរកទេ។
-
-មិនសុវត្ថិភាព៖
-
-Gateway.findById(gatewayId)
-សុវត្ថិភាពជាង៖
-
-Gateway.findOne({
-  _id: gatewayId,
-  organizationId: req.user.organizationId,
-})
-Status
-REPORTED VERIFIED
-5. Gateway API Security Matrix
-Case	Authentication	Permission	Organization	Result
-Valid user	Yes	org:read	Same org	Allow
-Valid user	Yes	Missing	Same org	Reject
-Valid user	Yes	org:read	Different org	Reject
-No token	No	Unknown	Unknown	401
-Invalid token	Invalid	Unknown	Unknown	401
-Missing gateway	Yes	Valid	Same org	404
-Malformed ID	Yes	Valid	Unknown	400 or 404
-Database unavailable	Yes	Valid	Unknown	5xx, no fake data
-ប្រព័ន្ធមិនត្រូវបង្ហាញ demo gateway ឬ static gateway ជា live production data ទេ។
-
-6. Gateway Data Boundary
-Gateway API អាចបង្ហាញតែព័ត៌មានដែលមាននៅក្នុង database ពិត។
-
-អាចបង្ហាញ៖
-
-Gateway ID
-Organization ID
-Gateway name
-Gateway status
-Online/offline state ប្រសិនបើមានក្នុង schema
-Protocol reference ប្រសិនបើមានក្នុង schema
-Last seen ប្រសិនបើមានក្នុង schema
-Created timestamp ប្រសិនបើមានក្នុង schema
-Updated timestamp ប្រសិនបើមានក្នុង schema
-មិនត្រូវបង្កើតតម្លៃក្លែងក្លាយសម្រាប់៖
-
-Online status
-Network latency
-Device count
-Last heartbeat
-Physical connection
-Protocol acknowledgement
-Gateway health score
-ប្រសិនបើ field មិនមានក្នុង database៖
-
-Return null, omit the field, or disclose unavailable status.
-មិនត្រូវបំពេញដោយ៖
-
-"online"
-"healthy"
-"connected"
-"ready"
-ដោយគ្មាន evidence។
-
-7. Gateway and Organization Isolation
-Organization isolation គឺជាការការពារសំខាន់បំផុតរបស់ API។
-
-រាល់ request ដែលទាក់ទងនឹង gateway ត្រូវ bind ទៅ៖
-
-Authenticated user
-↓
-User organization
-↓
-Gateway organization
-Flow ត្រឹមត្រូវ៖
-
-Read JWT
-↓
-Resolve user
-↓
-Read req.user.organizationId
-↓
-Validate permission
-↓
-Query gateway with organizationId
-↓
-Return only same-organization data
-Flow មិនត្រឹមត្រូវ៖
-
-Read gatewayId
-↓
-Find gateway globally
-↓
-Return result
-ករណីខាងក្រោមត្រូវតែបរាជ័យ៖
-
-User ប្តូរ gatewayId ទៅ ID របស់ organization ផ្សេង។
-User ដឹង gateway ID របស់ tenant ផ្សេង។
-User មាន org:read ប៉ុន្តែមិនមែនជាសមាជិករបស់ gateway organization។
-Client ផ្ញើ organizationId ផ្ទាល់ក្នុង body ដើម្បី override server identity។
-Query មិនមាន organization filter។
-Server មិនត្រូវទុកចិត្ត organization ID ពី client ទេ។
-
-មិនត្រូវប្រើ៖
-
-const organizationId = req.body.organizationId;
-ជំនួសវិញត្រូវប្រើ៖
-
-const organizationId = req.user.organizationId;
-8. Gateway Status Meaning
-Gateway status ត្រូវបែងចែកពី physical execution status។
-
-ឧទាហរណ៍៖
-
-Gateway record exists
-មិនមានន័យថា៖
-
-Gateway is physically connected
-Gateway status = configured
-មិនមានន័យថា៖
-
-Protocol transport is active
-Gateway status = online
-មិនមានន័យថា៖
-
-Every device command will succeed
-Gateway API returned 200
-មិនមានន័យថា៖
-
-Physical device received the command
-API availability និង physical availability គឺជារឿងពីរផ្សេងគ្នា។
-
-9. Gateway Architecture
-Gateway layer មានតួនាទីជាផ្លូវកណ្ដាលរវាង command service និង protocol transport។
-
-ស្ថាបត្យកម្មគោល៖
-
-Client UI
-  ↓
-API Route
-  ↓
-Authentication
-  ↓
-RBAC
-  ↓
-Organization Isolation
-  ↓
-Device Ownership
-  ↓
-Safety Engine
-  ↓
-Command Creation
-  ↓
-Gateway Dispatcher
-  ↓
-Protocol Adapter
-  ↓
-Gateway Transport
-  ↓
-Physical Device
-  ↓
-Device ACK
-  ↓
-Command Result
-  ↓
-Audit Log
-Gateway dispatcher មិនគួររំលង៖
-
-Authentication
-Authorization
-Organization isolation
-Device ownership
-Safety check
-Rate limit
-Audit logging
-10. Gateway Components
-Architecture ដែលបានរាយការណ៍មាន component ដូចខាងក្រោម៖
-
-src/core/protocol/
-├── protocol.types.ts
-└── protocol.registry.ts
-src/core/gateway/
-├── gateway.types.ts
-├── gateway.dispatcher.types.ts
-├── gateway.dispatcher.ts
-└── command.lifecycle.ts
-ស្ថានភាពដែលត្រូវប្រើ៖
-
-IMPLEMENTED or REPORTED
-រហូតដល់មាន code ពិត និង test result សម្រាប់ឯកសារមេ។
-
-មិនគួរសរសេរថា VERIFIED ដោយស្វ័យប្រវត្តិ ប្រសិនបើមិនបានឃើញ៖
-
-Source implementation
-Test result
-Runtime evidence
-Adapter registration
-Real transport result
-11. Gateway Dispatcher Validation
-Gateway dispatcher ត្រូវពិនិត្យយ៉ាងហោចណាស់៖
-
-Device មានក្នុង database។
-Device ស្ថិតក្នុង organization ត្រឹមត្រូវ។
-Gateway configuration មាន។
-Gateway មានក្នុង database។
-Gateway ស្ថិតក្នុង organization ត្រឹមត្រូវ។
-Gateway online state មានការបញ្ជាក់។
-Protocol configuration មាន។
-Protocol មានក្នុង registry ឬ database។
-Protocol adapter ត្រូវបាន register។
-Adapter អាចទទួល command បាន។
-Transport អាចបញ្ជូនបាន។
-Device ឬ protocol ផ្ញើ ACK ត្រឡប់។
-ACK ត្រូវ match នឹង command។
-Result ត្រូវបាន audit។
-ប្រសិនបើចំណុចណាមួយបរាជ័យ៖
-
-Do not report success.
-12. Explicit Gateway Failure Codes
-ប្រព័ន្ធគួរប្រើ failure code ដែលអាចពិនិត្យបាន។
-
-Device Errors
-DEVICE_NOT_FOUND
-DEVICE_NOT_OWNED_BY_ORGANIZATION
-DEVICE_NOT_READY
-DEVICE_OFFLINE
-Gateway Errors
-GATEWAY_NOT_CONFIGURED
-GATEWAY_NOT_FOUND
-GATEWAY_OFFLINE
-GATEWAY_AUTH_FAILED
-GATEWAY_TIMEOUT
-Protocol Errors
-PROTOCOL_NOT_CONFIGURED
-PROTOCOL_NOT_FOUND
-PROTOCOL_ADAPTER_UNAVAILABLE
-PROTOCOL_UNSUPPORTED
-PROTOCOL_VALIDATION_FAILED
-Transport Errors
-TRANSPORT_ERROR
-TRANSPORT_TIMEOUT
-TRANSPORT_UNAVAILABLE
-CONNECTION_REFUSED
-Acknowledgement Errors
-DEVICE_ACK_NOT_RECEIVED
-DEVICE_ACK_TIMEOUT
-DEVICE_ACK_INVALID
-DEVICE_ACK_MISMATCH
-Security Errors
-UNAUTHENTICATED
-FORBIDDEN
-ORGANIZATION_SCOPE_VIOLATION
-DEVICE_PERMISSION_DENIED
-SAFETY_BLOCKED
-RATE_LIMITED
-Error code មិនត្រូវលាក់ failure ដោយប្តូរទៅជា៖
-
-success
-completed
-accepted
-13. Command Success Rule
-ច្បាប់សំខាន់៖
-
-API accepted ≠ Device executed
-Command created ≠ Command succeeded
-Gateway selected ≠ Gateway dispatched
-Transport sent ≠ Device acknowledged
-Device acknowledged ≠ Safety audit completed
-Command អាចក្លាយជា success បានតែពេល៖
-
-User authenticated។
-Permission ត្រឹមត្រូវ។
-Organization scope ត្រឹមត្រូវ។
-Device ownership ត្រឹមត្រូវ។
-Safety check បានអនុញ្ញាត។
-Command ត្រូវបានបង្កើត។
-Gateway dispatch បានដំណើរការ។
-Protocol adapter បានបញ្ជូន។
-Device ឬ protocol បានផ្ញើ ACK ពិត។
-ACK ត្រូវ match command។
-Result ត្រូវបានកត់ត្រា។
-Audit event ត្រូវបានបង្កើត។
-បើគ្មាន ACK៖
-
-success = false
-ស្ថានភាពអាចជា៖
-
-pending
-failed
-blocked
-14. Command Lifecycle
-Lifecycle គោល៖
-
-received
-  ↓
-authenticated
-  ↓
-authorized
-  ↓
-rate_checked
-  ↓
-safety_checked
-  ↓
-pending
-  ↓
-dispatching
-  ↓
-sent
-  ↓
-awaiting_ack
-  ↓
-success
-Failure path៖
-
-received
-  ↓
-authentication_failed
-received
-  ↓
-authorization_failed
-received
-  ↓
-rate_limited
-received
-  ↓
-safety_blocked
-pending
-  ↓
-gateway_unavailable
-  ↓
-failed
-awaiting_ack
-  ↓
-ack_timeout
-  ↓
-failed
-Command មិនត្រូវលោតពី៖
-
-received → success
-ដោយគ្មាន dispatch និង ACK។
-
-15. Command Status Values
-Status ដែលត្រូវគាំទ្រ៖
-
-pending
-success
-failed
-blocked
-Frontend អាចមាន transient state៖
-
-sending
-ប៉ុន្តែ sending មិនចាំបាច់ជាគុណតម្លៃ database ទេ លុះត្រាតែ schema ពិតមាន។
-
-pending
-មាន command record ប៉ុន្តែមិនទាន់មាន final result។
-
-success
-មាន real acknowledgement និង final verified result។
-
-failed
-ការបញ្ជូន ឬការប្រតិបត្តិបរាជ័យ។
-
-blocked
-Safety, authorization ឬ policy បានបញ្ឈប់ command មុន dispatch។
-
-16. Safety Before Gateway Dispatch
-Safety Engine ត្រូវដំណើរការមុន physical dispatch។
-
-Flow៖
-
-Command request
-  ↓
-Authentication
-  ↓
-Authorization
-  ↓
-Rate limit
-  ↓
-Safety engine
-  ↓
-Gateway dispatch
-មិនត្រូវ dispatch មុន safety check ទេ។
-
-Safety rules ដែលបានរាយការណ៍៖
-
-Cold-storage temperature protection
-Duress-code restrictions
-HVAC emergency-shutdown restrictions
-Ignition lock after configured hours
-Other registered safety rules
-ប្រសិនបើ safety rule block៖
-
-Command status = blocked
-ត្រូវបង្កើត safety event និង audit event។
-
-មិនត្រូវបញ្ជូនទៅ gateway ទេ។
-
-17. Organization Scope for Device Commands
-Command ត្រូវ bind ទៅ organization របស់ device និង user។
-
-ត្រូវ verify៖
-
-command.organizationId
-device.organizationId
-req.user.organizationId
-តម្លៃទាំងបីត្រូវស្របគ្នា តាម model ពិត។
-
-ករណីខាងក្រោមត្រូវបរាជ័យ៖
-
-User organization មិនត្រូវនឹង device organization។
-Command ID ជារបស់ device ផ្សេង។
-Device ID ត្រូវនឹង organization ប៉ុន្តែ command ID មិនត្រូវ។
-Client ផ្ញើ organization ID ផ្សេង។
-Query ប្រើ command ID ដោយគ្មាន organization filter។
-Command history ក៏ត្រូវ organization-scoped ដែរ។
-
-User មិនត្រូវអាចមើល៖
-
-Command របស់ organization ផ្សេង
-Device state របស់ organization ផ្សេង
-Gateway status របស់ organization ផ្សេង
-Safety event របស់ organization ផ្សេង
-Telemetry របស់ organization ផ្សេង
-18. Gateway and Protocol Configuration
-Gateway configuration ត្រូវមានមុនពេល dispatch។
-
-Protocol configuration ត្រូវមានមុនពេល dispatch។
-
-Protocol adapter ត្រូវមានក្នុង registry ឬ adapter map។
-
-ប្រសិនបើគ្មាន៖
-
-GATEWAY_NOT_CONFIGURED
-ឬ៖
-
-PROTOCOL_NOT_CONFIGURED
-ប្រសិនបើ gateway មាន ប៉ុន្តែ adapter មិនមាន៖
-
-PROTOCOL_ADAPTER_UNAVAILABLE
-ប្រសិនបើ gateway offline៖
-
-GATEWAY_OFFLINE
-ប្រព័ន្ធមិនត្រូវបង្កើត mock ACK ដើម្បីបំពេញ success ទេ។
-
-19. Physical Device Boundary
-KSV អាចមាន architecture ត្រៀមសម្រាប់ physical device ប៉ុន្តែ architecture មិនមែនជាភស្តុតាងថា physical device ភ្ជាប់រួចទេ។
-
-ត្រូវបែងចែកជា៖
-
-Architecture ready
-និង៖
-
-Real transport verified
-និង៖
-
-Physical device execution verified
-បច្ចុប្បន្នតាមឯកសារដែលបានផ្ញើ៖
-
-Gateway API = reported verified
-Gateway abstraction = implemented/reported
-Real physical transport = not verified
-Real physical ACK = not verified
-ដូច្នេះ command ត្រូវ fail-closed នៅពេល transport មិនមាន។
-
-20. Audit Integration
-រាល់ gateway និង command operation សំខាន់ៗត្រូវមាន audit event។
-
-Audit result គួរបែងចែកជា៖
-
-SUCCESS
-FAILURE
-BLOCKED
-Audit context អាចមាន៖
-
-ip
-userAgent
-reason
-code
-userId
-organizationId
-deviceId
-gatewayId
-commandId
-តែ field ណាខ្លះអាចប្រើបាន ត្រូវផ្ទៀងផ្ទាត់តាម schema ពិត។
-
-Audit មិនត្រូវបង្កើត success ដោយខ្លួនឯងទេ។
-
-Audit ត្រូវកត់ត្រាលទ្ធផលពិត៖
-
-Request accepted
-ខុសពី៖
-
-Device executed
-21. Rate Limiting
-Command request ត្រូវមាន command-specific rate limiter។
-
-Rate limit ការពារ៖
-
-Command flooding
-Accidental loops
-Malicious repeated requests
-Device overload
-Gateway overload
-Abuse of control endpoints
-Flow៖
-
-Authenticate
-  ↓
-Authorize
-  ↓
-Rate limit
-  ↓
-Safety
-  ↓
-Create command
-ប្រសិនបើលើស rate limit៖
-
-RATE_LIMITED
-មិនត្រូវបង្កើត command success ទេ។
-
-22. Frontend Command State
-Frontend អាចបង្ហាញ lifecycle ដូចជា៖
-
-sending
-  ↓
-pending
-  ↓
-success
-Failure៖
-
-sending
-  ↓
-pending
-  ↓
-failed
-Blocked៖
-
-sending
-  ↓
-blocked
-ប្រសិនបើ backend ឆ្លើយ pending៖
-
-UI មិនត្រូវបង្ហាញ success ភ្លាមៗ។
-UI ត្រូវ poll command status។
-Polling ត្រូវមាន timeout។
-UI ត្រូវបង្ហាញថាកំពុងរង់ចាំ verification។
-UI ត្រូវបង្ហាញ failure ប្រសិនបើ timeout។
-UI មិនត្រូវរង់ចាំគ្មានកំណត់។
-ការបង្ហាញ៖
-
-Command accepted and awaiting device acknowledgement
-គឺត្រឹមត្រូវជាង៖
-
-Device command completed
-នៅពេលមិនទាន់មាន ACK។
-
-23. Verification Evidence
-ក្នុងឯកសារប្រភព មានការរាយការណ៍ថា commands ខាងក្រោមបានរត់៖
-
-npm run typecheck
-git diff --check
-npm run build
-Status ដែលបានរាយការណ៍៖
-
-typecheck = PASS
-git diff --check = PASS
-build = PASS
-Build បានរាយការណ៍ថាបាន transform ប្រហែល 1593 modules។
-
-Warnings ដែលបានរាយការណ៍៖
-
-outdated caniuse-lite
-JavaScript chunk ធំជាង 500 kB
-ចំណាំ៖ នេះជាស្ថានភាពដែលមានក្នុងឯកសារប្រភព។ វាមិនមែនជាការរត់ test ថ្មីដោយខ្ញុំនៅក្នុង workspace នេះទេ។ ដូច្នេះក្នុង Master Document គួរសម្គាល់ថា៖
-
-REPORTED VERIFICATION
-រហូតដល់មាន fresh test evidence។
-
-24. Gateway API Verification Checklist
-Authentication
- Request មាន valid token។
- Invalid token ត្រូវបាន reject។
- Missing token ត្រូវបាន reject ជា 401។
- User ត្រូវបាន resolve ពី database។
-Authorization
- org:read ត្រូវបានពិនិត្យ។
- Missing permission ត្រូវបាន reject។
- Permission មិនត្រូវ bypass ដោយ frontend។
-Organization
- Query ប្រើ req.user.organizationId។
- Gateway organization ត្រូវ match។
- Cross-organization access ត្រូវ block។
- Client មិនអាច override organization scope។
-Gateway
- Gateway ID ត្រូវ validate។
- Gateway existence ត្រូវ verify។
- Gateway status មិនត្រូវ fake។
- Gateway data មិនត្រូវ global read។
-Command
- Command ត្រូវចាប់ផ្ដើមជា pending។
- Safety check មុន dispatch។
- Gateway dispatch មាន evidence។
- Protocol adapter មាន evidence។
- Real ACK ត្រូវ verify។
- Success ត្រូវអាស្រ័យលើ ACK។
-Audit
- Success ត្រូវ audit។
- Failure ត្រូវ audit។
- Blocked ត្រូវ audit។
- Organization ID ត្រូវមានប្រសិនបើ schema គាំទ្រ។
- Error code ត្រូវរក្សាទុក។
-25. Known Gaps
-25.1 Real Physical Transport
-នៅមិនទាន់មាន evidence គ្រប់គ្រាន់ថា real gateway transport ត្រូវបានភ្ជាប់។
-
-Status៖
-
-NOT VERIFIED
-មិនត្រូវអះអាងថា device បានទទួល command ទេ។
-
-25.2 Real Protocol Adapter
-Architecture មាន protocol registry និង adapter concept។
-
-ប៉ុន្តែត្រូវផ្ទៀងផ្ទាត់៖
-
-Adapter ពិតមានឬអត់
-Adapter ត្រូវបាន register ឬអត់
-Adapter អាច dispatch បានឬអត់
-Adapter ទទួល ACK បានឬអត់
-Adapter មាន test environment ឬអត់
-Status រហូតដល់ verify៖ …
-
-This response is too long to display in full.
+Certificate #1 https://api2.sololearn.com/v2/certificates/CC-4WMNT8MZ/image/png?t=639211314186882960
+Certificate #2 https://api2.sololearn.com/v2/certificates/CC-FQXPSLUW/image/png?t=639114126319491590
+Certificate #3 https://api2.sololearn.com/v2/certificates/CC-T1WYSOHU/image/png?t=639218531599541850
+Certificate #4 https://api2.sololearn.com/v2/certificates/CC-I6OFSBAU/image/png?t=639221583443257000
+Certificate #5 https://api2.sololearn.com/v2/certificates/CC-IXX7OEVL/image/png?t=639129089670279240
+Certificate #6 https://api2.sololearn.com/v2/certificates/CC-AYYCWFZD/image/png?t=639213017982820410
+Certificate #7 https://api2.sololearn.com/v2/certificates/CC-3LIHOX01/image/png?t=639149755075790680
+Certificate #8 https://api2.sololearn.com/v2/certificates/CC-HAW7ZIH5/image/png?t=639127071272290510
+Certificate #9 https://api2.sololearn.com/v2/certificates/CC-U8DL49ZZ/image/png?t=639128642579113120
+Certificate #10 https://api2.sololearn.com/v2/certificates/CC-SI2WZX43/image/png?t=639128879870325970
+Certificate #11 https://api2.sololearn.com/v2/certificates/CC-SUOWGF8T/image/png?t=639129397891636970
+Certificate #12 https://api2.sololearn.com/v2/certificates/CC-I4TIACOI/image/png?t=639129633525792890
+Certificate #13 https://api2.sololearn.com/v2/certificates/CC-GT2PAJTL/image/png?t=639130145139061920
+Certificate #14 https://api2.sololearn.com/v2/certificates/CC-CCYNOT2R/image/png?t=639130171535224370
+Certificate #15 https://api2.sololearn.com/v2/certificates/CC-ZYSDAZM8/image/png?t=639130228680226390
+Certificate #16 https://api2.sololearn.com/v2/certificates/CC-7ABADG4R/image/png?t=639130271146365570
+Certificate #17 https://api2.sololearn.com/v2/certificates/CC-DBRL4YLD/image/png?t=639131460155620180
+Certificate #18 https://api2.sololearn.com/v2/certificates/CC-033EXHKA/image/png?t=639132345227292480
+Certificate #19 https://api2.sololearn.com/v2/certificates/CC-UYFGANZQ/image/png?t=639132373592160560
+Certificate #20 https://api2.sololearn.com/v2/certificates/CC-2M47YBCR/image/png?t=639132404731128520
+Certificate #21 https://api2.sololearn.com/v2/certificates/CC-WKCFVLYI/image/png?t=639132438814129950
+Certificate #22 https://api2.sololearn.com/v2/certificates/CC-CRBRNFSO/image/png?t=639132486370977210
+Certificate #23 https://api2.sololearn.com/v2/certificates/CC-SUEHSLUF/image/png?t=639132518202129160
+Certificate #24 https://api2.sololearn.com/v2/certificates/CC-SI4N5SIB/image/png?t=639132552000527100
+Certificate #25 https://api2.sololearn.com/v2/certificates/CC-ZTIH8SKI/image/png?t=639132624414342210
+Certificate #26 https://api2.sololearn.com/v2/certificates/CC-OFASKCAF/image/png?t=639136631237077950
+Certificate #27 https://api2.sololearn.com/v2/certificates/CC-SCJHQBG0/image/png?t=639133282834683540
+Certificate #28 https://api2.sololearn.com/v2/certificates/CC-JAJVCQCJ/image/png?t=639133319713608600
+Certificate #29 https://api2.sololearn.com/v2/certificates/CC-DJ9YJOG5/image/png?t=639133354278903030
+Certificate #30 https://api2.sololearn.com/v2/certificates/CC-FYISPG0F/image/png?t=639139227658362860
+Certificate #31 https://api2.sololearn.com/v2/certificates/CC-AXMQ8X3Q/image/png?t=639138317832565410
+Certificate #32 https://api2.sololearn.com/v2/certificates/CC-OU33MLMF/image/png?t=639142032442792440
+Certificate #33 https://api2.sololearn.com/v2/certificates/CC-K47BIVEI/image/png?t=639147137885562720
+Certificate #34 https://api2.sololearn.com/v2/certificates/CC-AREK9EJE/image/png?t=639154446519468340
+Certificate #35 https://api2.sololearn.com/v2/certificates/CC-6ZXHTBFA/image/png?t=639158173295795190
+Certificate #36 https://api2.sololearn.com/v2/certificates/CC-ZDBUNAIR/image/png?t=639156230587386000
+Certificate #37 https://api2.sololearn.com/v2/certificates/CC-2SCXNBZ6/image/png?t=639220875861304820
+Certificate #38 https://api2.sololearn.com/v2/certificates/CC-CAZPORAO/image/png?t=639214762709896540
+Certificate #39 https://api2.sololearn.com/v2/certificates/CC-S072WEWW/image/png?t=639220816092789140
+Certificate #40 https://api2.sololearn.com/v2/certificates/CC-OP1HINXS/image/png?t=639222163892448310
+Certificate #41 https://api2.sololearn.com/v2/certificates/CC-GPX6LLCC/image/png?t=639222232281084110
+Certificate #42 https://api2.sololearn.com/v2/certificates/CC-8VRSVYY8/image/png?t=639223768700061080
+Certificate #43 https://api2.sololearn.com/v2/certificates/CC-IGJZ5ICG/image/png?t=639224674159806284
+Certificate #44 https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png?t=639224739175951367
+Certificate #45 https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png?t=639224766824092049
+Certificate #46 https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png?t=639225729535120880
+Certificate​ #47 https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png?t=639227517866924285
+
+---
+
+# THANK YOU SO MUCH TO ALL THE AI ASSISTANTS WHO HELPED ME 🙏❤️
+
+---
+
+### ✅ ថ្ងៃទី 29 សីហា 2026 (យប់) — Root Cause Fix, API Domain Audit, Git Safety Incident
+
+**បញ្ហាធំបំផុតដែលរកឃើញ — Root Cause នៃ "ចុចទំព័រខុស" / build ខូច:**
+ថត (folder) ត្រួតគ្នាច្រើនស្រទាប់ ដែលកើតឡើងពី AI ផ្សេងៗ (Termux, bolt.new) កែក្នុងពេលដំណាលគ្នាដោយមិន sync៖
+- `khoem-now/khoem-now/` (i18n/components ត្រូវការស្រាប់ ជាប់ក្នុង folder ត្រួតគ្នា)
+- `App.tsx` ត្រួតគ្នា ៣ file (`App.tsx`, `App_ksv.tsx`, `App_1.tsx`)
+- `nav.tsx` ដាក់ខុសទីតាំង (root ជំនួស `src/components/`)
+
+**ការកែសម្រួលរចនាសម្ព័ន្ធ (Cleanup):**
+1. រួម i18n/components/data/views ដែលជាប់ក្នុង folder ត្រួតគ្នា ចូល `src/` ត្រឹមត្រូវ
+2. ជំនួស `src/App.tsx` (កំណែខុស/template) ដោយកំណែពិត (191 lines មាន i18n ពេញលេញ)
+3. លុប `App_ksv.tsx`, `nav.tsx` (root), `src/package.json` ស្ទួន
+4. កែ `main.tsx` ឱ្យ wrap `<App />` ដោយ `<LanguageProvider>` (កាលពីមុនខ្វះ → app crash ពេល load)
+5. កែ `InternationalView.tsx`: `export default` → named export (`export function InternationalView`) ឱ្យស៊ីគ្នានឹង views ១១ ទៀត
+6. Rename `DOCUMENTATION/authorization.md` → `authentication.md` (ខ្លឹមសារពិតជា Authentication តែដាក់ខុសឈ្មោះ) + ផ្លាស់ទី `authorization.md` (root) ចូល `DOCUMENTATION/`
+
+**API/ Domain Audit (ឆែកទាំង 13 file ម្តងមួយៗ):**
+account-recovery, authentication, authorization, automation, command, device, discovery, gateway, identity, protocol, safety — ✅ ស្អាតទាំងអស់, logic/security rules ត្រឹមត្រូវ។
+- `international.ts` — ខ្វះ `ROUTES`/`Handlers`/`SecurityRules`/`AuditEvent` (មានតែ types+functions) → **បានបន្ថែមរួច**
+- `organization.ts` — ខ្វះ `ORGANIZATION_SECURITY_RULES` ទាំងស្រុង → **បានបន្ថែមរួច** (ONLY_OWNER_CAN_DELETE_ORG, MINIMUM_ONE_OWNER_REQUIRED, CANNOT_ASSIGN_ROLE_ABOVE_OWN ។ល។)
+- កត់ចំណាំ: `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` (មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import ជាមួយគ្នា — ប្រយ័ត្នពេលបង្កើត file ថ្មីត្រូវការទាំងពីរ)
+
+**⚠️ Git Safety Incident — មេរៀនសំខាន់សម្រាប់ AI/Developer ក្រោយ:**
+- ពាក្យបញ្ជា `cp -r khoem-now khoem-now-backup-...` ដែលរត់ពី **ខាងក្នុង** `khoem-now/` ខ្លួនឯង បង្កើត backup folder ដែលមាន `node_modules` ពេញ **នៅខាងក្នុង git repo** → `git add -A` ចាប់យកចូល commit ដោយចៃដន្យ (រាប់ពាន់ file!)
+- **មេរៀន**: កុំដែល `cp -r` project folder ទៅជា backup **នៅខាងក្នុងខ្លួនឯង**។ បើត្រូវការ backup សូមធ្វើនៅ **ក្រៅ** project root ទាំងស្រុង (ឧ. `~/backups/`) ឬប្រើ `git stash`/`git branch` ជំនួស
+- **មេរៀនទី ២**: `git status` ត្រូវពិនិត្យជានិច្ចមុន `git add -A` — កុំទុកចិត្តលើ `-A` ដោយងងឹតងងុល
+- **មេរៀនទី ៣**: AI ២-៣ កន្លែងកែក្នុងពេលដំណាលគ្នា (Termux + bolt.new) នាំឱ្យ `git push` ត្រូវ `rejected` ជានិច្ច — ត្រូវ `git pull --no-rebase` ជានិច្ចមុន push
+
+**ឧបករណ៍ថ្មី — `ksv.sh` (shortcut script):**
+បង្កើតទុកនៅ `~/KSV/khoem-now/ksv.sh` ជាមួយ alias `ksv` ក្នុង `~/.bashrc`៖
+- `ksv pull` — ទាញកូដចុងក្រោយ
+- `ksv build` — `npm install && npm run build`
+- `ksv dev` — `npm install && npm run dev`
+- `ksv push` — add + commit (សួរសារ) + push
+- `ksv status` — `git status` + `git log --oneline -5`
+
+**Commits ថ្ងៃនេះ:**
+- `docs: complete API domain audit, add missing security rules and route definitions to organization.ts and international.ts`
+- Merge commit ជាមួយ `khoem-now/API/README.md` (ពី AI ផ្សេង) — គ្មាន conflict
+
+**ស្ថានភាពចុងក្រោយ:** GitHub `KHOEM-AI/KSV` main branch sync ១០០%, build ជោគជ័យ (1589 modules, 0 error), `node_modules` មិនជាប់ក្នុង repo ទៀត។
