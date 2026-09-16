@@ -1287,6 +1287,11 @@ const th: Dict = {
   'view.security.authMethods.title': 'วิธีการตรวจสอบสิทธิ์',
   'view.security.authMethods.sessions': 'เซสชัน',
 
+  'view.controls.logLoading': 'กำลังโหลดกิจกรรมล่าสุด…',
+  'view.controls.logEmpty': 'ยังไม่มีคำสั่งที่ส่ง',
+  'view.controls.logLoadFailed': 'ไม่สามารถโหลดกิจกรรมล่าสุดได้',
+  'view.security.authMethods.title': 'วิธีการตรวจสอบสิทธิ์',
+  'view.security.authMethods.sessions': 'เซสชัน',
 
   'dashboard.stat.connectedDevices': "อุปกรณ์ที่เชื่อมต่อ",
   'dashboard.stat.activeSafetyRules': "กฎความปลอดภัยที่ใช้งานอยู่",
@@ -1379,7 +1384,6 @@ const th: Dict = {
   'view.audit.category.device': "อุปกรณ์",
   'view.audit.category.network': "เครือข่าย",
   'view.audit.category.safety': "ความปลอดภัย",
-  'view.audit.chainVerified': "ห่วงโซ่ได้รับการยืนยันแล้ว",
   'view.audit.chainVerified': "ห่วงโซ่ได้รับการยืนยันแล้ว",
   'view.audit.noMatch': "ไม่มีเหตุการณ์ที่ตรงกับตัวกรองของคุณ",
   'view.audit.result.denied': "ถูกปฏิเสธ",
