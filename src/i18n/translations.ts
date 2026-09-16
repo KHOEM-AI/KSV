@@ -861,6 +861,14 @@ const km: Dict = {
 
 
 const ja: Dict = {
+  'aiChat.emptyState': 'KHOEM-AIとの会話を始めましょう',
+  'aiChat.placeholder': 'コマンドや質問を入力…',
+  'aiChat.subtitle': 'あなたのアシスタント',
+  'view.audit.loading': '監査証跡を読み込み中…',
+  'view.audit.loadFailed': '監査証跡を読み込めませんでした。',
+  'view.controls.logLoading': '最近のアクティビティを読み込み中…',
+  'view.controls.logEmpty': 'まだコマンドは送信されていません。',
+  'view.controls.logLoadFailed': '最近のアクティビティを読み込めませんでした。',
   'dashboard.stat.connectedDevices': "接続デバイス",
   'dashboard.stat.activeSafetyRules': "アクティブな安全ルール",
   'dashboard.stat.edgeGateways': "エッジゲートウェイ",
