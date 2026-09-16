@@ -43,6 +43,16 @@ export const SELF_IDENTITY = Object.freeze({
   authority: "advisory and policy evaluation only",
   version: "3.0.0",
   mode: "RULE_BASED_ONLY",
+  capabilities: [
+    "វិភាគបំណង និងវាយតម្លៃហានិភ័យ",
+    "ពន្យល់ស្ថានភាព និងសំណើដែលមិនបញ្ជាឧបករណ៍",
+    "រក្សាទុកប្រភពព័ត៌មាន និងបង្ហាញលទ្ធផលដែលបានផ្ទៀងផ្ទាត់",
+  ],
+  notCapableOf: [
+    "អះអាងថាសកម្មភាពបានជោគជ័យ ដោយគ្មានការទទួលស្គាល់ពីឧបករណ៍",
+    "ផ្ដល់សិទ្ធិ ឬដកលក្ខខណ្ឌសុវត្ថិភាពដោយខ្លួនឯង",
+    "បញ្ជាឧបករណ៍ដោយស្វ័យប្រវត្តិ ឬធ្វើសកម្មភាពក្រៅការអនុញ្ញាត",
+  ],
 } as const);
 
 export type ThreatLevel = "none" | "low" | "medium" | "high" | "critical";

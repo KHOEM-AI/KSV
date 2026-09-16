@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { X, Pause, Play, Send } from "lucide-react";
+import { analyze } from "@/core/ai/khoem-ai-brain";
 
 interface Message {
   id: string;
@@ -47,16 +48,61 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
   }, []);
 
   function handleSend() {
-    if (!input.trim()) return;
-    setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", text: input }]);
+    const text = input.trim();
+    if (!text) return;
+
+    const analysis = analyze({ text }) as unknown as Record<string, unknown>;
+    const reply = getAiReply(text, analysis);
+    const now = Date.now();
+
+    setMessages((prev) => [
+      ...prev,
+      { id: `${now}-user`, role: "user", text },
+      { id: `${now}-ai`, role: "ai", text: reply },
+    ]);
+
     setInput("");
+  }
+
+  function getAiReply(
+    text: string,
+    analysis: Record<string, unknown>,
+  ): string {
+    const candidates = [
+      analysis.response,
+      analysis.reply,
+      analysis.answer,
+      analysis.message,
+    ];
+
+    const reply = candidates.find(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    );
+
+    if (reply) return reply;
+
+    // Preserve the existing safety fallback if the brain returned one.
+    if (
+      typeof analysis.safeFallback === "string" &&
+      analysis.safeFallback.trim().length > 0
+    ) {
+      return analysis.safeFallback;
+    }
+
+    // Last resort: make the fallback specific to the user's actual words.
+    if (/[\u1780-\u17FF]/.test(text)) {
+      return `ខ្ញុំបានទទួលសំណួររបស់បង៖ «${text}»។ ខ្ញុំកំពុងពិនិត្យអត្ថន័យបន្ថែម ដើម្បីឆ្លើយឲ្យបានត្រឹមត្រូវ។`;
+    }
+
+    return `I received your question: “${text}”. I am checking its meaning so I can answer accurately.`;
   }
 
   // Two layouts: CLOSED = small idle panel on the right (always visible, shows stars).
   // OPEN = full-screen overlay covering the entire dashboard.
   const containerClass = open
     ? "fixed inset-0 h-full w-full bg-slate-950 z-50 flex flex-col overflow-hidden"
-    : "fixed top-[112px] sm:top-16 bottom-0 right-0 w-[360px] max-w-[360px] bg-slate-950 border-l border-slate-800 z-30 flex flex-col overflow-hidden cursor-pointer";
+    : "fixed top-[112px] sm:top-16 bottom-0 right-0 w-[min(360px,100vw)] max-w-[100vw] bg-slate-950 border-l border-slate-800 z-30 flex flex-col overflow-hidden cursor-pointer";
 
   return (
     <aside className={containerClass} onClick={!open ? onOpen : undefined}>
@@ -81,7 +127,7 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
       </div>
 
       {/* Background layer: scrolling vertical text, always rendered */}
-      <div className="absolute inset-0 flex items-start justify-end pr-6 overflow-hidden pointer-events-none">
+      <div className={`absolute inset-0 flex items-start justify-end pr-6 overflow-hidden pointer-events-none ${open ? "hidden" : ""}`}>
         <div className={`welcome-scroll-track relative z-10 ${paused ? "paused" : ""}`}>
           {[0, 1].map((copy) => (
             <span
@@ -120,7 +166,7 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
           </div>
 
           {/* Chat stream */}
-          <div className="flex-1 overflow-y-auto p-4 pr-16">
+          <div className="flex-1 min-w-0 overflow-y-auto p-4">
             <div className="flex flex-col gap-3">
               {messages.map((m) => (
                 <div

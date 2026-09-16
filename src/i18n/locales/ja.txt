@@ -1,0 +1,16 @@
+  'nav.map': 'マップ',
+  'view.map.title': 'インタラクティブマップ',
+  'view.map.subtitle': 'フリート全体のデバイスをリアルタイムで地図表示',
+  'view.map.filter.all': 'すべて',
+  'view.map.filter.online': 'オンライン',
+  'view.map.filter.warning': '警告',
+  'view.map.filter.critical': '重大',
+  'view.map.filter.offline': 'オフライン',
+  'view.map.filter.maintenance': 'メンテナンス',
+  'view.map.detail.category': 'カテゴリ',
+  'view.map.detail.protocol': 'プロトコル',
+  'view.map.detail.status': 'ステータス',
+  'view.map.detail.coords': '座標',
+  'view.map.detail.controlNote': 'コマンド送信はデバイス詳細から行います — 認可と安全確認はマップからバイパスされません。',
+
+

@@ -43,6 +43,19 @@ export const SELF_IDENTITY = Object.freeze({
   authority: "advisory and policy evaluation only",
   version: "3.0.0",
   mode: "RULE_BASED_ONLY",
+  capabilities: [
+    "Understand user intent",
+    "Answer general customer questions",
+    "Explain KSV features and workflows",
+    "Evaluate risk and authorization context",
+    "Disclose verified outcomes and limitations",
+  ],
+  notCapableOf: [
+    "Bypass authorization",
+    "Execute unauthorized device commands",
+    "Act autonomously without policy checks",
+    "Guarantee unverified information",
+  ],
 } as const);
 
 export type ThreatLevel = "none" | "low" | "medium" | "high" | "critical";

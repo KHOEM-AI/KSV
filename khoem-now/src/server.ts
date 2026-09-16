@@ -1667,12 +1667,12 @@ async function resolveAIDevice(
         // --- Deterministic intent interpretation ---
         // Interpretation produces intent only. It does not execute a device command.
         // Command types are restricted to the real KSV command contract.
-        const intentResult = interpretIntent(naturalLanguageInput);
+        const intentResult = interpretIntent({ text: naturalLanguageInput });
 
         let resolvedDevice: Awaited<ReturnType<typeof resolveAIDevice>> | null = null;
         let deviceResolutionReason: string | undefined;
 
-        if (intentResult.intent === "DEVICE_COMMAND") {
+        if (intentResult.intent === "control_request") {
           resolvedDevice = await resolveAIDevice(
             naturalLanguageInput,
             user.organizationId,
@@ -1689,18 +1689,18 @@ async function resolveAIDevice(
             : null;
 
         const commandReady =
-          intentResult.intent === "DEVICE_COMMAND" &&
+          intentResult.intent === "control_request" &&
           !!intentResult.commandType &&
           resolvedDeviceData !== null;
 
         const requiresClarification =
           intentResult.requiresClarification ||
-          (intentResult.intent === "DEVICE_COMMAND" && !commandReady);
+          (intentResult.intent === "control_request" && !commandReady);
 
         const assistantMessage =
-          intentResult.intent === "GREETING"
+          intentResult.intent === "greeting"
             ? "សួស្ដីបង 👋 ខ្ញុំជា KHOEM-AI។ បងអាចសួរខ្ញុំអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើបាន។"
-            : intentResult.intent === "GENERAL_QUESTION"
+            : intentResult.intent === "question"
               ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
               : undefined;
 

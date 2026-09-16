@@ -1,0 +1,52 @@
+47:  app.get("/api/certificates", async (_req, res) => {
+57:  app.post("/api/certificates", async (req, res) => {
+67:  app.post(
+113:  app.post(
+277:  app.post("/api/auth/login/password", authRateLimiter, async (req, res) => {
+410:  app.get(
+429:  app.put(
+455:  app.get("/api/devices", authenticate, requirePermission("device:read"), async (req, res) => {
+470:  app.get("/api/devices/:id/state", authenticate, requirePermission("device:read"), async (req, res) => {
+491:  app.get("/api/commands/recent", authenticate, requirePermission("device:read"), async (req, res) => {
+519:  app.get("/api/commands/:id", authenticate, requirePermission("device:read"), async (req, res) => {
+554:  app.post(
+589:  app.get("/api/security/threats", authenticate, requirePermission("org:read"), async (req, res) => {
+606:  app.get("/api/security/incidents", authenticate, requirePermission("org:read"), async (req, res) => {
+622:  app.get(
+646:  app.get(
+670:  app.get(
+690:  app.get(
+724:  app.post(
+933:app.get(
+968:  app.get(
+1020:  app.get(
+1068:  app.get(
+1092:  app.get(
+1107:  app.get(
+1126:  app.get(
+1145:  app.get(
+1158:  app.get(
+1178:  app.get(
+1208:  app.get(
+1221:  app.get(
+1251:  app.get(
+1287:  app.get(
+1312:  app.get(
+1350:  app.post(
+1379:  app.delete(
+1405:  app.get(
+1430:  app.get(
+1450:  app.put(
+1495:  app.delete(
+1522:  app.post(
+1653:  app.post(
+1760:  app.get(
+1783:  app.delete(
+1809:  app.post(
+1856:  app.get(
+1893:  app.post(
+1932:  app.get("/api/dashboard/stats", authenticate, requirePermission("device:read"), async (req, res) => {
+1954:  app.get(
+1994:  app.post(
+2032:  app.get(
+2047:  app.post(
