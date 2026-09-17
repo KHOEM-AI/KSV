@@ -1,11 +1,10 @@
 // src/views/ControlsView.tsx
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Lock, Unlock, Thermometer, Power, Settings2, Eye, EyeOff,
-  RotateCcw, Snowflake, Wind, Gauge, Activity, ToggleLeft,
+  Lock, Unlock, Thermometer, Power, Settings2,
+  RotateCcw, Snowflake, Wind, Gauge, Activity,
 } from 'lucide-react';
 import { Panel, SectionHeader, Toggle, Badge, ProgressBar, StatusDot } from '@/components/ui';
-import { devices } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { dispatchCommand, listRecentCommands, type RecentCommandEntry } from '@/lib/api';
 

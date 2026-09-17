@@ -1380,8 +1380,6 @@ const th: Dict = {
   'view.audit.category.network': "เครือข่าย",
   'view.audit.category.safety': "ความปลอดภัย",
   'view.audit.chainVerified': "ห่วงโซ่ได้รับการยืนยันแล้ว",
-  'view.audit.chainVerified': "ห่วงโซ่ได้รับการยืนยันแล้ว",
-  'view.audit.noMatch': "ไม่มีเหตุการณ์ที่ตรงกับตัวกรองของคุณ",
   'view.audit.result.denied': "ถูกปฏิเสธ",
   'view.audit.result.error': "ข้อผิดพลาด",
   'view.audit.result.success': "สำเร็จ",

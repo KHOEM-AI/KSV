@@ -325,7 +325,6 @@ export async function evaluateSafety(
       isEnabled: true,
     }).lean();
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("[SAFETY] Failed to load safety rules:", err);
     return {
       decision: "BLOCKED",
@@ -358,7 +357,6 @@ export async function evaluateSafety(
           }),
         ]);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("[SAFETY] Failed to record trigger/log for rule", rule.name, err);
       }
       return result;

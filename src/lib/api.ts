@@ -1475,7 +1475,6 @@ import type {
   Invoice,
   PaymentMethod,
   UsageMeter,
-  PlanTier,
 } from "../../API/billing-subscription";
 
 export async function listBillingPlans(): Promise<SubscriptionPlan[]> {
@@ -1666,7 +1665,6 @@ import type {
   ScheduledReport,
   ReportInstance,
   ExportJob,
-  ReportCategory,
   ReportFormat,
   ReportFrequency,
 } from "../../API/reporting-export";

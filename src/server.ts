@@ -48,7 +48,7 @@ async function main() {
     try {
       const certs = await Certificate.find().populate("holderUserId", "firstName lastName email");
       res.json({ certificates: certs });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "Failed to load certificates" });
     }
   });
@@ -58,7 +58,7 @@ async function main() {
     try {
       const cert = await Certificate.create(req.body);
       res.status(201).json({ certificate: cert });
-    } catch (err) {
+    } catch {
       res.status(400).json({ error: "Failed to create certificate" });
     }
   });
@@ -261,7 +261,6 @@ async function main() {
           command: updatedCommand,
         });
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("[COMMANDS] Failed to process device command:", err);
 
         await auditDeviceCommand(user.id, deviceId, commandType, "FAILURE", String(user.organizationId), {
@@ -444,7 +443,7 @@ async function main() {
         );
         await auditDeviceCommand(user.id, "settings", "UPDATE_SETTINGS", "SUCCESS", String(user.organizationId));
         res.json({ settings: updated });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to save settings." });
       }
     }
@@ -461,7 +460,7 @@ async function main() {
     try {
       const devices = await Device.find({ organizationId: user.organizationId }).lean();
       res.json({ devices, total: devices.length });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load devices." });
     }
   });
@@ -483,7 +482,7 @@ async function main() {
         return;
       }
       res.json({ device });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device state." });
     }
   });
@@ -580,7 +579,7 @@ async function main() {
           requiresReview: requiresReview ?? true,
         });
         res.status(201).json({ threat });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create threat." });
       }
     }
@@ -597,7 +596,7 @@ async function main() {
         .sort({ detectedAt: -1 })
         .lean();
       res.json({ threats, total: threats.length });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load threats." });
     }
   });
@@ -614,7 +613,7 @@ async function main() {
         .sort({ detectedAt: -1 })
         .lean();
       res.json({ incidents, total: incidents.length });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load incidents." });
     }
   });
@@ -636,7 +635,7 @@ async function main() {
           return;
         }
         res.json({ organizations: [org] });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
       }
     }
@@ -660,7 +659,7 @@ async function main() {
           return;
         }
         res.json({ organizations: [org] });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
       }
     }
@@ -680,7 +679,7 @@ async function main() {
       try {
         const rules = await SafetyRule.find({ organizationId: user.organizationId }).lean();
         res.json({ rules, total: rules.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety rules." });
       }
     }
@@ -712,7 +711,7 @@ async function main() {
         }).lean();
 
         res.json({ gateways, total: gateways.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
       }
     }
@@ -921,10 +920,10 @@ async function main() {
         cloudEndpoint: KSV_CLOUD_ENDPOINT,
         message: "Gateway registered successfully",
       });
-      } catch (err: any) {
+      } catch (err: unknown) {
         return res.status(500).json({
           error: "Internal server error",
-          details: err.message,
+          details: err instanceof Error ? err.message : String(err),
         });
       }
     }
@@ -955,7 +954,7 @@ app.get(
         }).lean();
 
         res.json({ gateways, total: gateways.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({
           error: "INTERNAL_ERROR",
           message: "Failed to load gateways.",
@@ -1004,7 +1003,7 @@ app.get(
         }
 
         res.json({ gateway });
-      } catch (err) {
+      } catch {
         res.status(500).json({
           error: "INTERNAL_ERROR",
           message: "Failed to load gateway.",
@@ -1058,7 +1057,7 @@ app.get(
         }));
 
         res.json({ events, total: events.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit events." });
       }
     }
@@ -1082,7 +1081,7 @@ app.get(
           .limit(limit)
           .lean();
         res.json({ logs, total: logs.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit logs." });
       }
     }
@@ -1097,7 +1096,7 @@ app.get(
       try {
         const protocols = await Protocol.find().lean();
         res.json({ protocols, total: protocols.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load protocols." });
       }
     }
@@ -1116,7 +1115,7 @@ app.get(
           return;
         }
         res.json({ account });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load account." });
       }
     }
@@ -1135,7 +1134,7 @@ app.get(
           .lean();
         const unreadCount = await Notification.countDocuments({ accountId: user.id, isRead: false });
         res.json({ notifications, unreadCount, total: notifications.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load notifications." });
       }
     }
@@ -1148,7 +1147,7 @@ app.get(
       try {
         const countries = await Country.find().lean();
         res.json({ countries, total: countries.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load countries." });
       }
     }
@@ -1168,7 +1167,7 @@ app.get(
       try {
         const rules = await AutomationRule.find({ organizationId: user.organizationId }).lean();
         res.json({ rules, total: rules.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load automation rules." });
       }
     }
@@ -1198,7 +1197,7 @@ app.get(
           .lean();
 
         res.json({ devices: discovered, total: discovered.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load discovered devices." });
       }
     }
@@ -1211,7 +1210,7 @@ app.get(
       try {
         const languages = await Language.find().lean();
         res.json({ languages, total: languages.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load languages." });
       }
     }
@@ -1241,7 +1240,7 @@ app.get(
           .lean();
 
         res.json({ events, total: events.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety events." });
       }
     }
@@ -1277,7 +1276,7 @@ app.get(
           .lean();
 
         res.json({ logs, total: logs.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device telemetry." });
       }
     }
@@ -1297,7 +1296,7 @@ app.get(
       try {
         const invoices = await Invoice.find({ organizationId: user.organizationId }).sort({ issuedAt: -1 }).lean();
         res.json({ invoices, total: invoices.length });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load invoices." });
       }
     }
@@ -1338,7 +1337,7 @@ app.get(
         res.setHeader("Content-Type", "text/plain");
         res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoice._id}.txt"`);
         res.send(text);
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to download invoice." });
       }
     }
@@ -1352,7 +1351,7 @@ app.get(
     authenticate,
     requirePermission("org:manage"),
     async (req, res) => {
-      const user = req.user!;
+      const _user = req.user!;
       const { type, token } = req.body || {};
 
       const validTypes = ["card", "bank", "wallet"];
@@ -1392,7 +1391,7 @@ app.get(
           return;
         }
         res.json({ success: true });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove payment method." });
       }
     }
@@ -1420,7 +1419,7 @@ app.get(
             { organizationId: String(user.organizationId), metricType: "devices", currentValue, limit },
           ],
         });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage." });
       }
     }
@@ -1440,7 +1439,7 @@ app.get(
       try {
         const subscription = await OrganizationSubscription.findOne({ organizationId: user.organizationId }).lean();
         res.json({ subscription });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load subscription." });
       }
     }
@@ -1485,7 +1484,7 @@ app.get(
         await subscription.save();
 
         res.json({ subscription });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update subscription." });
       }
     }
@@ -1512,7 +1511,7 @@ app.get(
         await subscription.save();
 
         res.json({ subscription });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to cancel subscription." });
       }
     }
@@ -1555,7 +1554,7 @@ app.get(
         });
 
         res.status(201).json({ subscription });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create subscription." });
       }
     }
@@ -1667,12 +1666,12 @@ async function resolveAIDevice(
         // --- Deterministic intent interpretation ---
         // Interpretation produces intent only. It does not execute a device command.
         // Command types are restricted to the real KSV command contract.
-        const intentResult = interpretIntent(naturalLanguageInput);
+        const intentResult = interpretIntent({ text: naturalLanguageInput });
 
         let resolvedDevice: Awaited<ReturnType<typeof resolveAIDevice>> | null = null;
         let deviceResolutionReason: string | undefined;
 
-        if (intentResult.intent === "DEVICE_COMMAND") {
+        if (intentResult.intent === "control_request") {
           resolvedDevice = await resolveAIDevice(
             naturalLanguageInput,
             user.organizationId,
@@ -1689,18 +1688,18 @@ async function resolveAIDevice(
             : null;
 
         const commandReady =
-          intentResult.intent === "DEVICE_COMMAND" &&
+          intentResult.intent === "control_request" &&
           !!intentResult.commandType &&
           resolvedDeviceData !== null;
 
         const requiresClarification =
           intentResult.requiresClarification ||
-          (intentResult.intent === "DEVICE_COMMAND" && !commandReady);
+          (intentResult.intent === "control_request" && !commandReady);
 
         const assistantMessage =
-          intentResult.intent === "GREETING"
+          intentResult.intent === "greeting"
             ? "សួស្ដីបង 👋 ខ្ញុំជា KHOEM-AI។ បងអាចសួរខ្ញុំអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើបាន។"
-            : intentResult.intent === "GENERAL_QUESTION"
+            : intentResult.intent === "question"
               ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
               : undefined;
 
@@ -1749,7 +1748,7 @@ async function resolveAIDevice(
         await session.save();
 
         res.json({ ...result, sessionId: String(session._id) });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to interpret input." });
       }
     }
@@ -1773,7 +1772,7 @@ async function resolveAIDevice(
           return;
         }
         res.json({ session });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load session." });
       }
     }
@@ -1796,7 +1795,7 @@ async function resolveAIDevice(
           return;
         }
         res.status(204).send();
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete session." });
       }
     }
@@ -1842,7 +1841,7 @@ async function resolveAIDevice(
         await session.save();
 
         res.json({ confirmed: true, structuredCommand, sessionId: String(session._id) });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to confirm interpretation." });
       }
     }
@@ -1942,7 +1941,7 @@ async function resolveAIDevice(
       const warningDevices = await Device.countDocuments({ organizationId: orgId, status: "warning" });
       const countriesDeployed = (await Site.distinct("country", { organizationId: orgId, country: { $ne: null } })).length;
       res.json({ totalDevices, onlineDevices, safetyRules, gateways, warningDevices, countriesDeployed });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: "INTERNAL_ERROR" });
     }
   });
@@ -1981,7 +1980,7 @@ async function resolveAIDevice(
           totalInterpretationRequests: totalRequests,
           lastRequestAt,
         });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage stats." });
       }
     }
@@ -2019,7 +2018,7 @@ async function resolveAIDevice(
         });
 
         res.status(201).json({ recorded: true, requestId, rating });
-      } catch (err) {
+      } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to record feedback." });
       }
     }

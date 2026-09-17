@@ -1,4 +1,4 @@
-export type DeviceStatus = 'online' | 'offline' | 'warning' | 'maintenance';
+export type DeviceStatus = 'online' | 'offline' | 'warning' | 'maintenance' | 'pairing' | 'error' | 'decommissioned';
 export type DeviceCategory = 'access' | 'climate' | 'industrial' | 'vehicle' | 'sensor' | 'network';
 
 export interface Device {

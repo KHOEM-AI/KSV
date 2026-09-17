@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ScrollText, Search, Filter } from 'lucide-react';
-import { Panel, SectionHeader, Badge, StatusDot } from '@/components/ui';
+import { ScrollText, Search } from 'lucide-react';
+import { Panel, SectionHeader, Badge } from '@/components/ui';
 import { listAuditEvents, type AuditEventEntry } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 

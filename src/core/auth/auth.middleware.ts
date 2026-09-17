@@ -85,7 +85,7 @@ export function authenticate(
     };
 
     next();
-  } catch (err) {
+  } catch {
     // Covers: expired token, invalid signature, malformed token.
     // Intentionally vague to the client (don't leak why verification failed).
     res.status(401).json({

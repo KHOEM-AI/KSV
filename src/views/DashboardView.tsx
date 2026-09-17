@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Cpu, ShieldCheck, ShieldAlert, Globe2, Activity, Zap, AlertTriangle,
-  TrendingUp, Server, Lock, Radio, ChevronRight, ArrowUpRight, Network,
+  Cpu, ShieldAlert, Globe2, Activity, AlertTriangle,
+  Server, Radio, Network,
 } from 'lucide-react';
 import { Panel, SectionHeader, StatCard, Sparkline, Donut, ProgressBar, Badge, StatusDot } from '@/components/ui';
 import { stats, trafficData, alertTrend, devices, safetyRules, gateways, protocols } from '@/data/domain';

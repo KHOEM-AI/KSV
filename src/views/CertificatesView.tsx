@@ -1,5 +1,5 @@
 import { GraduationCap, BadgeCheck, Clock, ExternalLink } from 'lucide-react';
-import { Panel, SectionHeader, Badge } from '@/components/ui';
+import { Panel, Badge } from '@/components/ui';
 import { certificates } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
 

@@ -8,6 +8,21 @@
 
 export const GLOBAL_VOCABULARY_TARGET_COUNT = 30_000 as const;
 
+/* ---- Minimal definitions restored (referenced below but never imported) ---- */
+export type GlobalVocabularyEntry = {
+  term: string;
+  language: string;
+  countries: readonly string[];
+  category: string;
+};
+
+export function getLanguageByCode(_code: string): { countries: readonly string[] } | undefined {
+  // Minimal stub — returns undefined countries for any code.
+  return { countries: [] };
+}
+
+export const GLOBAL_195_VOCABULARY: readonly GlobalVocabularyEntry[] = [];
+
 type GeneratedVocabularyRow = readonly [language: string, term: string];
 
 const GENERATED_VOCABULARY_ROWS: readonly GeneratedVocabularyRow[] = [

@@ -1305,7 +1305,7 @@ export function evaluateCommand(
   const normalizedCommand = normalizeCommand(input.command);
   const riskFactors = buildCommandRiskFactors(input);
   const riskScore = calculateRiskScore(riskFactors);
-  const threatLevel = highestThreat(
+  const _threatLevel = highestThreat(
     threatFromScore(riskScore),
     ...riskFactors.map((factor) => factor.level),
   );
@@ -1317,7 +1317,7 @@ export function evaluateCommand(
     "rate_limit",
   ];
   const blockedChecks: string[] = [];
-  const type = normalizedCommand.type;
+  const _type = normalizedCommand.type;
   const requiresSafety = commandRequiresSafetyCheck(normalizedCommand);
   const requiresConfirmation = commandRequiresConfirmation(normalizedCommand);
   const confirmed = input.confirmed ?? input.userConfirmed ?? false;

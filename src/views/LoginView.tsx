@@ -19,8 +19,8 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
         localStorage.setItem('ksv_access_token', res.token.accessToken);
       }
       onLoginSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }

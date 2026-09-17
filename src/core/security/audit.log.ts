@@ -89,7 +89,6 @@ export async function recordAuditEntry(entry: AuditEntryInput): Promise<void> {
   } catch (err) {
     // Audit logging must be resilient: a DB hiccup here should not
     // block the user's actual request. Surface to monitoring instead.
-    // eslint-disable-next-line no-console
     console.error("[AUDIT] Failed to write audit entry:", err, {
       action: entry.action,
       userId: entry.userId,

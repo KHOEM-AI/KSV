@@ -1,4 +1,4 @@
-import type { ProtocolCommand, ProtocolAck } from "../protocol/protocol.types.ts";
+import type { ProtocolCommand } from "../protocol/protocol.types.ts";
 
 export type GatewaySendResult = {
   acknowledged: boolean;

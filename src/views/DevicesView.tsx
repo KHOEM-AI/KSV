@@ -1,42 +1,48 @@
 import { useState, useEffect } from 'react';
-import { Search, Cpu, Filter, Download } from 'lucide-react';
-import { Panel, SectionHeader, Badge, StatusDot, ProgressBar } from '@/components/ui';
+import { Search, Cpu, Download } from 'lucide-react';
+import { Panel, SectionHeader, Badge, StatusDot } from '@/components/ui';
 import { capabilityRegistry } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { listDevices } from '@/lib/api';
 
-type DeviceStatus = 'online' | 'offline' | 'warning' | 'maintenance';
+type DeviceStatus = 'online' | 'offline' | 'pairing' | 'error' | 'maintenance' | 'decommissioned';
 
 interface ApiDevice {
-  _id: string;
+  deviceId: string;
   name: string;
-  deviceCode: string;
   type: string;
   status: DeviceStatus;
   firmwareVersion?: string;
   lastSeenAt?: string;
+  serialNumber?: string;
 }
 
-const statusVariant: Record<DeviceStatus, 'success' | 'warning' | 'neutral' | 'brand'> = {
+const statusVariant: Partial<Record<DeviceStatus, 'success' | 'warning' | 'neutral' | 'brand'>> = {
   online: 'success',
-  warning: 'warning',
   offline: 'neutral',
+  pairing: 'warning',
+  error: 'brand',
   maintenance: 'brand',
+  decommissioned: 'neutral',
 };
 
 const filterKey: Record<string, string> = {
   all: 'view.devices.filter.all',
   online: 'view.devices.filter.online',
-  warning: 'view.devices.filter.warning',
+  pairing: 'view.devices.filter.pairing',
+  error: 'view.devices.filter.error',
   maintenance: 'view.devices.filter.maintenance',
   offline: 'view.devices.filter.offline',
+  decommissioned: 'view.devices.filter.decommissioned',
 };
 
-const statusKey: Record<DeviceStatus, string> = {
+const statusKey: Partial<Record<DeviceStatus, string>> = {
   online: 'view.devices.status.online',
-  warning: 'view.devices.status.warning',
   offline: 'view.devices.status.offline',
+  pairing: 'view.devices.status.pairing',
+  error: 'view.devices.status.error',
   maintenance: 'view.devices.status.maintenance',
+  decommissioned: 'view.devices.status.decommissioned',
 };
 
 export function DevicesView() {
@@ -49,20 +55,20 @@ export function DevicesView() {
 
   useEffect(() => {
     listDevices()
-      .then((res: any) => setDevices(res.devices ?? []))
+      .then((res) => setDevices(res.devices ?? []))
       .catch((err) => setError(err.message ?? t('view.devices.loadFailed')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const filtered = devices.filter((d) => {
     const matchesQuery =
       d.name.toLowerCase().includes(query.toLowerCase()) ||
-      d.deviceCode.toLowerCase().includes(query.toLowerCase());
+      (d.serialNumber ?? d.deviceId).toLowerCase().includes(query.toLowerCase());
     const matchesFilter = filter === 'all' || d.status === filter;
     return matchesQuery && matchesFilter;
   });
 
-  const filters = ['all', 'online', 'warning', 'maintenance', 'offline'];
+  const filters = ['all', 'online', 'pairing', 'error', 'maintenance', 'offline', 'decommissioned'];
 
   return (
     <div className="space-y-6">
@@ -107,7 +113,7 @@ export function DevicesView() {
                   filter === f ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'border border-ink-700 text-ink-400 hover:text-ink-200'
                 }`}
               >
-                {t(filterKey[f])}
+                {filterKey[f] ? t(filterKey[f]) : f}
               </button>
             ))}
           </div>
@@ -129,10 +135,10 @@ export function DevicesView() {
               </thead>
               <tbody className="divide-y divide-ink-800">
                 {filtered.map((d) => (
-                  <tr key={d._id} className="group transition-colors hover:bg-ink-800/40">
+                  <tr key={d.deviceId} className="group transition-colors hover:bg-ink-800/40">
                     <td className="py-3 pr-4">
                       <div className="font-medium text-ink-100">{d.name}</div>
-                      <div className="text-xs text-ink-400">{d.deviceCode}</div>
+                      <div className="text-xs text-ink-400">{d.serialNumber ?? d.deviceId}</div>
                     </td>
                     <td className="py-3 pr-4">
                       <Badge variant="neutral">{d.type}</Badge>
@@ -141,8 +147,8 @@ export function DevicesView() {
                       {d.firmwareVersion ? `v${d.firmwareVersion}` : '—'}
                     </td>
                     <td className="py-3 pr-4">
-                      <Badge variant={statusVariant[d.status]}>
-                        <StatusDot status={d.status} /> {t(statusKey[d.status])}
+                      <Badge variant={statusVariant[d.status] ?? 'neutral'}>
+                        <StatusDot status={d.status} /> {statusKey[d.status] ? t(statusKey[d.status]!) : d.status}
                       </Badge>
                     </td>
                   </tr>

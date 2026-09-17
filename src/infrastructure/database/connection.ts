@@ -24,10 +24,8 @@ export async function connectDatabase(): Promise<void> {
   try {
     await mongoose.connect(uri);
     isConnected = true;
-    // eslint-disable-next-line no-console
     console.log("[DB] Connected to MongoDB");
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("[DB] Connection failed:", err);
     throw err;
   }

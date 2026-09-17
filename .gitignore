@@ -36,3 +36,6 @@ check_user.mjs
 create_user.mjs
 API/wire_*.py
 .env.*
+
+# Local backup files (not part of the app)
+*.backup*

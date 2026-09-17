@@ -19,7 +19,7 @@ export function SettingsView() {
       .then((res) => setSettings(res.settings))
       .catch((err) => setError(err.message || t('view.settings.loadFailed')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const toggle = (key: ToggleKey) => {
     if (!settings) return;
@@ -35,8 +35,8 @@ export function SettingsView() {
       const res = await updateSettings(settings);
       setSettings(res.settings);
       setSaved(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to save settings');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }

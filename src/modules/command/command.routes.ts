@@ -102,7 +102,7 @@ commandRouter.post(
         status: "pending",
         sentAt: new Date(),
       });
-    } catch (err) {
+    } catch {
       await auditDeviceCommand(req.user!.id, deviceId, commandType, "FAILURE", String(device.organizationId), {
         ip: req.ip,
         reason: "Database error creating command",

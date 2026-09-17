@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ShieldAlert, DoorClosed, Car, Factory, Zap } from 'lucide-react';
-import { Panel, SectionHeader, Badge, Toggle, StatusDot } from '@/components/ui';
+import { Panel, Badge, Toggle, StatusDot } from '@/components/ui';
 import { safetyRules, type SafetyRule } from '@/data/domain';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatTimeAgo } from '@/i18n/timeAgo';
