@@ -524,8 +524,12 @@ export async function createSafetyRule(req: CreateSafetyRuleRequest): Promise<Sa
   });
 }
 
-export async function listSafetyRules(orgId?: string): Promise<SafetyRule[]> {
-  return apiFetch<SafetyRule[]>(`/safety/rules${orgId ? `?orgId=${orgId}` : ""}`);
+export async function listSafetyRules(
+  orgId?: string
+): Promise<{ rules: SafetyRule[]; total: number }> {
+  return apiFetch<{ rules: SafetyRule[]; total: number }>(
+    `/safety/rules${orgId ? `?orgId=${orgId}` : ""}`
+  );
 }
 
 export async function getSafetyRule(ruleId: string): Promise<SafetyRule> {
