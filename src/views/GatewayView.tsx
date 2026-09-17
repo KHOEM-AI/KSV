@@ -1,15 +1,28 @@
 // src/views/GatewayView.tsx
+import { useState, useEffect } from 'react';
 import { Network, Cpu, MemoryStick, Wifi, WifiOff, RefreshCw, Globe } from 'lucide-react';
 import { Panel, SectionHeader, Badge, StatusDot, ProgressBar } from '@/components/ui';
-import { gateways } from '@/data/domain';
+import { listGateways } from '@/lib/api';
+import type { KSVGateway } from '../../API/gateway';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatTimeAgo } from '@/i18n/timeAgo';
 
 export function GatewayView() {
   const { t, language } = useLanguage();
-  const online = gateways.filter((g) => g.mode === 'online').length;
-  const degraded = gateways.filter((g) => g.mode === 'degraded').length;
-  const offline = gateways.filter((g) => g.mode === 'offline').length;
+  const [gateways, setGateways] = useState<KSVGateway[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    listGateways()
+      .then((res) => setGateways(res.gateways ?? []))
+      .catch((err) => setError(err.message ?? 'Failed to load gateways'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const online = gateways.filter((g) => g.status === 'online').length;
+  const degraded = gateways.filter((g) => g.status === 'degraded').length;
+  const offline = gateways.filter((g) => g.status === 'offline').length;
 
   const discovered = [
     { ip: '10.20.1.4', nameKey: 'view.gateway.discovery.frankfurt', proto: 'MQTT', port: 8883 },
@@ -42,10 +55,13 @@ export function GatewayView() {
         </Panel>
       </div>
 
+      {loading && <div className="py-12 text-center text-ink-400">Loading gateways…</div>}
+      {error && <div className="py-12 text-center text-red-400">Error: {error}</div>}
+
       {/* Gateway cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {gateways.map((g) => (
-          <Panel key={g.id} hover className="p-5 animate-fade-in">
+          <Panel key={g.gatewayId} hover className="p-5 animate-fade-in">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
@@ -53,49 +69,49 @@ export function GatewayView() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white">{g.name}</h3>
-                  <p className="text-xs text-ink-400">{g.ip}</p>
+                  <p className="text-xs text-ink-400">{g.ipAddress ?? '—'}</p>
                 </div>
               </div>
-              <StatusDot status={g.mode === 'online' ? 'online' : g.mode === 'degraded' ? 'warning' : 'offline'} />
+              <StatusDot status={g.status} />
             </div>
 
             <div className="space-y-3">
               <div>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 text-ink-400"><Cpu size={12} /> {t('dashboard.gateway.cpu')}</span>
-                  <span className="text-white tabular-nums">{g.cpu}%</span>
+                  <span className="text-white tabular-nums">{g.cpuUsage ?? 0}%</span>
                 </div>
-                <ProgressBar value={g.cpu} size="sm" color={g.cpu > 75 ? 'danger' : g.cpu > 50 ? 'warning' : 'success'} />
+                <ProgressBar value={g.cpuUsage ?? 0} size="sm" color={(g.cpuUsage ?? 0) > 75 ? 'danger' : (g.cpuUsage ?? 0) > 50 ? 'warning' : 'success'} />
               </div>
               <div>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 text-ink-400"><MemoryStick size={12} /> {t('view.gateway.memory')}</span>
-                  <span className="text-white tabular-nums">{g.memory}%</span>
+                  <span className="text-white tabular-nums">{g.memUsage ?? 0}%</span>
                 </div>
-                <ProgressBar value={g.memory} size="sm" color={g.memory > 75 ? 'danger' : g.memory > 50 ? 'warning' : 'success'} />
+                <ProgressBar value={g.memUsage ?? 0} size="sm" color={(g.memUsage ?? 0) > 75 ? 'danger' : (g.memUsage ?? 0) > 50 ? 'warning' : 'success'} />
               </div>
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-ink-700/50 pt-3 text-xs">
               <div>
                 <p className="text-ink-400">{t('view.gateway.firmware')}</p>
-                <p className="font-mono text-ink-200">v{g.firmware}</p>
+                <p className="font-mono text-ink-200">v{g.firmwareVersion}</p>
               </div>
               <div>
                 <p className="text-ink-400">{t('dashboard.gateway.devices')}</p>
-                <p className="text-right font-semibold text-white tabular-nums">{g.devices}</p>
+                <p className="text-right font-semibold text-white tabular-nums">{g.connectedDeviceCount}</p>
               </div>
               <div>
                 <p className="text-ink-400">{t('view.gateway.lastSync')}</p>
-                <p className="text-right text-ink-200">{formatTimeAgo(g.lastSync, language)}</p>
+                <p className="text-right text-ink-200">{formatTimeAgo(g.lastSyncAt ?? '', language)}</p>
               </div>
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <Badge variant={g.mode === 'offline' ? 'warning' : 'success'}>
-                {g.mode === 'offline' ? <><Globe size={10} /> {t('view.gateway.offlineMode')}</> : <><Wifi size={10} /> {t('view.gateway.connected')}</>}
+              <Badge variant={g.mode === 'local_only' ? 'warning' : 'success'}>
+                {g.mode === 'local_only' ? <><Globe size={10} /> {t('view.gateway.offlineMode')}</> : <><Wifi size={10} /> {t('view.gateway.connected')}</>}
               </Badge>
-              {g.mode === 'degraded' && <Badge variant="warning">{t('view.gateway.reconnecting')}</Badge>}
+              {g.status === 'degraded' && <Badge variant="warning">{t('view.gateway.reconnecting')}</Badge>}
             </div>
           </Panel>
         ))}

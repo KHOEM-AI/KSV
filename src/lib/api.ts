@@ -750,8 +750,12 @@ export async function registerGateway(req: RegisterGatewayRequest): Promise<Regi
   });
 }
 
-export async function listGateways(orgId?: string): Promise<KSVGateway[]> {
-  return apiFetch<KSVGateway[]>(`/gateways${orgId ? `?orgId=${orgId}` : ""}`);
+export async function listGateways(
+  orgId?: string
+): Promise<{ gateways: KSVGateway[]; total: number }> {
+  return apiFetch<{ gateways: KSVGateway[]; total: number }>(
+    `/gateways${orgId ? `?orgId=${orgId}` : ""}`
+  );
 }
 
 export async function getGateway(gatewayId: string): Promise<KSVGateway> {

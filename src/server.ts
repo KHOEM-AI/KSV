@@ -701,13 +701,8 @@ async function main() {
       }
 
       try {
-        const gatewayIds = await Device.find({
-          organizationId: user.organizationId,
-          gatewayId: { $ne: null },
-        }).distinct("gatewayId");
-
         const gateways = await Gateway.find({
-          _id: { $in: gatewayIds },
+          organizationId: user.organizationId,
         }).lean();
 
         res.json({ gateways, total: gateways.length });
