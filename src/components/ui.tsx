@@ -52,7 +52,7 @@ export function StatusDot({
   status,
   label,
 }: {
-  status: DeviceStatus | 'active' | 'degraded' | 'offline' | 'online' | 'warning' | 'maintenance' | 'expired' | 'revoked' | 'success' | 'denied' | 'error' | 'verified' | 'pending' | 'updating';
+  status: DeviceStatus | 'active' | 'degraded' | 'offline' | 'online' | 'warning' | 'maintenance' | 'expired' | 'revoked' | 'success' | 'denied' | 'error' | 'verified' | 'pending' | 'updating' | 'inactive';
   label?: string;
 }) {
   const map: Record<string, string> = {
@@ -63,6 +63,7 @@ export function StatusDot({
     warning: 'bg-warning-500',
     maintenance: 'bg-brand-400',
     updating: 'bg-brand-400',
+    inactive: 'bg-ink-500',
     pending: 'bg-warning-500',
     degraded: 'bg-warning-500',
     offline: 'bg-ink-500',

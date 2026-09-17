@@ -1097,6 +1097,45 @@ app.get(
     }
   );
 
+  // GET /api/protocols/adapters — protocol adapters with device counts
+  app.get(
+    "/api/protocols/adapters",
+    authenticate,
+    requirePermission("org:read"),
+    async (_req, res) => {
+      try {
+        const protocols = await Protocol.find().lean();
+        const adapters = await Promise.all(
+          protocols.map(async (p) => {
+            const currentDeviceCount = await Device.countDocuments({
+              "protocol": p.code,
+            });
+            return {
+              adapterId: String(p._id),
+              protocol: p.code,
+              name: p.name,
+              version: "1.0.0",
+              status: "active",
+              supportedManufacturers: [],
+              supportedDeviceTypes: [],
+              isSecureChannel: Boolean(p.securityType),
+              requiresGateway: false,
+              maxDevicesPerAdapter: 10000,
+              currentDeviceCount,
+              createdAt: new Date().toISOString(),
+            };
+          })
+        );
+        res.json({ adapters });
+      } catch {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: "Failed to load protocol adapters.",
+        });
+      }
+    }
+  );
+
   // GET /api/identity/account — returns the authenticated user's own account
   app.get(
     "/api/identity/account",
