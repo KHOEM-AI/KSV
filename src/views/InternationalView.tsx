@@ -1,7 +1,8 @@
 // src/views/InternationalView.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Globe2, Clock, Star } from 'lucide-react';
-import { COUNTRIES, getLocalTime, getLocalDateTime, getUtcOffset, type Country } from '@/data/countries';
+import { COUNTRIES as LOCAL_COUNTRIES, getLocalTime, getLocalDateTime, getUtcOffset, type Country } from '@/data/countries';
+import { listCountries } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 // ======================================================================
@@ -12,6 +13,10 @@ import { useLanguage } from '@/i18n/LanguageContext';
 //   Every country card shows THAT country's own real local time,
 //   read live from the IANA Time Zone Database — never a single
 //   "world time" forced on every user.
+//
+// Data source: /api/international/countries (seeded from the same
+// canonical list). Local list is kept as an offline fallback so the
+// screen never goes blank when the API is unreachable.
 // ======================================================================
 
 function useTick(intervalMs = 1000) {
@@ -70,28 +75,56 @@ function CountryCard({ country, pinned, onTogglePin }: { country: Country; pinne
 export function InternationalView() {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
-  const [pinned, setPinned] = useState<string[]>(() => {
-    // Default pins: a small, geographically spread starter set.
-    return ['KH', 'US', 'GB', 'JP'];
-  });
+  const [countries, setCountries] = useState<Country[]>(LOCAL_COUNTRIES);
+  const [source, setSource] = useState<'local' | 'api'>('local');
+  const [pinned, setPinned] = useState<string[]>(() => ['KH', 'US', 'GB', 'JP']);
   const [selected, setSelected] = useState<string>('KH');
 
   useTick(1000);
 
+  useEffect(() => {
+    let cancelled = false;
+    listCountries()
+      .then((rows) => {
+        if (cancelled) return;
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        // Merge API rows with local dialCode/timezones when missing.
+        const localByCode = new Map(LOCAL_COUNTRIES.map((c) => [c.code, c]));
+        const merged: Country[] = rows.map((r) => {
+          const local = localByCode.get(r.code);
+          return {
+            code: r.code,
+            name: r.name,
+            timezone: r.timezone || r.defaultTimeZone || local?.timezone || 'UTC',
+            timezones: r.timezones && r.timezones.length > 0 ? r.timezones : local?.timezones,
+            dialCode: r.dialCode || local?.dialCode || '',
+          };
+        });
+        setCountries(merged);
+        setSource('api');
+      })
+      .catch(() => {
+        // Silent fallback — local list stays in place.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return COUNTRIES;
-    return COUNTRIES.filter(
+    if (!q) return countries;
+    return countries.filter(
       (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.dialCode.includes(q)
     );
-  }, [query]);
+  }, [query, countries]);
 
   const pinnedCountries = useMemo(
-    () => pinned.map((code) => COUNTRIES.find((c) => c.code === code)).filter(Boolean) as Country[],
-    [pinned]
+    () => pinned.map((code) => countries.find((c) => c.code === code)).filter(Boolean) as Country[],
+    [pinned, countries]
   );
 
-  const selectedCountry = COUNTRIES.find((c) => c.code === selected) ?? COUNTRIES[0];
+  const selectedCountry = countries.find((c) => c.code === selected) ?? countries[0];
 
   function togglePin(code: string) {
     setPinned((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
@@ -106,33 +139,38 @@ export function InternationalView() {
         <div>
           <h1 className="text-xl font-semibold">{t('intl.title')}</h1>
           <p className="text-sm text-slate-500">
-            {t('intl.subtitle', { count: COUNTRIES.length })}
+            {t('intl.subtitle', { count: countries.length })}
+            <span className="ml-2 text-xs text-slate-600">
+              · {source === 'api' ? 'Live API' : 'Offline list'}
+            </span>
           </p>
         </div>
       </header>
 
-      {/* Featured: selected country, large live clock */}
-      <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-sky-500/10 to-transparent p-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-sm text-slate-400">{selectedCountry.name}</p>
-            <p className="font-mono text-4xl font-semibold tabular-nums mt-1">
-              {getLocalTime(selectedCountry.timezone)}
-            </p>
-            <p className="text-sm text-slate-500 mt-1">{getLocalDateTime(selectedCountry.timezone)}</p>
-          </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1.5 text-slate-400 justify-end">
-              <Clock size={14} />
-              <span className="text-sm">UTC{getUtcOffset(selectedCountry.timezone)}</span>
+      {/* Featured */}
+      {selectedCountry && (
+        <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-sky-500/10 to-transparent p-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-sm text-slate-400">{selectedCountry.name}</p>
+              <p className="font-mono text-4xl font-semibold tabular-nums mt-1">
+                {getLocalTime(selectedCountry.timezone)}
+              </p>
+              <p className="text-sm text-slate-500 mt-1">{getLocalDateTime(selectedCountry.timezone)}</p>
             </div>
-            <p className="text-xs text-slate-600 mt-1">{selectedCountry.timezone}</p>
-            <p className="text-xs text-slate-600">{t('intl.dialCode')} {selectedCountry.dialCode}</p>
+            <div className="text-right">
+              <div className="flex items-center gap-1.5 text-slate-400 justify-end">
+                <Clock size={14} />
+                <span className="text-sm">UTC{getUtcOffset(selectedCountry.timezone)}</span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">{selectedCountry.timezone}</p>
+              <p className="text-xs text-slate-600">{t('intl.dialCode')} {selectedCountry.dialCode || '—'}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Pinned countries — each keeps its own real local time, independently */}
+      {/* Pinned */}
       {pinnedCountries.length > 0 && (
         <section>
           <h2 className="text-sm font-medium text-slate-400 mb-2">{t('common.pinned')}</h2>

@@ -339,6 +339,8 @@ const countrySchema = new Schema({
   code: { type: String, required: true, unique: true }, // ISO 3166-1 alpha-2
   name: { type: String, required: true },
   timezone: String,
+  timezones: { type: [String], default: [] }, // all IANA zones for multi-zone countries
+  dialCode: String, // international calling code, e.g. "+855"
 });
 
 const languageSchema = new Schema({

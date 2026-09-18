@@ -25,8 +25,16 @@
 export interface CountryRecord {
   code: string; // ISO 3166-1 alpha-2, e.g. "KH"
   name: string;
-  defaultLanguage: string; // ISO 639-1, e.g. "km"
-  defaultTimeZone: string; // IANA time zone, e.g. "Asia/Phnom_Penh"
+  /** Primary IANA time zone, e.g. "Asia/Phnom_Penh" */
+  timezone: string;
+  /** All IANA zones when a country spans multiple (e.g. US, RU, BR). */
+  timezones?: string[];
+  /** International calling code, e.g. "+855" */
+  dialCode?: string;
+  /** ISO 639-1 default language code, if known. */
+  defaultLanguage?: string;
+  /** @deprecated Use `timezone` — kept for backward compatibility. */
+  defaultTimeZone?: string;
 }
 
 export interface ResolvedLocaleContext {

@@ -1831,10 +1831,17 @@ app.get(
   // GET /api/international/countries — list all countries
   app.get(
     "/api/international/countries",
-    async (req, res) => {
+    async (_req, res) => {
       try {
-        const countries = await Country.find().lean();
-        res.json({ countries, total: countries.length });
+        const docs = await Country.find().sort({ name: 1 }).lean();
+        const countries = docs.map((c) => ({
+          code: c.code,
+          name: c.name,
+          timezone: c.timezone ?? "UTC",
+          timezones: c.timezones ?? [],
+          dialCode: c.dialCode ?? "",
+        }));
+        res.json(countries);
       } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load countries." });
       }
