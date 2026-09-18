@@ -175,6 +175,25 @@ async function main() {
     }
   });
 
+  // GET /api/health — lightweight health check
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // GET /api/version — server version info
+  app.get("/api/version", (_req, res) => {
+    res.json({
+      name: "KSV API",
+      version: "1.0.0",
+      node: process.version,
+      env: process.env.NODE_ENV ?? "development",
+    });
+  });
+
   // POST /api/certificates — create one
   app.post("/api/certificates", async (req, res) => {
     try {
@@ -608,6 +627,136 @@ async function main() {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device state." });
     }
   });
+
+  // GET /api/devices/:id — single device
+  app.get(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const device = await Device.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        }).lean();
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ device });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device." });
+      }
+    }
+  );
+
+  // POST /api/devices — create device
+  app.post(
+    "/api/devices",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const { name, deviceCode, type, status, siteId, gatewayId, firmwareVersion } = req.body || {};
+        if (!name || !deviceCode || !type) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name, deviceCode and type are required." });
+          return;
+        }
+        const exists = await Device.findOne({ deviceCode }).lean();
+        if (exists) {
+          res.status(409).json({ error: "DEVICE_CODE_TAKEN" });
+          return;
+        }
+        const device = await Device.create({
+          name,
+          deviceCode,
+          type,
+          status: status ?? "offline",
+          organizationId: user.organizationId,
+          siteId,
+          gatewayId,
+          firmwareVersion,
+        });
+        res.status(201).json({ device: device.toObject() });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create device." });
+      }
+    }
+  );
+
+  // PUT /api/devices/:id — update device
+  app.put(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const { name, type, status, siteId, gatewayId, firmwareVersion } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (status) update.status = status;
+        if (siteId !== undefined) update.siteId = siteId;
+        if (gatewayId !== undefined) update.gatewayId = gatewayId;
+        if (firmwareVersion) update.firmwareVersion = firmwareVersion;
+
+        const device = await Device.findOneAndUpdate(
+          { _id: req.params.id, organizationId: user.organizationId },
+          update,
+          { new: true }
+        ).lean();
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ device });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update device." });
+      }
+    }
+  );
+
+  // DELETE /api/devices/:id — remove device
+  app.delete(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const result = await Device.findOneAndDelete({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete device." });
+      }
+    }
+  );
 
   app.get("/api/commands/recent", authenticate, requirePermission("device:read"), async (req, res) => {
     const user = req.user!;
