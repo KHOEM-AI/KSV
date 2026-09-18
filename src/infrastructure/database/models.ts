@@ -356,6 +356,32 @@ export const User = models.User || model("User", userSchema);
 export const Session = models.Session || model("Session", sessionSchema);
 export const Organization = models.Organization || model("Organization", organizationSchema);
 export const Site = models.Site || model("Site", siteSchema);
+
+const buildingSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    siteId: { type: ObjectId, ref: "Site", required: true },
+    name: { type: String, required: true },
+    type: { type: String, default: "main" },
+    floorCount: { type: Number, default: 1 },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+export const Building = models.Building || model("Building", buildingSchema);
+
+const roomSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    siteId: { type: ObjectId, ref: "Site", required: true },
+    buildingId: { type: ObjectId, ref: "Building", required: true },
+    name: { type: String, required: true },
+    floor: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+export const Room = models.Room || model("Room", roomSchema);
 export const Device = models.Device || model("Device", deviceSchema);
 export const Discovery = models.Discovery || model("Discovery", discoverySchema);
 export const Command = models.Command || model("Command", commandSchema);

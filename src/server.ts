@@ -11,7 +11,7 @@ import { interpretIntent } from "./core/ai/khoem-ai-brain.ts";
 import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
-import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
 import { User, Session } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
@@ -115,6 +115,44 @@ function toKSVOrgMember(user: Record<string, unknown>): Record<string, unknown> 
     invitedBy: "system",
     isActive: user.isActive ?? true,
     lastActivityAt: lastLoginAt ? lastLoginAt.toISOString() : undefined,
+  };
+}
+
+async function toKSVBuilding(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const buildingId = b._id;
+  const siteId = b.siteId;
+  const orgId = b.organizationId;
+  const [roomCount, deviceCount] = await Promise.all([
+    Room.countDocuments({ buildingId }),
+    Device.countDocuments({ buildingId }),
+  ]);
+  const createdAt = b.createdAt instanceof Date ? b.createdAt : new Date();
+  return {
+    buildingId: String(buildingId),
+    siteId: String(siteId),
+    orgId: String(orgId),
+    name: b.name ?? "",
+    type: b.type ?? "main",
+    floorCount: b.floorCount ?? 1,
+    roomCount,
+    deviceCount,
+    isActive: b.isActive ?? true,
+    createdAt: createdAt.toISOString(),
+  };
+}
+
+async function toKSVRoom(r: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const roomId = r._id;
+  const deviceCount = await Device.countDocuments({ roomId });
+  return {
+    roomId: String(roomId),
+    buildingId: String(r.buildingId),
+    siteId: String(r.siteId),
+    orgId: String(r.organizationId),
+    name: r.name ?? "",
+    floor: r.floor ?? 0,
+    deviceCount,
+    isActive: r.isActive ?? true,
   };
 }
 
@@ -1020,6 +1058,208 @@ async function main() {
         res.json({ success: true });
       } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove member." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId/buildings
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId/buildings",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const buildings = await Building.find({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+        }).lean();
+        const result = await Promise.all(buildings.map((b) => toKSVBuilding(b as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load buildings." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites/:siteId/buildings
+  app.post(
+    "/api/organizations/:orgId/sites/:siteId/buildings",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, floorCount } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const building = await Building.create({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          name,
+          type,
+          floorCount,
+        });
+        res.status(201).json(await toKSVBuilding(building.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create building." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId/buildings/:buildingId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, floorCount } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (typeof floorCount === "number") update.floorCount = floorCount;
+        const building = await Building.findOneAndUpdate(
+          {
+            _id: req.params.buildingId,
+            organizationId: req.params.orgId,
+            siteId: req.params.siteId,
+          },
+          update,
+          { new: true }
+        ).lean();
+        if (!building) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVBuilding(building as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update building." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId/buildings/:buildingId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Building.findOneAndDelete({
+          _id: req.params.buildingId,
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete building." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const rooms = await Room.find({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+        }).lean();
+        const result = await Promise.all(rooms.map((r) => toKSVRoom(r as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load rooms." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms
+  app.post(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, floor } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const room = await Room.create({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+          name,
+          floor,
+        });
+        res.status(201).json(await toKSVRoom(room.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create room." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, floor } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (typeof floor === "number") update.floor = floor;
+        const room = await Room.findOneAndUpdate(
+          {
+            _id: req.params.roomId,
+            organizationId: req.params.orgId,
+            siteId: req.params.siteId,
+            buildingId: req.params.buildingId,
+          },
+          update,
+          { new: true }
+        ).lean();
+        if (!room) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVRoom(room as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update room." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Room.findOneAndDelete({
+          _id: req.params.roomId,
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete room." });
       }
     }
   );
