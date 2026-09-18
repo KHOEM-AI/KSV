@@ -35,6 +35,34 @@ function hashRefreshToken(token: string): string {
 const PORT = process.env.PORT || 3000;
 const KSV_CLOUD_ENDPOINT = process.env.KSV_CLOUD_ENDPOINT;
 
+
+async function toKSVOrganization(org: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const orgId = org._id;
+  const ownerId = org.ownerId;
+  const [memberCount, siteCount, deviceCount] = await Promise.all([
+    User.countDocuments({ organizationId: orgId }),
+    Site.countDocuments({ organizationId: orgId }),
+    Device.countDocuments({ organizationId: orgId }),
+  ]);
+  const createdAt = org.createdAt instanceof Date ? org.createdAt : new Date();
+  const updatedAt = org.updatedAt instanceof Date ? org.updatedAt : new Date();
+  return {
+    orgId: String(orgId),
+    name: org.name ?? "",
+    type: "company",
+    countryCode: org.country ?? "",
+    timezone: org.timezone ?? "UTC",
+    primaryLanguage: "en",
+    ownerAccountId: String(ownerId),
+    memberCount,
+    siteCount,
+    deviceCount,
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
+    isActive: true,
+  };
+}
+
 async function main() {
   await connectDatabase();
 
@@ -629,38 +657,99 @@ async function main() {
         return;
       }
       try {
-        const org = await Organization.findById(user.organizationId).lean();
-        if (!org) {
-          res.status(404).json({ error: "NOT_FOUND" });
-          return;
-        }
-        res.json({ organizations: [org] });
+        const orgs = await Organization.find({ _id: user.organizationId }).lean();
+        const organizations = await Promise.all(orgs.map((o) => toKSVOrganization(o as Record<string, unknown>)));
+        res.json({ organizations });
       } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
       }
     }
   );
 
-  // GET /api/organizations — list organizations the user belongs to
+  // GET /api/organizations/:orgId — single organization
   app.get(
-    "/api/organizations",
+    "/api/organizations/:orgId",
     authenticate,
     requirePermission("org:read"),
     async (req, res) => {
-      const user = req.user!;
-      if (!user.organizationId) {
-        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
-        return;
-      }
       try {
-        const org = await Organization.findById(user.organizationId).lean();
+        const org = await Organization.findById(req.params.orgId).lean();
         if (!org) {
           res.status(404).json({ error: "NOT_FOUND" });
           return;
         }
-        res.json({ organizations: [org] });
+        res.json(await toKSVOrganization(org as Record<string, unknown>));
       } catch {
-        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organization." });
+      }
+    }
+  );
+
+  // POST /api/organizations — create organization
+  app.post(
+    "/api/organizations",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const { name, countryCode, timezone } = req.body || {};
+        if (!name || typeof name !== "string") {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const org = await Organization.create({
+          name,
+          ownerId: user.id,
+          country: countryCode,
+          timezone,
+        });
+        res.status(201).json(await toKSVOrganization(org.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create organization." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId — update organization
+  app.put(
+    "/api/organizations/:orgId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, countryCode, timezone } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (countryCode) update.country = countryCode;
+        if (timezone) update.timezone = timezone;
+        const org = await Organization.findByIdAndUpdate(req.params.orgId, update, { new: true }).lean();
+        if (!org) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVOrganization(org as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update organization." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId
+  app.delete(
+    "/api/organizations/:orgId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Organization.findByIdAndDelete(req.params.orgId);
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete organization." });
       }
     }
   );
