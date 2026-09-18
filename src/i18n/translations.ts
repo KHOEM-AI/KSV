@@ -216,8 +216,8 @@ const en: Dict = {
   'view.audit.chainVerified': "Chain verified",
   'view.audit.searchPlaceholder': "Search by actor, action, or target…",
   'view.audit.noMatch': "No events match your filters.",
-  'view.audit.loading': 'កំពុងផ្ទុក...',
-  'view.audit.loadFailed': 'មិនអាចផ្ទុកបានទេ',
+  'view.audit.loading': 'Loading audit trail…',
+  'view.audit.loadFailed': 'Failed to load audit trail.',
   'view.audit.category.all': "all",
   'view.audit.category.auth': "auth",
   'view.audit.category.device': "device",
@@ -461,7 +461,7 @@ const en: Dict = {
   'view.login.title': "KSV Login",
   'view.devices.loadFailed': "Failed to load devices.",
   'view.settings.loadFailed': "Failed to load settings.",
-  'aiChat.subtitle': 'ការឆ្លាតឆ្លួតរបស់អ្នក',
+  'aiChat.subtitle': 'Your assistant',
 };
 
 const km: Dict = {
