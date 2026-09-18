@@ -27,7 +27,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
-import { GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary";
+import { GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary.ts";
 
 function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
