@@ -2042,6 +2042,22 @@ export async function getDashboardFull(): Promise<DashboardFullResponse> {
   return apiFetch<DashboardFullResponse>("/dashboard/full");
 }
 
+export interface SecuritySessionEntry {
+  sessionId: string;
+  userId: string;
+  user: string;
+  email: string;
+  role: string;
+  ip: string;
+  userAgent: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export async function getSessions(): Promise<{ sessions: SecuritySessionEntry[]; total: number }> {
+  return apiFetch<{ sessions: SecuritySessionEntry[]; total: number }>("/security/sessions");
+}
+
 // ============================================================
 // Security endpoints — mirrors server.ts /api/security/*
 // ============================================================

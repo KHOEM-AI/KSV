@@ -1,44 +1,77 @@
-import { ShieldCheck, KeyRound, Fingerprint, Lock, UserCheck, AlertTriangle } from 'lucide-react';
-import { Panel, SectionHeader, Badge, StatusDot, ProgressBar, Donut } from '@/components/ui';
-import { sessions } from '@/data/domain';
+import { ShieldCheck, KeyRound, Fingerprint, AlertTriangle } from 'lucide-react';
+import { Panel, SectionHeader, Badge, ProgressBar, Donut } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { formatTimeAgo } from '@/i18n/timeAgo';
 import { useEffect, useState } from 'react';
-import { getThreats, getIncidents, type ThreatEntry, type IncidentEntry } from '@/lib/api';
+import {
+  getThreats,
+  getIncidents,
+  getSessions,
+  type ThreatEntry,
+  type IncidentEntry,
+  type SecuritySessionEntry,
+} from '@/lib/api';
+
+// Static illustrative policies (UI content, not domain data).
+const policies = [
+  { key: 'zeroPlaintext', nameKey: 'view.security.policy.zeroPlaintext', pct: 100 },
+  { key: 'oauthOidc', nameKey: 'view.security.policy.oauthOidc', pct: 100 },
+  { key: 'otpRecovery', nameKey: 'view.security.policy.otpRecovery', pct: 100 },
+  { key: 'sessionAudit', nameKey: 'view.security.policy.sessionAudit', pct: 100 },
+  { key: 'forceMfaAdmins', nameKey: 'view.security.policy.forceMfaAdmins', pct: 100 },
+  { key: 'ipAllowlist', nameKey: 'view.security.policy.ipAllowlist', pct: 72 },
+];
 
 export function SecurityView() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [threats, setThreats] = useState<ThreatEntry[]>([]);
   const [incidents, setIncidents] = useState<IncidentEntry[]>([]);
+  const [sessions, setSessions] = useState<SecuritySessionEntry[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([getThreats(), getIncidents()])
-      .then(([t, i]) => {
-        setThreats(t.threats);
-        setIncidents(i.incidents);
+    Promise.all([
+      getThreats(),
+      getIncidents(),
+      getSessions().catch(() => ({ sessions: [] as SecuritySessionEntry[], total: 0 })),
+    ])
+      .then(([th, inc, sess]) => {
+        setThreats(th.threats ?? []);
+        setIncidents(inc.incidents ?? []);
+        setSessions(sess.sessions ?? []);
       })
       .catch((err) => setLoadError(err instanceof Error ? err.message : 'Failed to load security data'));
   }, []);
-  const activeSessions = sessions.filter((s) => s.status === 'active').length;
-  const mfaEnabled = sessions.filter((s) => s.mfa).length;
-  const mfaPct = Math.round((mfaEnabled / sessions.length) * 100);
 
-  const authMethods = [
-    { value: sessions.filter((s) => s.method === 'OAuth 2.0').length, color: '#2a9dff', label: 'OAuth 2.0' },
-    { value: sessions.filter((s) => s.method === 'OIDC').length, color: '#22d3ee', label: 'OIDC' },
-    { value: sessions.filter((s) => s.method === 'OTP').length, color: '#10b981', label: 'OTP' },
-    { value: sessions.filter((s) => s.method === 'Password').length, color: '#f59e0b', label: 'Password' },
-  ];
+  const activeSessions = sessions.length;
 
-  const policies = [
-    { key: 'zeroPlaintext', name: t('view.security.policy.zeroPlaintext'), status: t('view.security.status.enforced'), pct: 100 },
-    { key: 'oauthOidc', name: t('view.security.policy.oauthOidc'), status: t('view.security.status.enforced'), pct: 100 },
-    { key: 'otpRecovery', name: t('view.security.policy.otpRecovery'), status: t('view.security.status.enforced'), pct: 100 },
-    { key: 'sessionAudit', name: t('view.security.policy.sessionAudit'), status: t('view.security.status.enforced'), pct: 100 },
-    { key: 'forceMfaAdmins', name: t('view.security.policy.forceMfaAdmins'), status: t('view.security.status.enforced'), pct: 100 },
-    { key: 'ipAllowlist', name: t('view.security.policy.ipAllowlist'), status: t('view.security.status.partial'), pct: 72 },
-  ];
+  // Auth method distribution — derived from real session userAgent data.
+  const detectMethod = (ua: string): string => {
+    const s = ua.toLowerCase();
+    if (s.includes('edg')) return 'Edge';
+    if (s.includes('chrome')) return 'Chrome';
+    if (s.includes('safari')) return 'Safari';
+    if (s.includes('firefox')) return 'Firefox';
+    if (s === '') return 'Unknown';
+    return 'Other';
+  };
+  const methodCounts: Record<string, number> = {};
+  for (const sess of sessions) {
+    const m = detectMethod(sess.userAgent);
+    methodCounts[m] = (methodCounts[m] ?? 0) + 1;
+  }
+  const methodColors: Record<string, string> = {
+    Chrome: '#2a9dff',
+    Edge: '#22d3ee',
+    Safari: '#10b981',
+    Firefox: '#f59e0b',
+    Other: '#8b5cf6',
+    Unknown: '#3a4666',
+  };
+  const authMethods = Object.entries(methodCounts).map(([label, value]) => ({
+    label,
+    value,
+    color: methodColors[label] ?? '#3a4666',
+  }));
 
   return (
     <div className="space-y-6">
@@ -47,25 +80,28 @@ export function SecurityView() {
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-success-500/10 text-success-400"><ShieldCheck size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">A+</p><p className="text-xs text-ink-400">{t('view.security.stat.grade')}</p></div>
+            <div>
+              <p className="text-2xl font-bold text-white">{incidents.length === 0 ? 'A+' : 'B'}</p>
+              <p className="text-xs text-ink-400">{t('view.security.stat.grade')}</p>
+            </div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400"><UserCheck size={20} /></div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400"><KeyRound size={20} /></div>
             <div><p className="text-2xl font-bold text-white">{activeSessions}</p><p className="text-xs text-ink-400">{t('view.security.stat.activeSessions')}</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400"><Fingerprint size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">{mfaPct}%</p><p className="text-xs text-ink-400">{t('view.security.stat.mfaCoverage')}</p></div>
+            <div><p className="text-2xl font-bold text-white">{threats.length}</p><p className="text-xs text-ink-400">Threats</p></div>
           </div>
         </Panel>
         <Panel className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-warning-500/10 text-warning-400"><AlertTriangle size={20} /></div>
-            <div><p className="text-2xl font-bold text-white">2</p><p className="text-xs text-ink-400">{t('view.security.stat.deniedAttempts')}</p></div>
+            <div><p className="text-2xl font-bold text-white">{incidents.length}</p><p className="text-xs text-ink-400">Incidents</p></div>
           </div>
         </Panel>
       </div>
@@ -79,43 +115,43 @@ export function SecurityView() {
               <thead>
                 <tr className="border-b border-ink-700 text-left text-xs uppercase tracking-wider text-ink-400">
                   <th className="pb-3 pr-4 font-semibold">{t('view.security.table.user')}</th>
-                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.method')}</th>
                   <th className="pb-3 pr-4 font-semibold">{t('view.security.table.location')}</th>
-                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.mfa')}</th>
+                  <th className="pb-3 pr-4 font-semibold">Client</th>
                   <th className="pb-3 pr-4 font-semibold">{t('view.security.table.lastActive')}</th>
-                  <th className="pb-3 pr-4 font-semibold">{t('view.security.table.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-800">
                 {sessions.map((s) => (
-                  <tr key={s.id} className="transition-colors hover:bg-ink-800/40">
+                  <tr key={s.sessionId} className="transition-colors hover:bg-ink-800/40">
                     <td className="py-3 pr-4">
                       <div className="font-medium text-ink-100">{s.user}</div>
                       <div className="text-xs text-ink-400">{s.role}</div>
                     </td>
-                    <td className="py-3 pr-4"><Badge variant="brand">{s.method}</Badge></td>
                     <td className="py-3 pr-4">
-                      <div className="text-ink-200">{s.location}</div>
-                      <div className="text-xs text-ink-400 font-mono">{s.ip}</div>
+                      <div className="text-ink-200">{s.ip || '—'}</div>
                     </td>
                     <td className="py-3 pr-4">
-                      {s.mfa ? <Badge variant="success"><Lock size={10} /> {t('view.security.mfa.on')}</Badge> : <Badge variant="warning">{t('view.security.mfa.off')}</Badge>}
+                      <div className="text-xs text-ink-300 truncate max-w-[180px]">{s.userAgent || '—'}</div>
                     </td>
-                    <td className="py-3 pr-4 text-ink-300">{formatTimeAgo(s.lastActive, language)}</td>
-                    <td className="py-3 pr-4"><StatusDot status={s.status} label={t(`view.security.session.${s.status}`)} /></td>
+                    <td className="py-3 pr-4 text-ink-300">
+                      {new Date(s.createdAt).toLocaleString()}
+                    </td>
                   </tr>
                 ))}
+                {sessions.length === 0 && (
+                  <tr><td colSpan={4} className="py-6 text-center text-ink-400">No active sessions.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         </Panel>
 
-        {/* Auth methods donut + policies */}
+        {/* Auth methods + policies */}
         <div className="space-y-4">
           <Panel className="p-5 animate-fade-in">
-            <SectionHeader title={t('view.security.authMethods.title')} icon={<Fingerprint size={18} />} />
+            <SectionHeader title="Clients" icon={<Fingerprint size={18} />} />
             <div className="flex flex-col items-center gap-4">
-              <Donut segments={authMethods} centerLabel={`${sessions.length}`} centerSub={t('view.security.authMethods.sessions')} size={130} />
+              <Donut segments={authMethods} centerLabel={`${sessions.length}`} centerSub="sessions" size={130} />
               <div className="w-full space-y-2">
                 {authMethods.map((m) => (
                   <div key={m.label} className="flex items-center justify-between text-sm">
@@ -126,6 +162,9 @@ export function SecurityView() {
                     <span className="font-semibold text-white tabular-nums">{m.value}</span>
                   </div>
                 ))}
+                {authMethods.length === 0 && (
+                  <div className="py-4 text-center text-ink-400 text-xs">No session data.</div>
+                )}
               </div>
             </div>
           </Panel>
@@ -136,8 +175,10 @@ export function SecurityView() {
               {policies.map((p) => (
                 <div key={p.key}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="text-ink-200">{p.name}</span>
-                    <Badge variant={p.pct === 100 ? 'success' : 'warning'}>{p.status}</Badge>
+                    <span className="text-ink-200">{t(p.nameKey)}</span>
+                    <Badge variant={p.pct === 100 ? 'success' : 'warning'}>
+                      {p.pct === 100 ? t('view.security.status.enforced') : t('view.security.status.partial')}
+                    </Badge>
                   </div>
                   <ProgressBar value={p.pct} size="sm" color={p.pct === 100 ? 'success' : 'warning'} />
                 </div>
@@ -145,6 +186,7 @@ export function SecurityView() {
             </div>
           </Panel>
         </div>
+      </div>
 
       <Panel className="p-5 animate-fade-in">
         <SectionHeader title="Threats & Incidents" subtitle="Live from /api/security" icon={<AlertTriangle size={18} />} />
@@ -187,7 +229,6 @@ export function SecurityView() {
           </div>
         </div>
       </Panel>
-      </div>
     </div>
   );
 }

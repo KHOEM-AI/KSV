@@ -722,6 +722,61 @@ async function main() {
     }
   });
 
+  // GET /api/security/sessions — active sessions for the user's organization
+  app.get(
+    "/api/security/sessions",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const orgUsers = await User.find({ organizationId: user.organizationId })
+          .select("_id firstName lastName email role")
+          .lean();
+        const userIds = orgUsers.map((u) => u._id);
+        const userById = new Map(orgUsers.map((u) => [String(u._id), u]));
+
+        const sessions = await Session.find({
+          userId: { $in: userIds },
+          revokedAt: { $exists: false },
+          expiresAt: { $gt: new Date() },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
+        const result = sessions.map((sess) => {
+          const u = userById.get(String(sess.userId));
+          const firstName = (u?.firstName as string) || "";
+          const lastName = (u?.lastName as string) || "";
+          const displayName = `${firstName} ${lastName}`.trim() || (u?.email as string) || "Unknown";
+          return {
+            sessionId: String(sess._id),
+            userId: String(sess.userId),
+            user: displayName,
+            email: u?.email ?? "",
+            role: u?.role ?? "",
+            ip: sess.ip ?? "",
+            userAgent: sess.userAgent ?? "",
+            createdAt: sess.createdAt instanceof Date ? sess.createdAt.toISOString() : new Date().toISOString(),
+            expiresAt: sess.expiresAt instanceof Date ? sess.expiresAt.toISOString() : "",
+          };
+        });
+
+        res.json({ sessions: result, total: result.length });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load sessions.",
+        });
+      }
+    }
+  );
+
   // GET /api/security/incidents — list security incidents for the org
   app.get("/api/security/incidents", authenticate, requirePermission("org:read"), async (req, res) => {
     const user = req.user!;
