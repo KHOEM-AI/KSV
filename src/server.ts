@@ -2580,6 +2580,164 @@ async function resolveAIDevice(
   });
 
 
+  // GET /api/dashboard/full — full dashboard data in one call
+  app.get(
+    "/api/dashboard/full",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const orgId = user.organizationId;
+      try {
+        const now = new Date();
+        const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const since24d = new Date(now.getTime() - 24 * 24 * 60 * 60 * 1000);
+
+        const [
+          totalDevices,
+          onlineDevices,
+          warningDevices,
+          safetyRulesCount,
+          gatewayIdsForCount,
+          countriesDeployed,
+          trafficRaw,
+          alertRaw,
+          openAlerts,
+          latencyRaw,
+          org,
+        ] = await Promise.all([
+          Device.countDocuments({ organizationId: orgId }),
+          Device.countDocuments({ organizationId: orgId, status: "online" }),
+          Device.countDocuments({ organizationId: orgId, status: "warning" }),
+          SafetyRule.countDocuments({ organizationId: orgId, isEnabled: true }),
+          Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId"),
+          Site.distinct("country", { organizationId: orgId, country: { $ne: null } }),
+          Command.aggregate([
+            { $match: { createdAt: { $gte: since24h } } },
+            { $group: { _id: { $hour: "$createdAt" }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ]),
+          SafetyLog.aggregate([
+            { $match: { createdAt: { $gte: since24d } } },
+            { $group: { _id: { $dayOfMonth: "$createdAt", $month: "$createdAt" }, count: { $sum: 1 } } },
+            { $limit: 24 },
+          ]),
+          SecurityIncident.countDocuments({ organizationId: orgId, status: { $ne: "resolved" } }),
+          Command.aggregate([
+            {
+              $match: {
+                sentAt: { $gte: since24h, $ne: null },
+                completedAt: { $ne: null },
+              },
+            },
+            {
+              $project: {
+                latency: { $subtract: ["$completedAt", "$sentAt"] },
+              },
+            },
+            { $group: { _id: null, avg: { $avg: "$latency" } } },
+          ]),
+          Organization.findById(orgId).lean(),
+        ]);
+
+        const gatewaysOnline = await Gateway.countDocuments({
+          _id: { $in: gatewayIdsForCount },
+          status: "online",
+        });
+
+        // Fill 24 hourly buckets
+        const trafficByHour: Record<number, number> = {};
+        for (const t of trafficRaw) trafficByHour[t._id] = t.count;
+        const traffic: number[] = [];
+        for (let h = 0; h < 24; h++) traffic.push(trafficByHour[h] ?? 0);
+
+        // Alert trend → last 24 points (fill zeros if missing)
+        const alertTrend: number[] = alertRaw.map((a: { count: number }) => a.count);
+        while (alertTrend.length < 24) alertTrend.unshift(0);
+
+        const avgLatencyMs = latencyRaw.length > 0 ? Math.round(latencyRaw[0].avg) : 0;
+
+        const createdAt = org?.createdAt instanceof Date ? org.createdAt : now;
+        const uptimeDays = Math.max(1, Math.floor((now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000)));
+
+        // Top sites by device count
+        const topSitesRaw = await Device.aggregate([
+          { $match: { organizationId: orgId, siteId: { $ne: null } } },
+          {
+            $group: {
+              _id: "$siteId",
+              total: { $sum: 1 },
+              online: { $sum: { $cond: [{ $eq: ["$status", "online"] }, 1, 0] } },
+            },
+          },
+          { $sort: { total: -1 } },
+          { $limit: 5 },
+        ]);
+        const siteIds = topSitesRaw.map((s: { _id: unknown }) => s._id);
+        const siteDocs = await Site.find({ _id: { $in: siteIds } }).lean();
+        const siteById = new Map(siteDocs.map((s) => [String(s._id), s]));
+        const topSites = topSitesRaw.map((s: { _id: unknown; total: number; online: number }) => {
+          const site = siteById.get(String(s._id));
+          return {
+            name: site?.name ?? "Unknown",
+            devices: s.total,
+            load: s.total > 0 ? Math.round((s.online / s.total) * 100) : 0,
+          };
+        });
+
+        // Recent devices
+        const recentDevicesRaw = await Device.find({ organizationId: orgId })
+          .sort({ updatedAt: -1 })
+          .limit(5)
+          .lean();
+
+        // Recent safety rules
+        const recentSafetyRules = await SafetyRule.find({ organizationId: orgId })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .lean();
+
+        // Protocols
+        const protocols = await Protocol.find().limit(10).lean();
+
+        // Gateways (top 6)
+        const gatewaysRaw = await Gateway.find({ _id: { $in: gatewayIdsForCount } })
+          .limit(6)
+          .lean();
+
+        res.json({
+          stats: {
+            totalDevices,
+            onlineDevices,
+            safetyRules: safetyRulesCount,
+            gateways: gatewaysOnline,
+            warningDevices,
+            countriesDeployed: countriesDeployed.length,
+          },
+          traffic,
+          alertTrend,
+          openAlerts,
+          avgLatencyMs,
+          uptimeDays,
+          topSites,
+          recentDevices: recentDevicesRaw,
+          recentSafetyRules,
+          protocols,
+          gateways: gatewaysRaw,
+        });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load dashboard.",
+        });
+      }
+    }
+  );
+
   // GET /api/v1/ai/usage — AI interpretation usage stats for the account
   // NOTE: derived from AIConversationSession.turns (no separate usage
   // table yet). Counts "user" turns as interpretation requests made.
