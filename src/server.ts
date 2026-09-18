@@ -86,6 +86,38 @@ async function toKSVSite(site: Record<string, unknown>): Promise<Record<string, 
   };
 }
 
+function mapUserRoleToMemberRole(role: string): string {
+  const r = (role || "").toLowerCase();
+  if (r === "owner") return "owner";
+  if (r === "orgadmin" || r === "superadmin") return "admin";
+  if (r === "manager") return "manager";
+  if (r === "operator" || r === "controller") return "operator";
+  if (r === "guest") return "guest";
+  return "viewer";
+}
+
+function toKSVOrgMember(user: Record<string, unknown>): Record<string, unknown> {
+  const memberId = user._id;
+  const firstName = (user.firstName as string) || "";
+  const lastName = (user.lastName as string) || "";
+  const email = (user.email as string) || "";
+  const displayName = `${firstName} ${lastName}`.trim() || email;
+  const createdAt = user.createdAt instanceof Date ? user.createdAt : new Date();
+  const lastLoginAt = user.lastLoginAt instanceof Date ? user.lastLoginAt : undefined;
+  return {
+    memberId: String(memberId),
+    orgId: String(user.organizationId ?? ""),
+    accountId: String(memberId),
+    displayName,
+    email: email || undefined,
+    role: mapUserRoleToMemberRole((user.role as string) || "Viewer"),
+    joinedAt: createdAt.toISOString(),
+    invitedBy: "system",
+    isActive: user.isActive ?? true,
+    lastActivityAt: lastLoginAt ? lastLoginAt.toISOString() : undefined,
+  };
+}
+
 async function main() {
   await connectDatabase();
 
@@ -890,6 +922,104 @@ async function main() {
         res.json({ success: true });
       } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete site." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/members — list members
+  app.get(
+    "/api/organizations/:orgId/members",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const users = await User.find({ organizationId: req.params.orgId }).lean();
+        const members = users.map((u) => toKSVOrgMember(u as Record<string, unknown>));
+        res.json(members);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load members." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/members/:memberId
+  app.get(
+    "/api/organizations/:orgId/members/:memberId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const user = await User.findOne({
+          _id: req.params.memberId,
+          organizationId: req.params.orgId,
+        }).lean();
+        if (!user) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(toKSVOrgMember(user as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load member." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/members/:memberId/role
+  app.put(
+    "/api/organizations/:orgId/members/:memberId/role",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { newRole } = req.body || {};
+        const roleMap: Record<string, string> = {
+          owner: "Owner",
+          admin: "OrgAdmin",
+          manager: "Manager",
+          operator: "Operator",
+          viewer: "Viewer",
+          guest: "Guest",
+        };
+        const mapped = roleMap[newRole];
+        if (!mapped) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Invalid newRole" });
+          return;
+        }
+        const user = await User.findOneAndUpdate(
+          { _id: req.params.memberId, organizationId: req.params.orgId },
+          { role: mapped },
+          { new: true }
+        ).lean();
+        if (!user) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(toKSVOrgMember(user as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update member role." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/members/:memberId
+  app.delete(
+    "/api/organizations/:orgId/members/:memberId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await User.findOneAndUpdate(
+          { _id: req.params.memberId, organizationId: req.params.orgId },
+          { isActive: false },
+          { new: true }
+        );
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove member." });
       }
     }
   );
