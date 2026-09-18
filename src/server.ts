@@ -63,6 +63,29 @@ async function toKSVOrganization(org: Record<string, unknown>): Promise<Record<s
   };
 }
 
+async function toKSVSite(site: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const siteId = site._id;
+  const orgId = site.organizationId;
+  const [buildingCount, deviceCount] = await Promise.all([
+    Promise.resolve(0),
+    Device.countDocuments({ siteId }),
+  ]);
+  const createdAt = site.createdAt instanceof Date ? site.createdAt : new Date();
+  return {
+    siteId: String(siteId),
+    orgId: String(orgId),
+    name: site.name ?? "",
+    type: site.type ?? "office",
+    address: site.address ?? undefined,
+    countryCode: site.country ?? undefined,
+    timezone: site.timezone ?? undefined,
+    buildingCount,
+    deviceCount,
+    isActive: site.isActive ?? true,
+    createdAt: createdAt.toISOString(),
+  };
+}
+
 async function main() {
   await connectDatabase();
 
@@ -750,6 +773,123 @@ async function main() {
         res.json({ success: true });
       } catch {
         res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete organization." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites — list sites
+  app.get(
+    "/api/organizations/:orgId/sites",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const sites = await Site.find({ organizationId: req.params.orgId }).lean();
+        const result = await Promise.all(sites.map((x) => toKSVSite(x as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load sites." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const site = await Site.findOne({
+          _id: req.params.siteId,
+          organizationId: req.params.orgId,
+        }).lean();
+        if (!site) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVSite(site as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load site." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites
+  app.post(
+    "/api/organizations/:orgId/sites",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, address, countryCode, timezone } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const site = await Site.create({
+          organizationId: req.params.orgId,
+          name,
+          type,
+          address,
+          country: countryCode,
+          timezone,
+        });
+        res.status(201).json(await toKSVSite(site.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create site." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, address, countryCode, timezone } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (address) update.address = address;
+        if (countryCode) update.country = countryCode;
+        if (timezone) update.timezone = timezone;
+        const site = await Site.findOneAndUpdate(
+          { _id: req.params.siteId, organizationId: req.params.orgId },
+          update,
+          { new: true }
+        ).lean();
+        if (!site) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVSite(site as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update site." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Site.findOneAndDelete({
+          _id: req.params.siteId,
+          organizationId: req.params.orgId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete site." });
       }
     }
   );

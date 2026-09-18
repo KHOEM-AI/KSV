@@ -65,8 +65,11 @@ const siteSchema = new Schema(
   {
     organizationId: { type: ObjectId, ref: "Organization", required: true },
     name: { type: String, required: true }, // e.g. "Frankfurt HQ"
+    type: { type: String, default: "office" }, // office | factory | warehouse | residential | commercial | industrial | mixed
     address: String,
     country: String, // ISO 3166-1 alpha-2, e.g. "DE" — used for Countries Deployed stat
+    timezone: String,
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

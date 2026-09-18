@@ -914,8 +914,8 @@ export async function createOrg(req: CreateOrgRequest): Promise<KSVOrganization>
   return apiFetch<KSVOrganization>(`/organizations`, { method: "POST", body: JSON.stringify(req) });
 }
 
-export async function listMyOrgs(): Promise<KSVOrganization[]> {
-  return apiFetch<KSVOrganization[]>(`/organizations`);
+export async function listMyOrgs(): Promise<{ organizations: KSVOrganization[] }> {
+  return apiFetch<{ organizations: KSVOrganization[] }>(`/organizations`);
 }
 
 export async function getOrg(orgId: string): Promise<KSVOrganization> {
