@@ -1212,6 +1212,9 @@ const ja: Dict = {
   'view.login.title': "KSV Login",
   'view.devices.loadFailed': "Failed to load devices.",
   'view.settings.loadFailed': "Failed to load settings.",
+  'view.audit.loading': '監査証跡を読み込み中…',
+  'view.audit.loadFailed': '監査証跡の読み込みに失敗しました。',
+  'aiChat.subtitle': 'あなたのアシスタント',
 };
 
 const zh: Dict = {
