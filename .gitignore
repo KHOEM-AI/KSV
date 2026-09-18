@@ -39,3 +39,8 @@ API/wire_*.py
 
 # Local backup files (not part of the app)
 *.backup*
+
+# Prevent legacy backup naming patterns
+*.before-*
+*.orig
+*-old.*
