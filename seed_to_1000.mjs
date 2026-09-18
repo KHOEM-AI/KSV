@@ -2,7 +2,7 @@ import "dotenv/config";
 import { connectDatabase } from "./src/infrastructure/database/connection.ts";
 import { Device, Gateway, Organization } from "./src/infrastructure/database/models.ts";
 
-const ORG_ID = "6a9e7ea3176a7202190df575";
+const ORG_ID = "6aa8561ec72b7a4925afb8ad";
 
 const TYPE_NAMES = {
   Access: ["Door Lock", "Gate Barrier", "Turnstile", "Badge Reader", "Window Sensor"],
@@ -26,7 +26,7 @@ async function seed() {
   if (gateways.length === 0) { console.log("No online gateways found — run seed-gateways.mjs first"); process.exit(1); }
 
   const existingCount = await Device.countDocuments({ organizationId: org._id });
-  const TARGET_TOTAL = 1000;
+  const TARGET_TOTAL = 12000;
   const toCreate = TARGET_TOTAL - existingCount;
   if (toCreate <= 0) { console.log(`Already at or above ${TARGET_TOTAL} (${existingCount}). Nothing to do.`); process.exit(0); }
 
