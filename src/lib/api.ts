@@ -1995,6 +1995,53 @@ export async function getDashboardStats() {
   }>("/dashboard/stats");
 }
 
+export interface DashboardFullResponse {
+  stats: {
+    totalDevices: number;
+    onlineDevices: number;
+    safetyRules: number;
+    gateways: number;
+    warningDevices: number;
+    countriesDeployed: number;
+  };
+  traffic: number[];
+  alertTrend: number[];
+  openAlerts: number;
+  avgLatencyMs: number;
+  uptimeDays: number;
+  topSites: { name: string; devices: number; load: number }[];
+  recentDevices: {
+    _id: string;
+    name: string;
+    deviceCode: string;
+    status: string;
+    protocol?: string;
+  }[];
+  recentSafetyRules: {
+    _id: string;
+    name: string;
+    category?: string;
+    severity: string;
+    triggerCount?: number;
+  }[];
+  protocols: { _id: string; name: string; code: string; securityType?: string }[];
+  gateways: {
+    _id: string;
+    name: string;
+    status?: string;
+    mode?: string;
+    ipAddress?: string;
+    cpuUsage?: number;
+    memUsage?: number;
+    deviceCount?: number;
+    lastPingAt?: string;
+  }[];
+}
+
+export async function getDashboardFull(): Promise<DashboardFullResponse> {
+  return apiFetch<DashboardFullResponse>("/dashboard/full");
+}
+
 // ============================================================
 // Security endpoints — mirrors server.ts /api/security/*
 // ============================================================
