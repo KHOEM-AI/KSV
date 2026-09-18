@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { listMapDevices } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 /**
  * MapView.tsx — KSV Interactive GIS / Geo-Location Map (README Section 44)
  *
- * ចំណាំសំខាន់មុននឹង build:
- *   npm install leaflet
- *   npm install -D @types/leaflet
- *
- * Marker color តាម Section 44.2 ក្នុង README:
+ * Marker color (Section 44.2):
  *   GREEN = NORMAL/ONLINE, YELLOW = WARNING, RED = CRITICAL,
  *   GRAY = OFFLINE, BLUE = MAINTENANCE
  *
- * Map មិនត្រូវជំនួស Authorization ទេ (Section 44.2) — ចុច marker បង្ហាញតែ
- * ព័ត៌មាន Device Detail ជា read-only; ប៊ូតុង Control ត្រូវទៅ Device Detail
- * page ដែលឆ្លង Auth/Authorization/Safety ដូចធម្មតា (មិនប្រតិបត្តិដោយផ្ទាល់ពី Map ទេ)។
+ * Map does NOT replace Authorization (Section 44.2) — clicking a marker
+ * shows read-only Device Detail; Control buttons must go through the
+ * Device Detail page (Auth → Authorization → Safety).
+ *
+ * Data source: /api/map/devices (devices with real coordinates).
+ * The local sample list below is a fallback so the map is never empty
+ * while the API is loading or unreachable.
  */
 
 type DeviceStatus = 'online' | 'warning' | 'critical' | 'offline' | 'maintenance';
@@ -32,8 +33,6 @@ interface MapDevice {
   protocol: string;
 }
 
-// TODO: ជំនួសដោយហៅ /api/devices?fields=id,name,lat,lng,status ពិតប្រាកដ
-// ពេលមាន backend — ឥឡូវប្រើទិន្នន័យដូច Device Registry (screenshot) ជា placeholder
 const MOCK_DEVICES: MapDevice[] = [
   { id: 'DEV-04821', name: 'North Vault Door',      category: 'Access',     site: 'Frankfurt HQ',    lat: 50.1109, lng: 8.6821,   status: 'online',      protocol: 'MQTT' },
   { id: 'DEV-04822', name: 'Cleanroom HVAC Unit 3',  category: 'Climate',    site: 'Taipei Fab',      lat: 25.0330, lng: 121.5654, status: 'warning',     protocol: 'Wi-Fi' },
@@ -55,6 +54,12 @@ const STATUS_COLOR: Record<DeviceStatus, string> = {
   maintenance: '#3b82f6',
 };
 
+const ALLOWED_STATUSES: DeviceStatus[] = ['online', 'warning', 'critical', 'offline', 'maintenance'];
+
+function toStatus(s: string): DeviceStatus {
+  return (ALLOWED_STATUSES as string[]).includes(s) ? (s as DeviceStatus) : 'offline';
+}
+
 function makeIcon(status: DeviceStatus): L.DivIcon {
   const color = STATUS_COLOR[status];
   return L.divIcon({
@@ -74,8 +79,39 @@ export function MapView() {
   const { t } = useLanguage();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const [devices, setDevices] = useState<MapDevice[]>(MOCK_DEVICES);
+  const [source, setSource] = useState<'sample' | 'api'>('sample');
   const [statusFilter, setStatusFilter] = useState<DeviceStatus | 'all'>('all');
   const [selectedDevice, setSelectedDevice] = useState<MapDevice | null>(null);
+
+  // Load real devices with coordinates (fallback keeps sample list).
+  useEffect(() => {
+    let cancelled = false;
+    listMapDevices()
+      .then((res) => {
+        if (cancelled) return;
+        const rows = res.devices ?? [];
+        if (rows.length === 0) return;
+        const mapped: MapDevice[] = rows.map((r) => ({
+          id: r.deviceCode,
+          name: r.name,
+          category: r.type || '—',
+          site: r.site || '—',
+          lat: r.latitude,
+          lng: r.longitude,
+          status: toStatus(r.status),
+          protocol: '—',
+        }));
+        setDevices(mapped);
+        setSource('api');
+      })
+      .catch(() => {
+        // Keep sample list — no error shown.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -100,13 +136,13 @@ export function MapView() {
     };
   }, []);
 
-  // ធ្វើ marker ឡើងវិញរាល់ដង filter ប្តូរ
+  // Rebuild markers whenever filter or data changes.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
     const markers: L.Marker[] = [];
-    const visible = MOCK_DEVICES.filter(
+    const visible = devices.filter(
       (d) => statusFilter === 'all' || d.status === statusFilter
     );
 
@@ -120,9 +156,9 @@ export function MapView() {
     return () => {
       markers.forEach((m) => m.remove());
     };
-  }, [statusFilter]);
+  }, [statusFilter, devices]);
 
-  const statusCounts = MOCK_DEVICES.reduce<Record<string, number>>((acc, d) => {
+  const statusCounts = devices.reduce<Record<string, number>>((acc, d) => {
     acc[d.status] = (acc[d.status] ?? 0) + 1;
     return acc;
   }, {});
@@ -131,10 +167,15 @@ export function MapView() {
     <div className="flex flex-col gap-4 p-4">
       <div>
         <h1 className="text-lg font-semibold text-white">{t('view.map.title')}</h1>
-        <p className="text-sm text-ink-400">{t('view.map.subtitle')}</p>
+        <p className="text-sm text-ink-400">
+          {t('view.map.subtitle')}
+          <span className="ml-2 text-xs text-ink-500">
+            · {source === 'api' ? 'Live API' : 'Sample data'}
+          </span>
+        </p>
       </div>
 
-      {/* Status filter chips — Section 44.3 (status filter) */}
+      {/* Status filter chips — Section 44.3 */}
       <div className="flex flex-wrap gap-2">
         {(['all', 'online', 'warning', 'critical', 'offline', 'maintenance'] as const).map((s) => (
           <button
@@ -211,12 +252,9 @@ export function MapView() {
             </div>
           </div>
 
-          {/* 
-            មិនដាក់ប៊ូតុង Control ត្រង់ៗនៅទីនេះទេ (Section 44.2: marker មិនត្រូវ
-            ជំនួស Authorization) — ត្រូវ navigate ទៅ Device Detail page ដែលឆ្លង
-            Auth → Authorization → Safety ដូចធម្មតា។ ជំនួសដោយ router navigate
-            ពិតប្រាកដនៅពេលភ្ជាប់ (ឧ. react-router `navigate(\`/devices/${selectedDevice.id}\`)`)
-          */}
+          {/* Control button is intentionally NOT placed here (Section 44.2):
+              marker does not replace Authorization — navigate to Device Detail
+              page which goes through Auth → Authorization → Safety. */}
           <p className="mt-3 text-xs text-ink-500">{t('view.map.detail.controlNote')}</p>
         </div>
       )}

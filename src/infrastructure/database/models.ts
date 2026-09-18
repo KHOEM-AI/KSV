@@ -94,6 +94,10 @@ const deviceSchema = new Schema(
     // rules like Ignition Lock After Hours); false/unset = customer-owned,
     // no such restriction — customers need 24/7 access for real emergencies.
     isCompanyFleet: { type: Boolean, default: false },
+    // Geographic coordinates for the interactive map view (README Section 44).
+    // Optional — devices without coordinates simply do not appear on the map.
+    latitude: { type: Number },
+    longitude: { type: Number },
   },
   { timestamps: true }
 );

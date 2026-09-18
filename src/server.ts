@@ -1828,6 +1828,58 @@ app.get(
     }
   );
 
+  // GET /api/map/devices — devices with coordinates for the interactive map
+  app.get(
+    "/api/map/devices",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const devices = await Device.find({
+          organizationId: user.organizationId,
+          latitude: { $exists: true, $ne: null },
+          longitude: { $exists: true, $ne: null },
+        })
+          .select("deviceCode name type status latitude longitude siteId firmwareVersion lastSeenAt")
+          .lean();
+
+        const siteIds = Array.from(
+          new Set(devices.map((d) => d.siteId).filter(Boolean).map((id) => String(id)))
+        );
+        const sites = await Site.find({ _id: { $in: siteIds } }).lean();
+        const siteById = new Map(sites.map((s) => [String(s._id), s]));
+
+        const result = devices.map((d) => {
+          const site = d.siteId ? siteById.get(String(d.siteId)) : undefined;
+          return {
+            deviceId: String(d._id),
+            deviceCode: d.deviceCode,
+            name: d.name,
+            type: d.type,
+            status: d.status,
+            latitude: d.latitude,
+            longitude: d.longitude,
+            site: site?.name ?? "",
+            country: site?.country ?? "",
+            firmwareVersion: d.firmwareVersion ?? "",
+          };
+        });
+
+        res.json({ devices: result, total: result.length });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load map devices.",
+        });
+      }
+    }
+  );
+
   // GET /api/international/countries — list all countries
   app.get(
     "/api/international/countries",

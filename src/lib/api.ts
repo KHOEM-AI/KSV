@@ -1303,6 +1303,23 @@ export async function revokeBackupCodes(): Promise<{ success: boolean }> {
   return apiFetch(`/recovery/backup-codes/revoke`, { method: "POST" });
 }
 
+export interface MapDeviceEntry {
+  deviceId: string;
+  deviceCode: string;
+  name: string;
+  type: string;
+  status: string;
+  latitude: number;
+  longitude: number;
+  site: string;
+  country: string;
+  firmwareVersion: string;
+}
+
+export async function listMapDevices(): Promise<{ devices: MapDeviceEntry[]; total: number }> {
+  return apiFetch<{ devices: MapDeviceEntry[]; total: number }>("/map/devices");
+}
+
 // ============================================================
 // International endpoints — mirrors API/international.ts exactly
 // ============================================================
