@@ -1,6 +1,6 @@
 /**
  * KSV — Identity Routes
- * Location: src/modules/identity/routes/identity.routes.ts
+ * Location: khoem-now/src/modules/identity/routes/identity.routes.ts
  */
 
 import { Router } from 'express';
@@ -31,4 +31,6 @@ router.delete('/me', authenticate, (req, res, next) =>
   identityController.deleteAccount(req, res, next)
 );
 
+// Export ទាំង ២ បែប (Named + Default)
+export const identityRoutes = router;
 export default router;
