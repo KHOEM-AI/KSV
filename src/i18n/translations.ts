@@ -472,8 +472,8 @@ const km: Dict = {
   'nav.controls': "ការគ្រប់គ្រង",
   'nav.protocols': "ពិធីការ",
   'nav.gateway': "ច្រកបញ្ជូន",
-  'nav.security': "សុវត្ថិភាព",
-  'nav.safety': "សុវត្ថិភាពផ្ទាល់ខ្លួន",
+  'nav.security': "សន្តិសុខ",
+  'nav.safety': "សុវត្ថិភាព",
   'nav.audit': "កំណត់ត្រាត្រួតពិនិត្យ",
   'nav.organization': "អង្គភាព",
   'nav.international': "អន្តរជាតិ",
@@ -506,7 +506,7 @@ const km: Dict = {
 
   'navgroup.overview': "ទិដ្ឋភាពទូទៅ",
   'navgroup.devicesControl': "ឧបករណ៍ និងការគ្រប់គ្រង",
-  'navgroup.securitySafety': "សុវត្ថិភាព",
+  'navgroup.securitySafety': "សន្តិសុខ និងសុវត្ថិភាព",
   'navgroup.organization': "អង្គភាព",
 
   'view.dashboard.subtitle': "ទិដ្ឋភាពផ្ទាល់នៃប្រព័ន្ធ KSV ទាំងមូល",
@@ -850,6 +850,9 @@ const km: Dict = {
   'view.login.title': "ចូលប្រព័ន្ធ KSV",
   'view.devices.loadFailed': "មិនអាចផ្ទុកឧបករណ៍បានទេ។",
   'view.settings.loadFailed': "មិនអាចផ្ទុកការកំណត់បានទេ។",
+  'view.audit.loading': 'កំពុងផ្ទុកកំណត់ហេតុសវនកម្ម...',
+  'view.audit.loadFailed': 'មិនអាចផ្ទុកកំណត់ហេតុសវនកម្មបានទេ',
+  'aiChat.subtitle': 'ជំនួយការរបស់អ្នក',
 };
 
 
