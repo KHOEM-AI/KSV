@@ -1939,6 +1939,10 @@ const th: Dict = {
   'view.login.title': "KSV Login",
   'view.devices.loadFailed': "Failed to load devices.",
   'view.settings.loadFailed': "Failed to load settings.",
+  'view.audit.noMatch': 'ไม่มีเหตุการณ์ที่ตรงกับตัวกรองของคุณ',
+  'view.audit.loading': 'กำลังโหลดบันทึกการตรวจสอบ…',
+  'view.audit.loadFailed': 'ไม่สามารถโหลดบันทึกการตรวจสอบได้',
+  'aiChat.subtitle': 'ผู้ช่วยของคุณ',
 };
 
 const ko: Dict = {
