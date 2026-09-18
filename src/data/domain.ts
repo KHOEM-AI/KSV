@@ -78,16 +78,6 @@ export interface SecuritySession {
   status: 'active' | 'expired' | 'revoked';
 }
 
-export interface OrgNode {
-  id: string;
-  name: string;
-  type: 'company' | 'site' | 'building' | 'floor';
-  parentId?: string;
-  devices: number;
-  users: number;
-  policy: string;
-}
-
 export interface CountryConfig {
   code: string;
   name: string;
@@ -183,16 +173,6 @@ export const sessions: SecuritySession[] = [
   { id: 'SES-505', user: 'Mei Lin', email: 'm.lin@ksv.io', role: 'Network Admin', method: 'OIDC', ip: '10.30.2.18', location: 'Singapore, SG', started: '2026-08-26 05:45', lastActive: '4m ago', mfa: true, status: 'active' },
 ];
 
-export const orgTree: OrgNode[] = [
-  { id: 'ORG-1', name: 'KSV Global Holdings', type: 'company', devices: 12847, users: 1240, policy: 'Root Policy v4' },
-  { id: 'ORG-2', name: 'EMEA Region', type: 'site', parentId: 'ORG-1', devices: 4820, users: 410, policy: 'EMEA Baseline' },
-  { id: 'ORG-3', name: 'Frankfurt HQ', type: 'site', parentId: 'ORG-2', devices: 1340, users: 180, policy: 'HQ Strict' },
-  { id: 'ORG-4', name: 'Tower A', type: 'building', parentId: 'ORG-3', devices: 620, users: 95, policy: 'Tower A Access' },
-  { id: 'ORG-5', name: 'Tower B', type: 'building', parentId: 'ORG-3', devices: 720, users: 85, policy: 'Tower B Access' },
-  { id: 'ORG-6', name: 'APAC Region', type: 'site', parentId: 'ORG-1', devices: 5210, users: 520, policy: 'APAC Baseline' },
-  { id: 'ORG-7', name: 'Singapore DC', type: 'site', parentId: 'ORG-6', devices: 2110, users: 140, policy: 'DC Critical' },
-  { id: 'ORG-8', name: 'Taipei Fab', type: 'site', parentId: 'ORG-6', devices: 1980, users: 220, policy: 'Fab Cleanroom' },
-];
 
 export const countries: CountryConfig[] = [
   { code: 'DE', name: 'Germany', timezone: 'Europe/Berlin', utcOffset: '+02:00', locale: 'de-DE', sites: 4, devices: 1340, compliance: 'verified', flag: 'DE' },
