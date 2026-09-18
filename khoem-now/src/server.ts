@@ -27,6 +27,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
+import { GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary";
 
 function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -176,6 +177,9 @@ async function main() {
   });
 
   // GET /api/health — lightweight health check
+  app.get("/api/vocabulary", (_req, res) => { res.json({ total: GLOBAL_195_VOCABULARY.length, data: GLOBAL_195_VOCABULARY }); });
+  app.get("/api/vocabulary/:language", (req, res) => { const filtered = GLOBAL_195_VOCABULARY.filter((entry) => entry.language === req.params.language); res.json({ language: req.params.language, total: filtered.length, data: filtered }); });
+
   app.get("/api/health", (_req, res) => {
     res.json({
       status: "ok",
