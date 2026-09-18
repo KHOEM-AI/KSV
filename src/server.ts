@@ -19,6 +19,7 @@ import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-
 import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
+import { startMqttClient } from "./infrastructure/mqtt/client.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
 import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
@@ -2981,6 +2982,13 @@ async function resolveAIDevice(
   app.listen(PORT, () => {
     console.log(`[Server] KSV API running on http://localhost:${PORT}`);
   });
+
+  // Start MQTT client (optional — logs failure but never crashes the app).
+  try {
+    startMqttClient();
+  } catch (err) {
+    console.error("[MQTT] Failed to start:", err instanceof Error ? err.message : err);
+  }
 }
 
 main().catch((err) => {
