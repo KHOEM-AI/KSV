@@ -92,7 +92,20 @@ export class SafetyService {
     orgId: string,
     dto: UpdateSafetyRuleDto
   ): Promise<SafetyRuleResponseDto> {
-    const r = await safetyRepository.updateRule(ruleId, orgId, dto as any);
+    const allowed: UpdateSafetyRuleDto = {};
+    const keys = [
+      'name',
+      'description',
+      'enabled',
+      'severity',
+      'condition',
+      'decision',
+      'message',
+    ] as const;
+    for (const k of keys) {
+      if (dto[k] !== undefined) (allowed as any)[k] = dto[k];
+    }
+    const r = await safetyRepository.updateRule(ruleId, orgId, allowed as any);
     if (!r) throw new Error('Safety rule not found');
     return this.toRuleResponse(r);
   }
