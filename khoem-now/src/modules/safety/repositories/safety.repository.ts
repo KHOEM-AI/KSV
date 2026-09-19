@@ -13,20 +13,19 @@ import {
 export class SafetyRepository {
   // ============ RULES ============
 
-  async findRuleById(ruleId: string): Promise<ISafetyRule | null> {
-    return SafetyRule.findOne({ ruleId });
+  async findRuleById(
+    ruleId: string,
+    orgId: string
+  ): Promise<ISafetyRule | null> {
+    return SafetyRule.findOne({ ruleId, orgId });
   }
 
-  async listRules(orgId?: string): Promise<ISafetyRule[]> {
-    const filter: Record<string, unknown> = {};
-    if (orgId) filter.orgId = orgId;
-    return SafetyRule.find(filter).sort({ createdAt: -1 });
+  async listRules(orgId: string): Promise<ISafetyRule[]> {
+    return SafetyRule.find({ orgId }).sort({ createdAt: -1 });
   }
 
-  async listEnabledRules(orgId?: string): Promise<ISafetyRule[]> {
-    const filter: Record<string, unknown> = { enabled: true };
-    if (orgId) filter.orgId = orgId;
-    return SafetyRule.find(filter);
+  async listEnabledRules(orgId: string): Promise<ISafetyRule[]> {
+    return SafetyRule.find({ enabled: true, orgId });
   }
 
   async createRule(data: Partial<ISafetyRule>): Promise<ISafetyRule> {
@@ -35,17 +34,18 @@ export class SafetyRepository {
 
   async updateRule(
     ruleId: string,
+    orgId: string,
     data: Partial<ISafetyRule>
   ): Promise<ISafetyRule | null> {
     return SafetyRule.findOneAndUpdate(
-      { ruleId },
+      { ruleId, orgId },
       { $set: data },
       { new: true }
     );
   }
 
-  async deleteRule(ruleId: string): Promise<boolean> {
-    const result = await SafetyRule.deleteOne({ ruleId });
+  async deleteRule(ruleId: string, orgId: string): Promise<boolean> {
+    const result = await SafetyRule.deleteOne({ ruleId, orgId });
     return result.deletedCount === 1;
   }
 
@@ -56,18 +56,19 @@ export class SafetyRepository {
   }
 
   async listLogs(
+    orgId: string,
     deviceId?: string,
     limit = 100
   ): Promise<ISafetyLog[]> {
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { orgId };
     if (deviceId) filter.deviceId = deviceId;
     return SafetyLog.find(filter)
       .sort({ createdAt: -1 })
       .limit(Math.min(limit, 500));
   }
 
-  async countLogsByDecision(decision: string): Promise<number> {
-    return SafetyLog.countDocuments({ decision });
+  async countLogsByDecision(orgId: string, decision: string): Promise<number> {
+    return SafetyLog.countDocuments({ orgId, decision });
   }
 }
 

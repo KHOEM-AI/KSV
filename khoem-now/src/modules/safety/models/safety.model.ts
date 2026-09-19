@@ -28,6 +28,7 @@ export interface ISafetyRule extends Document {
 export interface ISafetyLog extends Document {
   logId: string;
   ruleId?: string;
+  orgId?: string;
   deviceId: string;
   commandId?: string;
   userId?: string;
@@ -66,6 +67,7 @@ const SafetyLogSchema = new Schema<ISafetyLog>(
   {
     logId: { type: String, required: true, unique: true, index: true },
     ruleId: { type: String, index: true },
+    orgId: { type: String, index: true },
     deviceId: { type: String, required: true, index: true },
     commandId: { type: String, index: true },
     userId: { type: String, index: true },

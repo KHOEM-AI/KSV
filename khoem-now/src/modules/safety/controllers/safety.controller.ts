@@ -11,11 +11,10 @@ export class SafetyController {
 
   async createRule(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = (req as any).user?.orgId;
-      const result = await safetyService.createRule({
-        ...req.body,
-        orgId: req.body.orgId || orgId,
-      });
+      const result = await safetyService.createRule(
+        req.user!.organizationId,
+        req.body
+      );
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -24,9 +23,7 @@ export class SafetyController {
 
   async listRules(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId =
-        (req.query.orgId as string) || (req as any).user?.orgId;
-      const result = await safetyService.listRules(orgId);
+      const result = await safetyService.listRules(req.user!.organizationId);
       res.json({ total: result.length, data: result });
     } catch (err) {
       next(err);
@@ -35,7 +32,10 @@ export class SafetyController {
 
   async getRuleById(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await safetyService.getRuleById(req.params.ruleId);
+      const result = await safetyService.getRuleById(
+        req.params.ruleId,
+        req.user!.organizationId
+      );
       res.json(result);
     } catch (err) {
       next(err);
@@ -46,6 +46,7 @@ export class SafetyController {
     try {
       const result = await safetyService.updateRule(
         req.params.ruleId,
+        req.user!.organizationId,
         req.body
       );
       res.json(result);
@@ -56,7 +57,10 @@ export class SafetyController {
 
   async removeRule(req: Request, res: Response, next: NextFunction) {
     try {
-      await safetyService.deleteRule(req.params.ruleId);
+      await safetyService.deleteRule(
+        req.params.ruleId,
+        req.user!.organizationId
+      );
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -67,9 +71,11 @@ export class SafetyController {
 
   async evaluate(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
-      const orgId = (req as any).user?.orgId;
-      const result = await safetyService.evaluate(req.body, userId, orgId);
+      const result = await safetyService.evaluate(
+        req.body,
+        req.user!.id,
+        req.user!.organizationId
+      );
       res.json(result);
     } catch (err) {
       next(err);
@@ -82,16 +88,22 @@ export class SafetyController {
     try {
       const deviceId = req.query.deviceId as string | undefined;
       const limit = req.query.limit ? Number(req.query.limit) : 100;
-      const result = await safetyService.listLogs(deviceId, limit);
+      const result = await safetyService.listLogs(
+        req.user!.organizationId,
+        deviceId,
+        limit
+      );
       res.json({ total: result.length, data: result });
     } catch (err) {
       next(err);
     }
   }
 
-  async statistics(_req: Request, res: Response, next: NextFunction) {
+  async statistics(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await safetyService.getStatistics();
+      const result = await safetyService.getStatistics(
+        req.user!.organizationId
+      );
       res.json(result);
     } catch (err) {
       next(err);

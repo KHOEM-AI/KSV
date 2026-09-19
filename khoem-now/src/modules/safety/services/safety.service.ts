@@ -49,7 +49,10 @@ export class SafetyService {
 
   // ============ RULES ============
 
-  async createRule(dto: CreateSafetyRuleDto): Promise<SafetyRuleResponseDto> {
+  async createRule(
+    orgId: string,
+    dto: CreateSafetyRuleDto
+  ): Promise<SafetyRuleResponseDto> {
     const ruleId = `SAF-${crypto
       .randomBytes(5)
       .toString('hex')
@@ -59,7 +62,7 @@ export class SafetyService {
       ruleId,
       name: dto.name,
       description: dto.description,
-      orgId: dto.orgId,
+      orgId,
       severity: dto.severity || 'medium',
       condition: dto.condition,
       decision: dto.decision || 'WARN',
@@ -70,28 +73,32 @@ export class SafetyService {
     return this.toRuleResponse(rule);
   }
 
-  async listRules(orgId?: string): Promise<SafetyRuleResponseDto[]> {
+  async listRules(orgId: string): Promise<SafetyRuleResponseDto[]> {
     const list = await safetyRepository.listRules(orgId);
     return list.map((r) => this.toRuleResponse(r));
   }
 
-  async getRuleById(ruleId: string): Promise<SafetyRuleResponseDto> {
-    const r = await safetyRepository.findRuleById(ruleId);
+  async getRuleById(
+    ruleId: string,
+    orgId: string
+  ): Promise<SafetyRuleResponseDto> {
+    const r = await safetyRepository.findRuleById(ruleId, orgId);
     if (!r) throw new Error('Safety rule not found');
     return this.toRuleResponse(r);
   }
 
   async updateRule(
     ruleId: string,
+    orgId: string,
     dto: UpdateSafetyRuleDto
   ): Promise<SafetyRuleResponseDto> {
-    const r = await safetyRepository.updateRule(ruleId, dto as any);
+    const r = await safetyRepository.updateRule(ruleId, orgId, dto as any);
     if (!r) throw new Error('Safety rule not found');
     return this.toRuleResponse(r);
   }
 
-  async deleteRule(ruleId: string): Promise<void> {
-    const ok = await safetyRepository.deleteRule(ruleId);
+  async deleteRule(ruleId: string, orgId: string): Promise<void> {
+    const ok = await safetyRepository.deleteRule(ruleId, orgId);
     if (!ok) throw new Error('Safety rule not found');
   }
 
@@ -105,8 +112,8 @@ export class SafetyService {
    */
   async evaluate(
     dto: EvaluateSafetyDto,
-    userId?: string,
-    orgId?: string
+    userId: string,
+    orgId: string
   ): Promise<SafetyEvaluationResultDto> {
     const rules = await safetyRepository.listEnabledRules(orgId);
 
@@ -149,6 +156,7 @@ export class SafetyService {
     await safetyRepository.createLog({
       logId,
       ruleId: matchedRules[0],
+      orgId,
       deviceId: dto.deviceId,
       commandId: dto.commandId,
       userId,
@@ -190,22 +198,23 @@ export class SafetyService {
   // ============ LOGS ============
 
   async listLogs(
+    orgId: string,
     deviceId?: string,
     limit = 100
   ): Promise<SafetyLogResponseDto[]> {
-    const logs = await safetyRepository.listLogs(deviceId, limit);
+    const logs = await safetyRepository.listLogs(orgId, deviceId, limit);
     return logs.map((l) => this.toLogResponse(l));
   }
 
-  async getStatistics(): Promise<{
+  async getStatistics(orgId: string): Promise<{
     allow: number;
     warn: number;
     block: number;
   }> {
     const [allow, warn, block] = await Promise.all([
-      safetyRepository.countLogsByDecision('ALLOW'),
-      safetyRepository.countLogsByDecision('WARN'),
-      safetyRepository.countLogsByDecision('BLOCK'),
+      safetyRepository.countLogsByDecision(orgId, 'ALLOW'),
+      safetyRepository.countLogsByDecision(orgId, 'WARN'),
+      safetyRepository.countLogsByDecision(orgId, 'BLOCK'),
     ]);
     return { allow, warn, block };
   }

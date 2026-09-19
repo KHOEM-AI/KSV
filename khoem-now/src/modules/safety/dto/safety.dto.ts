@@ -11,7 +11,6 @@ import type {
 export interface CreateSafetyRuleDto {
   name: string;
   description?: string;
-  orgId?: string;
   severity?: SafetySeverity;
   condition: Record<string, unknown>;
   decision?: SafetyDecision;
