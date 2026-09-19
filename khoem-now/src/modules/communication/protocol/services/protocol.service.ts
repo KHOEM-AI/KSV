@@ -34,7 +34,11 @@ export class ProtocolService {
 
     const protocol = await protocolRepository.create({
       protocolId,
-      ...dto,
+      code: dto.code,
+      name: dto.name,
+      category: dto.category,
+      description: dto.description,
+      config: dto.config,
     });
 
     return this.toResponse(protocol);
@@ -60,7 +64,12 @@ export class ProtocolService {
     protocolId: string,
     dto: UpdateProtocolDto
   ): Promise<ProtocolResponseDto> {
-    const p = await protocolRepository.update(protocolId, dto as any);
+    const allowed: UpdateProtocolDto = {};
+    const keys = ['name', 'enabled', 'description', 'config'] as const;
+    for (const k of keys) {
+      if (dto[k] !== undefined) (allowed as any)[k] = dto[k];
+    }
+    const p = await protocolRepository.update(protocolId, allowed as any);
     if (!p) throw new Error('Protocol not found');
     return this.toResponse(p);
   }
