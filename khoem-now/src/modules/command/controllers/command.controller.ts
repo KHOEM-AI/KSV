@@ -5,6 +5,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { commandService } from '../services/command.service';
+import { deviceRepository } from '../../device/repositories/device.repository';
+import { evaluateSafety } from '../../../core/safety/safety.engine';
 
 export class CommandController {
   async dispatch(req: Request, res: Response, next: NextFunction) {
@@ -12,19 +14,49 @@ export class CommandController {
       const userId = req.user!.id;
       const orgId = req.user!.organizationId;
 
-      // TODO: ភ្ជាប់ទៅ Authorization Engine + Safety Engine ជាក់ស្តែងនៅទីនេះ
-      // (evaluateSafety ពី core/safety/safety.engine.ts) — បច្ចុប្បន្នអនុញ្ញាតគ្រប់ command
-      // ដោយស្វ័យប្រវត្តិ, ត្រូវជំនួសមុននឹងដាក់ដំណើរការជាក់ស្តែង។
-      const decision: 'ALLOW' | 'WARN' | 'BLOCK' = 'ALLOW';
-      const reasons: string[] = ['Default allow — authorization pending'];
+      if (!orgId) {
+        res.status(400).json({ error: 'NO_ORGANIZATION', message: 'User has no organizationId.' });
+        return;
+      }
+
+      const dto = req.body as { deviceId: string; type: string; payload?: Record<string, unknown>; signals?: Record<string, unknown> };
+
+      // Device must exist and belong to this user's organization —
+      // also gives us deviceType, required by the Safety Engine.
+      const device = await deviceRepository.findByDeviceIdAndOrg(dto.deviceId, orgId);
+      if (!device) {
+        res.status(404).json({ error: 'DEVICE_NOT_FOUND' });
+        return;
+      }
+
+      const safetyResult = await evaluateSafety({
+        deviceId: dto.deviceId,
+        deviceType: device.type,
+        organizationId: orgId,
+        commandType: dto.type,
+        payload: dto.payload,
+        signals: dto.signals,
+      });
+
+      const decision: 'ALLOW' | 'WARN' | 'BLOCK' =
+        safetyResult.decision === 'BLOCKED' ? 'BLOCK' : 'ALLOW';
+      const reasons: string[] = safetyResult.reason
+        ? [safetyResult.reason]
+        : ['Allowed — no safety rule triggered'];
 
       const result = await commandService.create(
         userId,
         orgId,
-        req.body,
+        dto,
         decision,
         reasons
       );
+
+      if (decision === 'BLOCK') {
+        res.status(423).json(result);
+        return;
+      }
+
       res.status(201).json(result);
     } catch (err) {
       next(err);

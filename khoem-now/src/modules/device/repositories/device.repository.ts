@@ -11,6 +11,15 @@ export class DeviceRepository {
     return Device.findOne({ deviceId });
   }
 
+  // Org-scoped lookup — use this (not findByDeviceId) wherever the caller
+  // is an authenticated user and must not see devices from other orgs.
+  async findByDeviceIdAndOrg(
+    deviceId: string,
+    orgId: string
+  ): Promise<IDevice | null> {
+    return Device.findOne({ deviceId, orgId });
+  }
+
   async findByDeviceCode(deviceCode: string): Promise<IDevice | null> {
     return Device.findOne({ deviceCode });
   }

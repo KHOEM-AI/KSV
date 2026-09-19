@@ -12,6 +12,12 @@ export interface DispatchCommandDto {
   deviceId: string;
   type: string;
   payload?: Record<string, unknown>;
+  // Optional context signals for the Safety Engine (e.g. geofence status).
+  // Supplied by the caller — this module does not read hardware/GPS itself.
+  signals?: {
+    isInsideGeoFence?: boolean;
+    [key: string]: unknown;
+  };
 }
 
 export interface CommandResponseDto {
