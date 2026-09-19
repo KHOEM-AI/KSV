@@ -1,8 +1,9 @@
 /**
  * KHOEM NOW — Global vocabulary: a small set of curated entries plus
- * roughly 29,000 generated rows.
+ * roughly 37,000 generated rows across 53 languages.
  *
- * Data-only module. Generated lexical rows use FrequencyWords 2018 lists;
+ * Data-only module. Generated lexical rows use FrequencyWords 2018 lists
+ * (hermitdave/FrequencyWords, CC-BY-SA-4.0 content; attribution required);
  * the curated entries (km, en) are defined below. Use
  * GLOBAL_195_VOCABULARY_30K_COUNT for the actual total.
  */
