@@ -1,3 +1,4 @@
+import { DISRESPECT_VOCABULARY } from "./patterns/disrespect-vocabulary.ts";
 /**
  * KHOEM-AI Brain — Conduct Layer (Respect + Honesty)
  * Location: khoem-now/src/core/ai/khoem-ai-conduct.ts
@@ -25,11 +26,15 @@
  * etc). Kept as data, not hardcoded logic, so it can grow without
  * touching the matching function below.
  */
-const DISRESPECT_PATTERNS: RegExp[] = [
-  /\b(stupid|idiot|dumb|shut up|useless)\b/i,
-  // Add Khmer or other-language patterns here as needed, e.g.:
-  // /ឃើលា|ល្ងង់/,
-];
+const escapeRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const DISRESPECT_PATTERNS: RegExp[] = DISRESPECT_VOCABULARY.flatMap((entry) =>
+  [entry.term, ...(entry.aliases ?? [])].map((t) =>
+    entry.language === "km"
+      ? new RegExp(escapeRegex(t.normalize("NFC")), "u")
+      : new RegExp(`\\b${escapeRegex(t)}\\b`, "iu"),
+  ),
+);
 
 
 const UNVERIFIED_THIRD_PARTY_CLAIM_PATTERNS: RegExp[] = [
@@ -50,7 +55,8 @@ function containsUnverifiedThirdPartyClaim(text: string): boolean {
 }
 
 export function containsDisrespect(text: string): boolean {
-  return DISRESPECT_PATTERNS.some((pattern) => pattern.test(text));
+  const normalized = text.normalize("NFC");
+  return DISRESPECT_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 /**

@@ -1,3 +1,4 @@
+import { containsDisrespect as conductContainsDisrespect } from "./khoem-ai-conduct.ts";
 /**
  * KHOEM-AI Brain
  * ------------------------------------------------------------------
@@ -463,14 +464,6 @@ const INJECTION_PATTERNS: readonly {
     weight: 35,
   },
 ];
-
-const DISRESPECT_SIGNATURES = [
-  "idiot",
-  "stupid",
-  "shut up",
-  "worthless",
-  "useless ai",
-] as const;
 
 const HIGH_RISK_COMMANDS = new Set<string>([
   "UNLOCK",
@@ -978,7 +971,7 @@ function detectPromptInjection(text: string): boolean {
 }
 
 function containsDisrespect(text: string): boolean {
-  return containsSignature(text, DISRESPECT_SIGNATURES);
+  return conductContainsDisrespect(text);
 }
 
 function findCommandAlias(text: string): {
