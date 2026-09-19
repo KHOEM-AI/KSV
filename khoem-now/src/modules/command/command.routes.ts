@@ -54,7 +54,10 @@ commandRouter.post(
 
     // 1. Load the device — need its type + org to run the safety check
     // and to make sure it actually exists before creating a command.
-    const device = await Device.findById(deviceId).lean();
+    const device = await Device.findOne({
+      _id: deviceId,
+      organizationId: req.user!.organizationId,
+    }).lean();
     if (!device) {
       res.status(404).json({ error: "DEVICE_NOT_FOUND" });
       return;
@@ -140,6 +143,15 @@ commandRouter.get(
     const { deviceId } = req.params;
     const limit = Math.min(Number(req.query.limit) || 20, 100);
 
+    const device = await Device.findOne({
+      _id: deviceId,
+      organizationId: req.user!.organizationId,
+    }).lean();
+    if (!device) {
+      res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+      return;
+    }
+
     const commands = await Command.find({ deviceId })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -163,6 +175,17 @@ commandRouter.get(
       res.status(404).json({ error: "COMMAND_NOT_FOUND" });
       return;
     }
+
+    const device = await Device.findOne({
+      _id: command.deviceId,
+      organizationId: req.user!.organizationId,
+    }).lean();
+    if (!device) {
+      // command exists but belongs to another org — treat as not found
+      res.status(404).json({ error: "COMMAND_NOT_FOUND" });
+      return;
+    }
+
     res.json(command);
   }
 );
