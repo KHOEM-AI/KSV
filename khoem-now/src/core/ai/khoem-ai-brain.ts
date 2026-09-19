@@ -1090,7 +1090,13 @@ export function interpretIntent(input: {
     lowered.endsWith("?") ||
     lowered.includes("what") ||
     lowered.includes("how") ||
-    lowered.includes("why")
+    lowered.includes("why") ||
+    lowered.includes("តើ") ||
+    lowered.includes("ដែរឬទេ") ||
+    lowered.includes("អ្វី") ||
+    lowered.includes("ម៉េច") ||
+    lowered.includes("ហេតុអ្វី") ||
+    /ទេ\s*[?？]?\s*$/.test(lowered)
   ) {
     return {
       intent: "question",
