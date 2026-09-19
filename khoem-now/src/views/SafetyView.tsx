@@ -57,7 +57,7 @@ export function SafetyView() {
   const totalTriggers = rules.reduce((s, r) => s + (r.triggeredCount ?? 0), 0);
   const criticalCount = rules.filter((r) => r.severity === 'critical').length;
 
-  const types = ['all', ...Array.from(new Set(rules.map((r) => r.type)))];
+  const types = ['all', ...Array.from(new Set(rules.map((r) => r.type).filter(Boolean)))];
   const filtered = rules.filter((r) => typeFilter === 'all' || r.type === typeFilter);
 
   return (
@@ -117,7 +117,7 @@ export function SafetyView() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">{r.name}</h3>
-                      <p className="text-xs text-ink-400">{r.type.replace(/_/g, ' ')}</p>
+                      <p className="text-xs text-ink-400">{(r.type ?? '').replace(/_/g, ' ')}</p>
                     </div>
                   </div>
                   <Toggle checked={r.isActive} onChange={() => toggleRule(r.ruleId, r.isActive)} />

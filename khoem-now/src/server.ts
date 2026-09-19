@@ -417,6 +417,53 @@ async function main() {
     }
   );
 
+
+  // POST /api/auth/password/change
+  app.post("/api/auth/password/change", authenticate, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body ?? {};
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "currentPassword and newPassword are required.",
+        });
+        return;
+      }
+
+      const userId = req.user!.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        res.status(404).json({ error: "NOT_FOUND", message: "User not found." });
+        return;
+      }
+
+      const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
+
+      if (!passwordMatches) {
+        res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Current password is incorrect.",
+        });
+        return;
+      }
+
+      user.passwordHash = await bcrypt.hash(newPassword, 12);
+      await user.save();
+
+      res.json({
+        success: true,
+        sessionRevoked: false,
+        message: "Password changed successfully.",
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: "INTERNAL_ERROR",
+        message: err instanceof Error ? err.message : "Failed to change password.",
+      });
+    }
+  });
   // POST /api/auth/login/password
   app.post("/api/auth/login/password", authRateLimiter, async (req, res) => {
     try {
@@ -2891,7 +2938,7 @@ async function resolveAIDevice(
           ]),
           SafetyLog.aggregate([
             { $match: { createdAt: { $gte: since24d } } },
-            { $group: { _id: { $dayOfMonth: "$createdAt", $month: "$createdAt" }, count: { $sum: 1 } } },
+            { $group: { _id: { day: { $dayOfMonth: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } },
             { $limit: 24 },
           ]),
           SecurityIncident.countDocuments({ organizationId: orgId, status: { $ne: "resolved" } }),
