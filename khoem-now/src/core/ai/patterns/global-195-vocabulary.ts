@@ -1,8 +1,10 @@
 /**
- * KHOEM NOW — Global vocabulary expansion to exactly 30,000 entries.
+ * KHOEM NOW — Global vocabulary: a small set of curated entries plus
+ * roughly 29,000 generated rows.
  *
  * Data-only module. Generated lexical rows use FrequencyWords 2018 lists;
- * the original 33 curated entries remain in global-195-vocabulary.ts.
+ * the curated entries (km, en) are defined below. Use
+ * GLOBAL_195_VOCABULARY_30K_COUNT for the actual total.
  */
 
 export type GlobalVocabularyEntry = {
@@ -36,8 +38,6 @@ export const GLOBAL_195_VOCABULARY: readonly GlobalVocabularyEntry[] = [
 export function getLanguageByCode(language: string): GlobalVocabularyEntry | undefined {
   return GLOBAL_195_VOCABULARY.find((entry) => entry.language === language);
 }
-
-export const GLOBAL_VOCABULARY_TARGET_COUNT = 30_000 as const;
 
 type GeneratedVocabularyRow = readonly [language: string, term: string];
 
