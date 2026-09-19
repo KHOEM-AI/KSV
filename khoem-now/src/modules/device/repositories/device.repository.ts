@@ -59,10 +59,11 @@ export class DeviceRepository {
 
   async update(
     deviceId: string,
+    orgId: string,
     data: Partial<IDevice>
   ): Promise<IDevice | null> {
     return Device.findOneAndUpdate(
-      { deviceId },
+      { deviceId, orgId },
       { $set: data },
       { new: true }
     );
@@ -79,8 +80,8 @@ export class DeviceRepository {
     );
   }
 
-  async delete(deviceId: string): Promise<boolean> {
-    const result = await Device.deleteOne({ deviceId });
+  async delete(deviceId: string, orgId: string): Promise<boolean> {
+    const result = await Device.deleteOne({ deviceId, orgId });
     return result.deletedCount === 1;
   }
 

@@ -9,8 +9,16 @@ import { deviceService } from '../services/device.service';
 export class DeviceController {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
-      const result = await deviceService.register(userId, req.body);
+      const userId = req.user!.id;
+      const orgId = req.user!.organizationId;
+      if (!orgId) {
+        res.status(400).json({ error: 'NO_ORGANIZATION', message: 'User has no organizationId.' });
+        return;
+      }
+      // orgId always comes from the authenticated user — never let the
+      // client register a device into an arbitrary organization.
+      const { orgId: _ignored, ...body } = req.body ?? {};
+      const result = await deviceService.register(userId, { ...body, orgId });
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -19,10 +27,10 @@ export class DeviceController {
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await deviceService.list({
+      const orgId = req.user!.organizationId!;
+      const result = await deviceService.list(orgId, {
         status: req.query.status as any,
         category: req.query.category as any,
-        orgId: req.query.orgId as string,
         site: req.query.site as string,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         offset: req.query.offset ? Number(req.query.offset) : undefined,
@@ -35,7 +43,8 @@ export class DeviceController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await deviceService.getById(req.params.deviceId);
+      const orgId = req.user!.organizationId!;
+      const result = await deviceService.getById(req.params.deviceId, orgId);
       res.json(result);
     } catch (err) {
       next(err);
@@ -44,7 +53,8 @@ export class DeviceController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await deviceService.update(req.params.deviceId, req.body);
+      const orgId = req.user!.organizationId!;
+      const result = await deviceService.update(req.params.deviceId, orgId, req.body);
       res.json(result);
     } catch (err) {
       next(err);
@@ -53,7 +63,8 @@ export class DeviceController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      await deviceService.delete(req.params.deviceId);
+      const orgId = req.user!.organizationId!;
+      await deviceService.delete(req.params.deviceId, orgId);
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -62,7 +73,7 @@ export class DeviceController {
 
   async mapDevices(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.query.orgId as string | undefined;
+      const orgId = req.user!.organizationId!;
       const devices = await deviceService.getMapDevices(orgId);
       res.json({ total: devices.length, devices });
     } catch (err) {

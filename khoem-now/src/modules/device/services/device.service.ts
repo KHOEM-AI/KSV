@@ -72,23 +72,27 @@ export class DeviceService {
   }
 
   async list(
+    orgId: string,
     query: DeviceListQueryDto
   ): Promise<{ total: number; data: DeviceResponseDto[] }> {
-    const { items, total } = await deviceRepository.list(query);
+    // orgId always comes from the authenticated user, never from the
+    // client-supplied query.
+    const { items, total } = await deviceRepository.list({ ...query, orgId });
     return { total, data: items.map((d) => this.toResponse(d)) };
   }
 
-  async getById(deviceId: string): Promise<DeviceResponseDto> {
-    const device = await deviceRepository.findByDeviceId(deviceId);
+  async getById(deviceId: string, orgId: string): Promise<DeviceResponseDto> {
+    const device = await deviceRepository.findByDeviceIdAndOrg(deviceId, orgId);
     if (!device) throw new Error('Device not found');
     return this.toResponse(device);
   }
 
   async update(
     deviceId: string,
+    orgId: string,
     dto: UpdateDeviceDto
   ): Promise<DeviceResponseDto> {
-    const device = await deviceRepository.update(deviceId, dto as any);
+    const device = await deviceRepository.update(deviceId, orgId, dto as any);
     if (!device) throw new Error('Device not found');
     return this.toResponse(device);
   }
@@ -103,12 +107,12 @@ export class DeviceService {
     }
   }
 
-  async delete(deviceId: string): Promise<void> {
-    const ok = await deviceRepository.delete(deviceId);
+  async delete(deviceId: string, orgId: string): Promise<void> {
+    const ok = await deviceRepository.delete(deviceId, orgId);
     if (!ok) throw new Error('Device not found');
   }
 
-  async getMapDevices(orgId?: string): Promise<DeviceResponseDto[]> {
+  async getMapDevices(orgId: string): Promise<DeviceResponseDto[]> {
     const devices = await deviceRepository.listWithCoordinates(orgId);
     return devices.map((d) => this.toResponse(d));
   }
