@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { X, Pause, Play, Send } from "lucide-react";
 import { interpretIntent } from "../core/ai/khoem-ai-brain";
+import { guardRespectfulResponse } from "../core/ai/khoem-ai-conduct";
 
 interface Message {
   id: string;
@@ -58,7 +59,13 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
     const aiMessage: Message = {
       id: `${userMessage.id}-ai`,
       role: "ai",
-      text: result.reason,
+      text:
+        guardRespectfulResponse(text, /[\u1780-\u17FF]/.test(text) ? "km" : "en") ??
+        (result.intent === "greeting"
+          ? /[\u1780-\u17FF]/.test(text)
+            ? "សួស្តីបង! ខ្ញុំជា KHOEM-AI។ ខ្ញុំអាចជួយពន្យល់ស្ថានភាព និងសំណួររបស់បងបាន។"
+            : "Hello! I'm KHOEM-AI. I can help explain your system and answer your questions."
+          : result.userMessage || result.reason),
     };
 
     setMessages((prev) => [...prev, userMessage, aiMessage]);
@@ -94,12 +101,12 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
       </div>
 
       {/* Background layer: scrolling vertical text, always rendered */}
-      <div className="absolute inset-0 flex items-start justify-end pr-6 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 flex items-start justify-end pr-2 sm:pr-6 overflow-hidden pointer-events-none">
         <div className={`welcome-scroll-track relative z-10 ${paused ? "paused" : ""}`}>
           {[0, 1].map((copy) => (
             <span
               key={copy}
-              className="welcome-vertical-text block text-2xl font-light tracking-wide text-cyan-300/90"
+              className="welcome-vertical-text block text-base sm:text-2xl font-light tracking-wide text-cyan-300/90"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
               {GREETING_TEXT}
@@ -133,7 +140,7 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
           </div>
 
           {/* Chat stream */}
-          <div className="flex-1 overflow-y-auto p-4 pr-16">
+          <div className="flex-1 overflow-y-auto p-4 pr-10 sm:pr-16">
             <div className="flex flex-col gap-3">
               {messages.map((m) => (
                 <div
