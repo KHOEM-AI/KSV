@@ -5,7 +5,7 @@
 
 import mongoose, { Schema, type Document, type Types } from 'mongoose';
 
-export type OrgRole = 'owner' | 'admin' | 'manager' | 'operator' | 'viewer';
+export type OrgRole = 'Owner' | 'OrgAdmin' | 'Manager' | 'Operator' | 'Viewer';
 
 export interface IOrganization extends Document {
   orgId: string;
@@ -34,8 +34,8 @@ const OrganizationSchema = new Schema<IOrganization>(
         userId: { type: String, required: true },
         role: {
           type: String,
-          enum: ['owner', 'admin', 'manager', 'operator', 'viewer'],
-          default: 'viewer',
+          enum: ['Owner', 'OrgAdmin', 'Manager', 'Operator', 'Viewer'],
+          default: 'Viewer',
         },
         joinedAt: { type: Date, default: Date.now },
       },

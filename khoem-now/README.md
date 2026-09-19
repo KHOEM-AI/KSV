@@ -29,7 +29,7 @@ KSV កំពុងធ្វើ migration ពី monolith (`src/server.ts`, ក�
 
 - [x] `src/modules/discovery/` — org-scoping + RBAC ធ្វើរួច
 - [x] `src/modules/identity/` — field name, updateProfile allow-list, JWT secret, token claims (sub/role/organizationId) ធ្វើរួច; នៅសល់៖ requirePermission សម្រាប់ /me និងភ្ជាប់ organizationId ជាមួយ organization module
-- [x] `src/modules/organization/` — membership check, field name, requirePermission, update allow-list, ហាម role owner តាម addMember/updateMemberRole ធ្វើរួច; នៅសល់៖ ឈ្មោះ role មិនដូច RBAC, admin អាចប្តូរ/ដក owner
+- [x] `src/modules/organization/` — membership check, field name, requirePermission, update allow-list, ឈ្មោះ role ដូច RBAC, OrgAdmin ប៉ះ Owner មិនបាន ធ្វើរួច
 - [x] `src/modules/safety/` — org-scoping (rules + logs + statistics), field name, requirePermission, updateRule allow-list ធ្វើរួច
 - [x] `src/modules/communication/gateway/` — org-scoping, field name, requirePermission, update/create field allow-list ធ្វើរួច
 - [x] `src/modules/communication/protocol/` — registry ជា global (មិនមាន org); create/update field allow-list, write ត្រូវការ SuperAdmin ឡើង ធ្វើរួច

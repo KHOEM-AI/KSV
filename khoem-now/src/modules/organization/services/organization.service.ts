@@ -15,8 +15,8 @@ import type {
   MemberResponseDto,
 } from '../dto/organization.dto';
 
-const MANAGE_ROLES: OrgRole[] = ['owner', 'admin'];
-const OWNER_ONLY: OrgRole[] = ['owner'];
+const MANAGE_ROLES: OrgRole[] = ['Owner', 'OrgAdmin'];
+const OWNER_ONLY: OrgRole[] = ['Owner'];
 
 export class OrganizationService {
   private toResponse(org: any): OrganizationResponseDto {
@@ -53,6 +53,19 @@ export class OrganizationService {
     return org;
   }
 
+  // OrgAdmin មិនអាចប្តូរ ឬដក Owner បាន — មានតែ Owner ប៉ុណ្ណោះ
+  private assertCanTouchOwner(
+    org: any,
+    callerId: string,
+    targetUserId: string
+  ) {
+    const caller = org.members.find((m: any) => m.userId === callerId);
+    const target = org.members.find((m: any) => m.userId === targetUserId);
+    if (target?.role === 'Owner' && caller?.role !== 'Owner') {
+      throw new Error('Forbidden');
+    }
+  }
+
   async create(
     ownerUserId: string,
     dto: CreateOrganizationDto
@@ -70,7 +83,7 @@ export class OrganizationService {
       ownerUserId,
       plan: dto.plan || 'free',
       members: [
-        { userId: ownerUserId, role: 'owner', joinedAt: new Date() },
+        { userId: ownerUserId, role: 'Owner', joinedAt: new Date() },
       ],
     });
 
@@ -116,7 +129,7 @@ export class OrganizationService {
     dto: AddMemberDto
   ): Promise<MemberResponseDto[]> {
     await this.requireMember(orgId, callerId, MANAGE_ROLES);
-    if (dto.role === 'owner') throw new Error('Forbidden');
+    if (dto.role === 'Owner') throw new Error('Forbidden');
     const org = await organizationRepository.addMember(orgId, {
       userId: dto.userId,
       role: dto.role,
@@ -134,7 +147,8 @@ export class OrganizationService {
     callerId: string,
     userId: string
   ): Promise<void> {
-    await this.requireMember(orgId, callerId, MANAGE_ROLES);
+    const current = await this.requireMember(orgId, callerId, MANAGE_ROLES);
+    this.assertCanTouchOwner(current, callerId, userId);
     const org = await organizationRepository.removeMember(orgId, userId);
     if (!org) throw new Error('Organization or member not found');
   }
@@ -145,8 +159,9 @@ export class OrganizationService {
     userId: string,
     dto: UpdateMemberRoleDto
   ): Promise<MemberResponseDto[]> {
-    await this.requireMember(orgId, callerId, MANAGE_ROLES);
-    if (dto.role === 'owner') throw new Error('Forbidden');
+    const current = await this.requireMember(orgId, callerId, MANAGE_ROLES);
+    if (dto.role === 'Owner') throw new Error('Forbidden');
+    this.assertCanTouchOwner(current, callerId, userId);
     const org = await organizationRepository.updateMemberRole(
       orgId,
       userId,
