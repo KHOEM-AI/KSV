@@ -304,39 +304,6 @@ async function main() {
       }
 
       try {
-        // KSV-ESTOP-GUARD: refuse commands while an emergency stop is active (fail closed)
-        {
-          const stopFilter: Record<string, unknown> = {
-            organizationId: user.organizationId,
-            releasedAt: { $exists: false },
-          };
-          stopFilter.$or = mongoose.isValidObjectId(deviceId)
-            ? [{ scope: "organization" }, { deviceId }]
-            : [{ scope: "organization" }];
-          const activeStop = await EmergencyStop.findOne(stopFilter).lean();
-          if (activeStop) {
-            const stoppedCommand = await Command.create({
-              deviceId,
-              userId: user.id,
-              type: commandType,
-              payload,
-              status: "blocked",
-              response: { reason: "Emergency stop active: " + activeStop.reason, ruleName: "EMERGENCY_STOP" },
-              sentAt: new Date(),
-              completedAt: new Date(),
-            });
-            await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId), {
-              reason: "Emergency stop active",
-            });
-            res.status(423).json({
-              error: "EMERGENCY_STOP_ACTIVE",
-              message: "Emergency stop is active. Commands are blocked.",
-              commandId: stoppedCommand._id,
-            });
-            return;
-          }
-        }
-
         const safetyResult = await evaluateSafetyForDevice(
           deviceId,
           user.organizationId,

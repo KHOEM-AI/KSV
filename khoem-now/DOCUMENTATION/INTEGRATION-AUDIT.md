@@ -24,3 +24,12 @@
 - Still missing in auth: MFA (enroll/confirm/verify/disable/challenge/methods), login/oauth.
 - SECURITY TODO: MQTT uses public broker test.mosquitto.org -> move to private broker + auth + TLS.
 - Backup: archive/backup-20260920/server-before-auth.ts
+
+## Update 2026-09-20 (safety routes)
+- Added (block KSV-SAFETY-ROUTES in src/server.ts): POST/GET/PUT/DELETE /api/safety/rules[/:ruleId], POST /api/safety/rules/:ruleId/enable|disable, GET /api/safety/events/:eventId, GET/POST /api/safety/emergency-stop, POST /api/safety/emergency-stop/release (Manager+).
+- Guard KSV-ESTOP-GUARD in the device command route: active emergency stop => 423 EMERGENCY_STOP_ACTIVE, Command saved as blocked, audit BLOCKED.
+- Verified end-to-end on test device (DEV-5004): activate 201, command 423, duplicate 409, release 200, active stops 0.
+- Only one dispatch path exists (gatewayDispatcher.dispatch in the command route); no other publish() in core/ or infrastructure/.
+- Rule schema is minimal (name, category, severity, isEnabled, triggerCount); contract fields (conditions/actions/description) are NOT persisted yet.
+- Not yet implemented: POST /safety/check, /safety/devices, /safety/devices/:deviceId.
+- Still open: AI interpret/confirm path must be checked to ensure it goes through the command route guard; MFA, pairing, automation routes; MQTT on public broker test.mosquitto.org.
