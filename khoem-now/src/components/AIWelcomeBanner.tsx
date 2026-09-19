@@ -1,12 +1,16 @@
-import React, { useState, useMemo } from "react";
-import { X, Pause, Play, Send } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Pause, Play, Send, X } from "lucide-react";
 import { interpretIntent } from "../core/ai/khoem-ai-brain";
 import { guardRespectfulResponse } from "../core/ai/khoem-ai-conduct";
 
+type SupportedLanguage = "en" | "zh" | "km";
+type MessageRole = "user" | "ai";
+
 interface Message {
   id: string;
-  role: "user" | "ai";
+  role: MessageRole;
   text: string;
+  language: SupportedLanguage;
 }
 
 interface AIWelcomeBannerProps {
@@ -15,10 +19,110 @@ interface AIWelcomeBannerProps {
   onOpen?: () => void;
 }
 
-const GREETING_TEXT =
-  "Hello, dear valued customer. Welcome to our platform. If you have any questions, I can help explain in English. • 您好， 尊贵的客户。欢迎使用我们的平台。如果您有任何问题，我很乐意为您解答。 • ";
+interface LocalizedCopy {
+  name: string;
+  greeting: string;
+  question: string;
+  unknown: string;
+  placeholder: string;
+  send: string;
+  pause: string;
+  resume: string;
+  close: string;
+  title: string;
+}
 
-const STAR_COLORS = ["#67e8f9", "#c084fc", "#f472b6", "#fbbf24", "#34d399", "#ffffff", "#60a5fa"];
+const COPY: Record<SupportedLanguage, LocalizedCopy> = {
+  en: {
+    name: "English",
+    greeting:
+      "Hello. I am KHOEM-AI. I can help explain your system, devices, status, and safe actions.",
+    question:
+      "Sure. Ask me directly. I will explain what is verified and clearly disclose what is not verified.",
+    unknown:
+      "I do not understand that request yet. Try asking about a device, system status, safety, or an action.",
+    placeholder: "Ask KHOEM-AI anything...",
+    send: "Send message",
+    pause: "Pause animation",
+    resume: "Resume animation",
+    close: "Close KHOEM-AI",
+    title: "KHOEM-AI assistant",
+  },
+  zh: {
+    name: "中文",
+    greeting:
+      "您好。我是 KHOEM-AI。我可以帮助您了解系统、设备、状态以及安全操作。",
+    question:
+      "可以。您可以直接提问。我会说明哪些信息已经验证，并清楚说明哪些信息尚未验证。",
+    unknown:
+      "我暂时还无法理解这个请求。您可以询问设备、系统状态、安全或想执行的操作。",
+    placeholder: "请向 KHOEM-AI 提问...",
+    send: "发送消息",
+    pause: "暂停动画",
+    resume: "继续动画",
+    close: "关闭 KHOEM-AI",
+    title: "KHOEM-AI 助手",
+  },
+  km: {
+    name: "ខ្មែរ",
+    greeting:
+      "សួស្តីបង។ ខ្ញុំជា KHOEM-AI។ ខ្ញុំអាចជួយពន្យល់អំពីប្រព័ន្ធ ឧបករណ៍ ស្ថានភាព និងសកម្មភាពដែលមានសុវត្ថិភាព។",
+    question:
+      "បានបង។ បងអាចសួរខ្ញុំដោយផ្ទាល់បាន។ ខ្ញុំនឹងប្រាប់ថាព័ត៌មានណាត្រូវបានផ្ទៀងផ្ទាត់ ហើយបញ្ជាក់ឱ្យច្បាស់នៅពេលព័ត៌មានណាមិនទាន់បានផ្ទៀងផ្ទាត់។",
+    unknown:
+      "សុំទោសបង ខ្ញុំមិនទាន់យល់សំណួរនេះទេ។ បងអាចសួរអំពីឧបករណ៍ ស្ថានភាពប្រព័ន្ធ សុវត្ថិភាព ឬសកម្មភាពដែលបងចង់ធ្វើ។",
+    placeholder: "សួរ KHOEM-AI បានគ្រប់សំណួរ...",
+    send: "ផ្ញើសារ",
+    pause: "ផ្អាកចលនា",
+    resume: "បន្តចលនា",
+    close: "បិទ KHOEM-AI",
+    title: "ជំនួយការ KHOEM-AI",
+  },
+};
+
+const GREETING_TEXT = [
+  "Hello. Welcome to KHOEM-AI.",
+  "您好，欢迎使用 KHOEM-AI。",
+  "សួស្តីបង។ សូមស្វាគមន៍មកកាន់ KHOEM-AI។",
+].join("  •  ");
+
+const STAR_COLORS = [
+  "#67e8f9",
+  "#c084fc",
+  "#f472b6",
+  "#fbbf24",
+  "#34d399",
+  "#ffffff",
+  "#60a5fa",
+];
+
+function detectLanguage(text: string): SupportedLanguage {
+  if (/[ក-៿]/.test(text)) {
+    return "km";
+  }
+
+  if (/[㐀-䶿一-鿿]/.test(text)) {
+    return "zh";
+  }
+
+  return "en";
+}
+
+function getIntentText(language: SupportedLanguage, intent: string): string {
+  if (intent === "greeting") {
+    return COPY[language].greeting;
+  }
+
+  if (intent === "question" || intent === "status_request") {
+    return COPY[language].question;
+  }
+
+  return COPY[language].unknown;
+}
+
+function makeMessageId(): string {
+  return Date.now().toString() + "-" + Math.random().toString(36).slice(2);
+}
 
 export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps) {
   const [paused, setPaused] = useState(false);
@@ -26,95 +130,126 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
   const [messages, setMessages] = useState<Message[]>([]);
 
   const stars = useMemo(() => {
-    const COLS = 8;
-    const ROWS = 20;
-    const result = [];
+    const columns = 8;
+    const rows = 20;
+    const result: Array<{
+      id: number;
+      left: number;
+      top: number;
+      size: number;
+      color: string;
+      delay: number;
+      duration: number;
+    }> = [];
+
     let id = 0;
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const cellW = 100 / COLS;
-        const cellH = 100 / ROWS;
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let column = 0; column < columns; column += 1) {
+        const cellWidth = 100 / columns;
+        const cellHeight = 100 / rows;
+
         result.push({
-          id: id++,
-          left: c * cellW + Math.random() * cellW,
-          top: r * cellH + Math.random() * cellH,
+          id,
+          left: column * cellWidth + Math.random() * cellWidth,
+          top: row * cellHeight + Math.random() * cellHeight,
           size: 1 + Math.random() * 2.5,
           color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
           delay: Math.random() * 4,
           duration: 2 + Math.random() * 3,
         });
+
+        id += 1;
       }
     }
+
     return result;
   }, []);
 
   function handleSend() {
     const text = input.trim();
-    if (!text) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: "user", text };
+    if (!text) {
+      return;
+    }
 
-    const looksEnglish = /[A-Za-z]/.test(text) && !/[\u1780-\u17FF]/.test(text);
-    const result = interpretIntent({ text });
-
-    const aiMessage: Message = {
-      id: `${userMessage.id}-ai`,
-      role: "ai",
-      text:
-        guardRespectfulResponse(text, !looksEnglish ? "km" : "en") ??
-        (result.intent === "greeting"
-          ? !looksEnglish
-            ? "សួស្តីបង! ខ្ញុំជា KHOEM-AI។ ខ្ញុំអាចជួយពន្យល់ស្ថានភាព និងសំណួររបស់បងបាន។"
-            : "Hello! I'm KHOEM-AI. I can help explain your system and answer your questions."
-          : result.intent === "question"
-            ? !looksEnglish
-              ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
-              : "Sure. Ask me directly and I'll try to understand and answer within what KHOEM-AI can do."
-            : !looksEnglish
-              ? "សុំទោសបង ខ្ញុំមិនទាន់យល់សំណួរនេះនៅឡើយទេ។ សូមសាកសួរអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើ។"
-              : "Sorry, I didn't understand that yet. Try asking about devices, status, or an action you want to do."),
+    const language = detectLanguage(text);
+    const userMessage: Message = {
+      id: makeMessageId(),
+      role: "user",
+      text,
+      language,
     };
 
-    setMessages((prev) => [...prev, userMessage, aiMessage]);
+    let intent = "unknown";
+
+    try {
+      const result = interpretIntent({ text });
+      intent = typeof result?.intent === "string" ? result.intent : "unknown";
+    } catch {
+      intent = "unknown";
+    }
+
+    const respectfulResponse = guardRespectfulResponse(text, language);
+    const responseText = respectfulResponse || getIntentText(language, intent);
+
+    const aiMessage: Message = {
+      id: makeMessageId(),
+      role: "ai",
+      text: responseText,
+      language,
+    };
+
+    setMessages((previous) => [...previous, userMessage, aiMessage]);
     setInput("");
   }
 
-  // Two layouts: CLOSED = small idle panel on the right (always visible, shows stars).
-  // OPEN = full-screen overlay covering the entire dashboard.
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    handleSend();
+  }
+
   const containerClass = open
-    ? "fixed inset-0 h-full w-full bg-slate-950 z-50 flex flex-col overflow-hidden"
-    : "fixed top-[112px] sm:top-16 bottom-0 right-0 w-[360px] max-w-[360px] bg-slate-950 border-l border-slate-800 z-30 flex flex-col overflow-hidden cursor-pointer";
+    ? "fixed inset-0 z-50 flex h-full w-full flex-col overflow-hidden bg-slate-950"
+    : "fixed bottom-0 right-0 top-[112px] z-30 flex w-[360px] max-w-[360px] cursor-pointer flex-col overflow-hidden border-l border-slate-800 bg-slate-950 sm:top-16";
 
   return (
-    <aside className={containerClass} onClick={!open ? onOpen : undefined}>
-      {/* Background layer: starfield fills the WHOLE panel, always rendered */}
-      <div className={`star-field ${paused ? "paused" : ""}`}>
-        {stars.map((s) => (
+    <aside
+      className={containerClass}
+      onClick={!open ? onOpen : undefined}
+      aria-label={COPY.en.title}
+    >
+      <div className={["star-field", paused ? "paused" : ""].join(" ")} aria-hidden="true">
+        {stars.map((star) => (
           <span
-            key={s.id}
+            key={star.id}
             className="star"
             style={{
-              left: s.left + "%",
-              top: s.top + "%",
-              width: s.size + "px",
-              height: s.size + "px",
-              background: s.color,
-              boxShadow: `0 0 ${s.size * 2}px ${s.color}`,
-              animationDelay: s.delay + "s",
-              animationDuration: s.duration + "s",
+              left: star.left + "%",
+              top: star.top + "%",
+              width: star.size + "px",
+              height: star.size + "px",
+              background: star.color,
+              boxShadow: "0 0 " + star.size * 2 + "px " + star.color,
+              animationDelay: star.delay + "s",
+              animationDuration: star.duration + "s",
             }}
           />
         ))}
       </div>
 
-      {/* Background layer: scrolling vertical text, always rendered */}
-      <div className="absolute inset-0 flex items-start justify-end pr-2 sm:pr-6 overflow-hidden pointer-events-none">
-        <div className={`welcome-scroll-track relative z-10 ${paused ? "paused" : ""}`}>
+      <div
+        className="pointer-events-none absolute inset-0 flex items-start justify-end overflow-hidden pr-2 sm:pr-6"
+        aria-hidden="true"
+      >
+        <div
+          className={["welcome-scroll-track", "relative z-10", paused ? "paused" : ""].join(" ")}
+        >
           {[0, 1].map((copy) => (
             <span
               key={copy}
-              className="welcome-vertical-text block text-base sm:text-2xl font-light tracking-wide text-cyan-300/90"
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              className="welcome-vertical-text block text-base font-light tracking-wide text-cyan-300/90 sm:text-2xl"
+              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
             >
               {GREETING_TEXT}
             </span>
@@ -122,63 +257,81 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
         </div>
       </div>
 
-      {/* Foreground UI: only rendered when open */}
       {open && (
-        <div className="relative z-10 flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-sm px-4 py-3 shrink-0">
-            <span className="text-sm font-semibold text-white">KHOEM-AI</span>
+        <div className="relative z-10 flex h-full flex-col" onClick={(event) => event.stopPropagation()}>
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-800/60 bg-slate-950/40 px-4 py-3 backdrop-blur-sm">
+            <div>
+              <span className="text-sm font-semibold text-white">KHOEM-AI</span>
+              <p className="mt-0.5 text-xs text-slate-400">English • 中文 • ខ្មែរ</p>
+            </div>
+
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setPaused((p) => !p)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/80 text-white hover:bg-sky-400 transition-colors"
-                aria-label={paused ? "Resume animation" : "Pause animation"}
+                type="button"
+                onClick={() => setPaused((value) => !value)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/80 text-white transition-colors hover:bg-sky-400"
+                aria-label={paused ? COPY.en.resume : COPY.en.pause}
+                title={paused ? COPY.en.resume : COPY.en.pause}
               >
                 {paused ? <Play size={12} /> : <Pause size={12} />}
               </button>
+
               <button
+                type="button"
                 onClick={onClose}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/80 text-white hover:bg-sky-400 transition-colors"
-                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/80 text-white transition-colors hover:bg-sky-400"
+                aria-label={COPY.en.close}
+                title={COPY.en.close}
               >
                 <X size={14} />
               </button>
             </div>
           </div>
 
-          {/* Chat stream */}
-          <div className="flex-1 overflow-y-auto p-4 pr-10 sm:pr-16">
+          <div
+            className="flex-1 overflow-y-auto p-4 pr-10 sm:pr-16"
+            aria-live="polite"
+            aria-label="KHOEM-AI conversation"
+          >
             <div className="flex flex-col gap-3">
-              {messages.map((m) => (
+              {messages.map((message) => (
                 <div
-                  key={m.id}
-                  className={`rounded-xl px-4 py-2 text-sm max-w-[85%] w-fit ${
-                    m.role === "user" ? "ml-auto bg-sky-500 text-white" : "bg-sky-500/40 text-sky-50 border border-sky-500/50"
-                  }`}
+                  key={message.id}
+                  className={[
+                    "w-fit max-w-[85%] rounded-xl px-4 py-2 text-sm",
+                    message.role === "user"
+                      ? "ml-auto bg-sky-500 text-white"
+                      : "border border-sky-500/50 bg-sky-500/40 text-sky-50",
+                  ].join(" ")}
+                  lang={message.language}
                 >
-                  {m.text.length > 240 ? `${m.text.slice(0, 240)}…` : m.text}
+                  {message.text.length > 500 ? message.text.slice(0, 500) + "..." : message.text}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Input */}
-          <div className="border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm p-3 shrink-0">
-            <div className="flex items-center gap-2">
+          <div className="shrink-0 border-t border-slate-800/60 bg-slate-950/40 p-3 backdrop-blur-sm">
+            <form className="flex items-center gap-2" onSubmit={handleSubmit}>
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Hi! Feel free to ask me anything..."
+                maxLength={2000}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder={COPY[detectLanguage(input)].placeholder}
+                aria-label={COPY[detectLanguage(input)].placeholder}
                 className="flex-1 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-4 text-base text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
               />
+
               <button
-                onClick={handleSend}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white transition-colors hover:bg-brand-600 shrink-0"
+                type="submit"
+                disabled={!input.trim()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={COPY[detectLanguage(input)].send}
+                title={COPY[detectLanguage(input)].send}
               >
                 <Send size={15} />
               </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
