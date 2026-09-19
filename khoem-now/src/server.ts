@@ -28,6 +28,7 @@ import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { GLOBAL_195_VOCABULARY_30K as GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary.ts";
+import { guardRespectfulResponse } from "./core/ai/khoem-ai-conduct.ts";
 
 function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -2657,7 +2658,7 @@ async function resolveAIDevice(
             ? intentResult.confidence
             : Math.min(intentResult.confidence, 0.2),
           intent: intentResult.intent,
-          assistantMessage,
+          assistantMessage: guardRespectfulResponse(naturalLanguageInput, /[\u1780-\u17FF]/.test(naturalLanguageInput) ? "km" : "en") ?? assistantMessage,
           structuredCommand: commandReady
             ? {
                 deviceId: String(resolvedDeviceData!._id),
