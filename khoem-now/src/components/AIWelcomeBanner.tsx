@@ -54,22 +54,23 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
 
     const userMessage: Message = { id: Date.now().toString(), role: "user", text };
 
+    const looksEnglish = /[A-Za-z]/.test(text) && !/[\u1780-\u17FF]/.test(text);
     const result = interpretIntent({ text });
 
     const aiMessage: Message = {
       id: `${userMessage.id}-ai`,
       role: "ai",
       text:
-        guardRespectfulResponse(text, /[\u1780-\u17FF]/.test(text) ? "km" : "en") ??
+        guardRespectfulResponse(text, !looksEnglish ? "km" : "en") ??
         (result.intent === "greeting"
-          ? /[\u1780-\u17FF]/.test(text)
+          ? !looksEnglish
             ? "សួស្តីបង! ខ្ញុំជា KHOEM-AI។ ខ្ញុំអាចជួយពន្យល់ស្ថានភាព និងសំណួររបស់បងបាន។"
             : "Hello! I'm KHOEM-AI. I can help explain your system and answer your questions."
           : result.intent === "question"
-            ? /[\u1780-\u17FF]/.test(text)
+            ? !looksEnglish
               ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
               : "Sure. Ask me directly and I'll try to understand and answer within what KHOEM-AI can do."
-            : /[\u1780-\u17FF]/.test(text)
+            : !looksEnglish
               ? "សុំទោសបង ខ្ញុំមិនទាន់យល់សំណួរនេះនៅឡើយទេ។ សូមសាកសួរអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើ។"
               : "Sorry, I didn't understand that yet. Try asking about devices, status, or an action you want to do."),
     };
