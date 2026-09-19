@@ -29,7 +29,7 @@ export class IdentityController {
 
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user!.id;
       const result = await identityService.getProfile(userId);
       res.json(result);
     } catch (err) {
@@ -39,7 +39,7 @@ export class IdentityController {
 
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user!.id;
       const result = await identityService.updateProfile(userId, req.body);
       res.json(result);
     } catch (err) {
@@ -49,7 +49,7 @@ export class IdentityController {
 
   async deleteAccount(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user!.id;
       await identityService.deleteAccount(userId);
       res.status(204).send();
     } catch (err) {
