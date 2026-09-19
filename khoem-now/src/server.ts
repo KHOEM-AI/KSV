@@ -419,6 +419,166 @@ async function main() {
   );
 
 
+  // ===== KSV-AUTH-SESSIONS (added 2026-09-20) =====
+  function authSignAccess(user: { _id: unknown; role: string; organizationId?: unknown }): string {
+    return jwt.sign(
+      {
+        sub: String(user._id),
+        role: user.role,
+        organizationId: user.organizationId ? String(user.organizationId) : undefined,
+      },
+      process.env.JWT_ACCESS_SECRET as string,
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m") as jwt.SignOptions["expiresIn"] }
+    );
+  }
+
+  function authSessionView(s: any, mfaVerified: boolean) {
+    return {
+      sessionId: String(s._id),
+      accountId: String(s.userId),
+      ipAddress: s.ip,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt ? new Date(s.createdAt).toISOString() : undefined,
+      expiresAt: new Date(s.expiresAt).toISOString(),
+      lastActivityAt: s.createdAt ? new Date(s.createdAt).toISOString() : undefined,
+      status: "active",
+      mfaVerified,
+      loginMethod: "password",
+    };
+  }
+
+  // POST /api/auth/token/refresh (rotating refresh token + reuse detection)
+  app.post("/api/auth/token/refresh", authRateLimiter, async (req, res) => {
+    try {
+      const { refreshToken } = req.body ?? {};
+      if (!refreshToken || typeof refreshToken !== "string") {
+        res.status(400).json({ result: "failed", message: "refreshToken is required." });
+        return;
+      }
+      let sub: string;
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string);
+        if (typeof decoded === "string" || decoded.type !== "refresh" || !decoded.sub) {
+          throw new Error("bad token");
+        }
+        sub = String(decoded.sub);
+      } catch {
+        res.status(401).json({ result: "failed", message: "Invalid or expired refresh token." });
+        return;
+      }
+      const session = await Session.findOne({ refreshToken: hashRefreshToken(refreshToken) });
+      if (!session || session.revokedAt) {
+        await Session.updateMany({ userId: sub, revokedAt: null }, { revokedAt: new Date() });
+        res.status(401).json({ result: "failed", message: "Refresh token is no longer valid. Please log in again." });
+        return;
+      }
+      const nowMs = Date.now();
+      if (session.expiresAt.getTime() <= nowMs) {
+        res.status(401).json({ result: "failed", message: "Session expired. Please log in again." });
+        return;
+      }
+      const user = await User.findById(session.userId);
+      if (!user || !user.isActive) {
+        session.revokedAt = new Date();
+        await session.save();
+        res.status(401).json({ result: "failed", message: "Account is not active." });
+        return;
+      }
+      const secondsLeft = Math.max(1, Math.floor((session.expiresAt.getTime() - nowMs) / 1000));
+      const newRefresh = jwt.sign(
+        { sub: String(user._id), type: "refresh", jti: crypto.randomUUID() },
+        process.env.JWT_REFRESH_SECRET as string,
+        { expiresIn: secondsLeft }
+      );
+      session.refreshToken = hashRefreshToken(newRefresh);
+      session.ip = req.ip;
+      session.userAgent = req.headers["user-agent"];
+      await session.save();
+      res.json({
+        result: "success",
+        session: authSessionView(session, !user.mfaEnabled),
+        token: {
+          accessToken: authSignAccess(user),
+          refreshToken: newRefresh,
+          expiresIn: 15 * 60,
+          tokenType: "Bearer",
+        },
+      });
+    } catch (err) {
+      console.error("[AUTH] Refresh failed:", err);
+      res.status(500).json({ result: "failed", message: "Token refresh failed due to a server error." });
+    }
+  });
+
+  // POST /api/auth/logout  body: { sessionId? | refreshToken? | allSessions? }
+  app.post("/api/auth/logout", authenticate, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { sessionId, allSessions, refreshToken } = req.body ?? {};
+      const now = new Date();
+      let revoked = 0;
+      if (allSessions === true) {
+        const r = await Session.updateMany({ userId, revokedAt: null }, { revokedAt: now });
+        revoked = r.modifiedCount;
+      } else if (typeof sessionId === "string" && mongoose.isValidObjectId(sessionId)) {
+        const r = await Session.updateOne({ _id: sessionId, userId, revokedAt: null }, { revokedAt: now });
+        revoked = r.modifiedCount;
+      } else if (typeof refreshToken === "string") {
+        const r = await Session.updateOne(
+          { refreshToken: hashRefreshToken(refreshToken), userId, revokedAt: null },
+          { revokedAt: now }
+        );
+        revoked = r.modifiedCount;
+      } else {
+        res.status(400).json({ result: "failed", message: "Provide sessionId, refreshToken, or allSessions=true." });
+        return;
+      }
+      res.json({ success: true, result: "success", sessionsRevoked: revoked, message: "Logged out." });
+    } catch (err) {
+      console.error("[AUTH] Logout failed:", err);
+      res.status(500).json({ result: "failed", message: "Logout failed due to a server error." });
+    }
+  });
+
+  // GET /api/auth/sessions
+  app.get("/api/auth/sessions", authenticate, async (req, res) => {
+    try {
+      const sessions = await Session.find({
+        userId: req.user!.id,
+        revokedAt: null,
+        expiresAt: { $gt: new Date() },
+      }).sort({ createdAt: -1 });
+      res.json({ sessions: sessions.map((s: any) => authSessionView(s, true)) });
+    } catch (err) {
+      console.error("[AUTH] List sessions failed:", err);
+      res.status(500).json({ error: "SERVER_ERROR", message: "Could not list sessions." });
+    }
+  });
+
+  // DELETE /api/auth/sessions/:sessionId
+  app.delete("/api/auth/sessions/:sessionId", authenticate, async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      if (!mongoose.isValidObjectId(sessionId)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "Invalid sessionId." });
+        return;
+      }
+      const r = await Session.updateOne(
+        { _id: sessionId, userId: req.user!.id, revokedAt: null },
+        { revokedAt: new Date() }
+      );
+      if (r.modifiedCount === 0) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+        return;
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[AUTH] Revoke session failed:", err);
+      res.status(500).json({ error: "SERVER_ERROR", message: "Could not revoke session." });
+    }
+  });
+  // ===== END KSV-AUTH-SESSIONS =====
+
   // POST /api/auth/password/change
   app.post("/api/auth/password/change", authenticate, async (req, res) => {
     try {
@@ -1569,10 +1729,10 @@ async function main() {
   );
 
 
-  // GET /api/v1/gateways — organization-scoped Gateway list
-  // POST /api/v1/gateways - Register new gateway & issue provisioning token
+  // GET /api/gateways — organization-scoped Gateway list
+  // POST /api/gateways - Register new gateway & issue provisioning token
   app.post(
-    "/api/v1/gateways",
+    "/api/gateways",
     authenticate,
     requirePermission("org:manage"),
     async (req, res) => {
@@ -1781,7 +1941,7 @@ async function main() {
   );
 
 app.get(
-    "/api/v1/gateways",
+    "/api/gateways",
     authenticate,
     requirePermission("org:read"),
     async (req, res) => {
@@ -1814,9 +1974,9 @@ app.get(
     }
   );
 
-  // GET /api/v1/gateways/:gatewayId — organization-scoped Gateway detail
+  // GET /api/gateways/:gatewayId — organization-scoped Gateway detail
   app.get(
-    "/api/v1/gateways/:gatewayId",
+    "/api/gateways/:gatewayId",
     authenticate,
     requirePermission("org:read"),
     async (req, res) => {
@@ -2593,13 +2753,13 @@ async function resolveAIDevice(
   };
 }
 
-// POST /api/v1/ai/interpret — AI Orchestration (MOCK)
+// POST /api/ai/interpret — AI Orchestration (MOCK)
   // NOTE: no AI provider API key is configured yet. This uses a simple
   // keyword-matching stub so the pipeline (auth -> session -> audit) can
   // be built and tested now, and swapped for a real model call later
   // without changing the route contract.
   app.post(
-    "/api/v1/ai/interpret",
+    "/api/ai/interpret",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
@@ -2704,9 +2864,9 @@ async function resolveAIDevice(
   );
 
 
-  // GET /api/v1/ai/sessions/:id — fetch one AI conversation session
+  // GET /api/ai/sessions/:id — fetch one AI conversation session
   app.get(
-    "/api/v1/ai/sessions/:id",
+    "/api/ai/sessions/:id",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
@@ -2727,9 +2887,9 @@ async function resolveAIDevice(
     }
   );
 
-  // DELETE /api/v1/ai/sessions/:id — delete a session (privacy)
+  // DELETE /api/ai/sessions/:id — delete a session (privacy)
   app.delete(
-    "/api/v1/ai/sessions/:id",
+    "/api/ai/sessions/:id",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
@@ -2751,11 +2911,11 @@ async function resolveAIDevice(
   );
 
 
-  // POST /api/v1/ai/interpret/confirm — user confirms an ambiguous
+  // POST /api/ai/interpret/confirm — user confirms an ambiguous
   // AI interpretation by picking one of the ambiguityOptions returned
-  // from /api/v1/ai/interpret.
+  // from /api/ai/interpret.
   app.post(
-    "/api/v1/ai/interpret/confirm",
+    "/api/ai/interpret/confirm",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
@@ -2797,12 +2957,12 @@ async function resolveAIDevice(
   );
 
 
-  // GET /api/v1/ai/models — list AI model profiles the org may use
+  // GET /api/ai/models — list AI model profiles the org may use
   // NOTE: static list for now (no AIModelProfile DB table yet — no real
   // provider is configured). Only "internal" (the mock interpreter) is
   // enabled. Swap for a DB-backed list once Anthropic/OpenAI keys exist.
   app.get(
-    "/api/v1/ai/models",
+    "/api/ai/models",
     authenticate,
     requirePermission("device:read"),
     async (_req, res) => {
@@ -2834,12 +2994,12 @@ async function resolveAIDevice(
   );
 
 
-  // POST /api/v1/ai/models/:id/enable — Admin: toggle a model's enabled flag
+  // POST /api/ai/models/:id/enable — Admin: toggle a model's enabled flag
   // NOTE: models are a static in-memory list for now (no AIModelProfile DB
   // table — no real provider configured yet). "internal-mock-v1" cannot be
   // disabled since it is the only working interpreter right now.
   app.post(
-    "/api/v1/ai/models/:id/enable",
+    "/api/ai/models/:id/enable",
     authenticate,
     requireMinRole("OrgAdmin"),
     async (req, res) => {
@@ -3054,11 +3214,11 @@ async function resolveAIDevice(
     }
   );
 
-  // GET /api/v1/ai/usage — AI interpretation usage stats for the account
+  // GET /api/ai/usage — AI interpretation usage stats for the account
   // NOTE: derived from AIConversationSession.turns (no separate usage
   // table yet). Counts "user" turns as interpretation requests made.
   app.get(
-    "/api/v1/ai/usage",
+    "/api/ai/usage",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {
@@ -3094,11 +3254,11 @@ async function resolveAIDevice(
   );
 
 
-  // POST /api/v1/ai/feedback — user feedback on an AI interpretation result
+  // POST /api/ai/feedback — user feedback on an AI interpretation result
   // (helps track/improve accuracy over time). Stored as an AuditLog entry
   // since there is no dedicated feedback table yet.
   app.post(
-    "/api/v1/ai/feedback",
+    "/api/ai/feedback",
     authenticate,
     requirePermission("device:read"),
     async (req, res) => {

@@ -50,3 +50,8 @@ Fixed to use `updateOne(..., { upsert: true })` per device, matched by
 
 Verified: ran twice in a row, device count stayed at 20 both times
 (0 created, 20 updated on the second run — no data loss).
+
+<!-- KSV-AUDIT-2026-09-20-B -->
+### Client/Server gap (2026-09-20)
+- Client calls 227 paths; server (src/server.ts) implements 63. Prefix unified to /api.
+- Details: ../DOCUMENTATION/INTEGRATION-AUDIT.md, ../DOCUMENTATION/CLIENT_SERVER_COMPARE.md

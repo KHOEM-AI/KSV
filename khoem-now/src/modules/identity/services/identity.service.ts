@@ -5,7 +5,7 @@
  * Business Logic សម្រាប់គណនី
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { identityRepository } from '../repositories/identity.repository';
@@ -76,13 +76,13 @@ export class IdentityService {
         role: user.role || 'Viewer',
         organizationId: user.organizationId,
       },
-      JWT_SECRET,
+      JWT_SECRET as string,
       { expiresIn: JWT_EXPIRES }
     );
 
     const refreshToken = jwt.sign(
       { sub: user.userId, type: 'refresh' },
-      JWT_REFRESH_SECRET,
+      JWT_REFRESH_SECRET as string,
       { expiresIn: REFRESH_EXPIRES }
     );
 

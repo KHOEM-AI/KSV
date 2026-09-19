@@ -1,0 +1,3198 @@
+/**
+ * KSV - Backend Server Entry Point
+ * Run with: npm run server
+ */
+// MUST load dotenv before modules that read process.env.
+// other modules (connection.ts, auth.middleware.ts, rate-limiter.ts) read process.env.DATABASE_URL / JWT_ACCESS_SECRET / etc.
+// other module (connection.ts, auth.middleware.ts, rate-limiter.ts)
+// reads process.env.DATABASE_URL / JWT_ACCESS_SECRET / etc.
+import "dotenv/config";
+import { interpretIntent } from "./core/ai/khoem-ai-brain.ts";
+import express from "express";
+import cors from "cors";
+import { connectDatabase } from "./infrastructure/database/connection.ts";
+import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
+import { User, Session } from "./infrastructure/database/models.ts";
+import { authenticate } from "./core/auth/auth.middleware.ts";
+import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
+import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
+import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
+import { auditDeviceCommand } from "./core/security/audit.log.ts";
+import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
+import { startMqttClient } from "./infrastructure/mqtt/client.ts";
+import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
+import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
+import { generateSecureToken } from "./core/security/encryption.util.ts";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
+import mongoose from "mongoose";
+import { GLOBAL_195_VOCABULARY_30K as GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary.ts";
+import { guardRespectfulResponse } from "./core/ai/khoem-ai-conduct.ts";
+
+function hashRefreshToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+
+const PORT = process.env.PORT || 3000;
+const KSV_CLOUD_ENDPOINT = process.env.KSV_CLOUD_ENDPOINT;
+
+
+async function toKSVOrganization(org: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const orgId = org._id;
+  const ownerId = org.ownerId;
+  const [memberCount, siteCount, deviceCount] = await Promise.all([
+    User.countDocuments({ organizationId: orgId }),
+    Site.countDocuments({ organizationId: orgId }),
+    Device.countDocuments({ organizationId: orgId }),
+  ]);
+  const createdAt = org.createdAt instanceof Date ? org.createdAt : new Date();
+  const updatedAt = org.updatedAt instanceof Date ? org.updatedAt : new Date();
+  return {
+    orgId: String(orgId),
+    name: org.name ?? "",
+    type: "company",
+    countryCode: org.country ?? "",
+    timezone: org.timezone ?? "UTC",
+    primaryLanguage: "en",
+    ownerAccountId: String(ownerId),
+    memberCount,
+    siteCount,
+    deviceCount,
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
+    isActive: true,
+  };
+}
+
+async function toKSVSite(site: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const siteId = site._id;
+  const orgId = site.organizationId;
+  const [buildingCount, deviceCount] = await Promise.all([
+    Promise.resolve(0),
+    Device.countDocuments({ siteId }),
+  ]);
+  const createdAt = site.createdAt instanceof Date ? site.createdAt : new Date();
+  return {
+    siteId: String(siteId),
+    orgId: String(orgId),
+    name: site.name ?? "",
+    type: site.type ?? "office",
+    address: site.address ?? undefined,
+    countryCode: site.country ?? undefined,
+    timezone: site.timezone ?? undefined,
+    buildingCount,
+    deviceCount,
+    isActive: site.isActive ?? true,
+    createdAt: createdAt.toISOString(),
+  };
+}
+
+function mapUserRoleToMemberRole(role: string): string {
+  const r = (role || "").toLowerCase();
+  if (r === "owner") return "owner";
+  if (r === "orgadmin" || r === "superadmin") return "admin";
+  if (r === "manager") return "manager";
+  if (r === "operator" || r === "controller") return "operator";
+  if (r === "guest") return "guest";
+  return "viewer";
+}
+
+function toKSVOrgMember(user: Record<string, unknown>): Record<string, unknown> {
+  const memberId = user._id;
+  const firstName = (user.firstName as string) || "";
+  const lastName = (user.lastName as string) || "";
+  const email = (user.email as string) || "";
+  const displayName = `${firstName} ${lastName}`.trim() || email;
+  const createdAt = user.createdAt instanceof Date ? user.createdAt : new Date();
+  const lastLoginAt = user.lastLoginAt instanceof Date ? user.lastLoginAt : undefined;
+  return {
+    memberId: String(memberId),
+    orgId: String(user.organizationId ?? ""),
+    accountId: String(memberId),
+    displayName,
+    email: email || undefined,
+    role: mapUserRoleToMemberRole((user.role as string) || "Viewer"),
+    joinedAt: createdAt.toISOString(),
+    invitedBy: "system",
+    isActive: user.isActive ?? true,
+    lastActivityAt: lastLoginAt ? lastLoginAt.toISOString() : undefined,
+  };
+}
+
+async function toKSVBuilding(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const buildingId = b._id;
+  const siteId = b.siteId;
+  const orgId = b.organizationId;
+  const [roomCount, deviceCount] = await Promise.all([
+    Room.countDocuments({ buildingId }),
+    Device.countDocuments({ buildingId }),
+  ]);
+  const createdAt = b.createdAt instanceof Date ? b.createdAt : new Date();
+  return {
+    buildingId: String(buildingId),
+    siteId: String(siteId),
+    orgId: String(orgId),
+    name: b.name ?? "",
+    type: b.type ?? "main",
+    floorCount: b.floorCount ?? 1,
+    roomCount,
+    deviceCount,
+    isActive: b.isActive ?? true,
+    createdAt: createdAt.toISOString(),
+  };
+}
+
+async function toKSVRoom(r: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const roomId = r._id;
+  const deviceCount = await Device.countDocuments({ roomId });
+  return {
+    roomId: String(roomId),
+    buildingId: String(r.buildingId),
+    siteId: String(r.siteId),
+    orgId: String(r.organizationId),
+    name: r.name ?? "",
+    floor: r.floor ?? 0,
+    deviceCount,
+    isActive: r.isActive ?? true,
+  };
+}
+
+async function main() {
+  await connectDatabase();
+
+  const app = express();
+  const gatewayDispatcher = new DefaultGatewayDispatcher();
+  app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
+  app.use(express.json());
+
+  // GET /api/certificates — list all
+  app.get("/api/certificates", async (_req, res) => {
+    try {
+      const certs = await Certificate.find().populate("holderUserId", "firstName lastName email");
+      res.json({ certificates: certs });
+    } catch {
+      res.status(500).json({ error: "Failed to load certificates" });
+    }
+  });
+
+  // GET /api/health — lightweight health check
+  app.get("/api/vocabulary", (_req, res) => { res.json({ total: GLOBAL_195_VOCABULARY.length, data: GLOBAL_195_VOCABULARY }); });
+  app.get("/api/vocabulary/:language", (req, res) => { const filtered = GLOBAL_195_VOCABULARY.filter((entry) => entry.language === req.params.language); res.json({ language: req.params.language, total: filtered.length, data: filtered }); });
+
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // GET /api/version — server version info
+  app.get("/api/version", (_req, res) => {
+    res.json({
+      name: "KSV API",
+      version: "1.0.0",
+      node: process.version,
+      env: process.env.NODE_ENV ?? "development",
+    });
+  });
+
+  // POST /api/certificates — create one
+  app.post("/api/certificates", async (req, res) => {
+    try {
+      const cert = await Certificate.create(req.body);
+      res.status(201).json({ certificate: cert });
+    } catch {
+      res.status(400).json({ error: "Failed to create certificate" });
+    }
+  });
+
+  // POST /api/users — create one (Owner only, password hashed, no mass-assignment)
+  app.post(
+    "/api/users",
+    authenticate,
+    requireMinRole("Owner"),
+    async (req, res) => {
+      try {
+        const { email, password, role, firstName, lastName, organizationId } = req.body ?? {};
+
+        if (!email || !password || !role) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "email, password, and role are required." });
+          return;
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        const user = await User.create({ email, passwordHash, role, firstName, lastName, organizationId });
+
+        const safeUser = user.toObject();
+        delete safeUser.passwordHash;
+
+        res.status(201).json({ user: safeUser });
+      } catch (err) {
+        res.status(400).json({ error: "Failed to create user", details: String(err) });
+      }
+    }
+  );
+
+  // ============================================================
+  // POST /api/devices/:id/commands
+  //
+  // Flow (per KSV Command Engine, section 14):
+  //   Authenticate → Authorize (device:command) → Rate limit
+  //   → Safety check → Create pending command → Dispatch → Audit → Response
+  //
+  // Request body:
+  //   {
+  //     "commandType": "UNLOCK",           // required
+  //     "payload": { ... },                // optional, command-specific
+  //     "signals": { "isInsideGeoFence": true, ... } // optional, for safety engine
+  //   }
+  //
+  // The command is persisted as pending, then dispatched through the
+  // gateway/protocol layer. Success is recorded only after an actual
+  // transport/protocol acknowledgement. If no adapter/transport is
+  // configured, the dispatcher fails closed instead of reporting success.
+  // ============================================================
+  app.post(
+    "/api/devices/:id/commands",
+    authenticate,
+    requirePermission("device:command"),
+    deviceCommandRateLimiter,
+    async (req, res) => {
+      const rawDeviceId = req.params.id;
+      if (typeof rawDeviceId !== "string") {
+        res.status(400).json({ error: "INVALID_DEVICE_ID" });
+        return;
+      }
+      const deviceId = rawDeviceId;
+      const { commandType, payload, signals } = req.body ?? {};
+      const user = req.user!; // authenticate() guarantees this is set
+
+      if (!commandType || typeof commandType !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "commandType is required." });
+        return;
+      }
+
+      // KHOEM-AI Brain — rule-based request pattern check (injection
+      // signatures in the payload). Runs alongside, not instead of,
+      // rbac/rate-limiter/safety.engine. See khoem-ai-brain.ts for scope.
+      const brain = evaluateSelfDefense({ text: JSON.stringify(payload ?? {}), source: "user_input" });
+      if (brain.protected) {
+        await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId ?? ""), {
+          reason: brain.reason,
+        }, {
+          matchedSignatures: brain.riskFactors.map((f) => f.code),
+        });
+        res.status(400).json({
+          error: "REQUEST_PATTERN_BLOCKED",
+          message: "Request blocked by pattern analysis.",
+          reasons: [brain.reason],
+        });
+        return;
+      }
+
+      if (!user.organizationId) {
+        // Fail closed: a device command must be scoped to an organization.
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "Authenticated user has no organizationId — cannot evaluate safety/ownership.",
+        });
+        return;
+      }
+
+      try {
+        const safetyResult = await evaluateSafetyForDevice(
+          deviceId,
+          user.organizationId,
+          commandType,
+          { payload, signals }
+        );
+
+        if (safetyResult.decision === "BLOCKED") {
+          const blockedCommand = await Command.create({
+            deviceId,
+            userId: user.id,
+            type: commandType,
+            payload,
+            status: "blocked",
+            response: { reason: safetyResult.reason, ruleName: safetyResult.ruleName },
+            sentAt: new Date(),
+            completedAt: new Date(),
+          });
+
+          await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", String(user.organizationId), {
+            reason: safetyResult.reason,
+          });
+
+          res.status(403).json({
+            error: "SAFETY_BLOCKED",
+            message: safetyResult.reason,
+            ruleId: safetyResult.ruleId,
+            commandId: blockedCommand._id,
+          });
+          return;
+        }
+
+        // ALLOWED — create the command as pending, then dispatch it through
+        // the gateway/protocol layer. A command is successful only after
+        // the physical transport/protocol returns an acknowledgement.
+        const device = await Device.findOne({
+          _id: deviceId,
+          organizationId: user.organizationId,
+        }).lean();
+
+        if (!device) {
+          res.status(404).json({
+            error: "DEVICE_NOT_FOUND",
+            message: "Device not found.",
+          });
+          return;
+        }
+
+        const command = await Command.create({
+          deviceId,
+          userId: user.id,
+          type: commandType,
+          payload,
+          status: "pending",
+        });
+
+        const dispatchResult = await gatewayDispatcher.dispatch({
+          deviceId,
+          organizationId: String(user.organizationId),
+          commandId: String(command._id),
+          command: {
+            deviceId,
+            deviceCode: device.deviceCode,
+            deviceType: device.type,
+            commandType,
+            payload,
+          },
+        });
+
+        await applyDispatchResult(String(command._id), dispatchResult);
+
+        const updatedCommand = await Command.findById(command._id).lean();
+
+        if (dispatchResult.status === "success") {
+          await auditDeviceCommand(
+            user.id,
+            deviceId,
+            commandType,
+            "SUCCESS",
+            String(user.organizationId)
+          );
+        } else if (dispatchResult.status === "failed") {
+          await auditDeviceCommand(
+            user.id,
+            deviceId,
+            commandType,
+            "FAILURE",
+            String(user.organizationId),
+            {
+              reason: dispatchResult.message,
+              code: dispatchResult.code,
+            }
+          );
+        }
+
+        res.status(201).json({
+          commandId: String(updatedCommand?._id ?? command._id),
+          deviceId,
+          type: commandType,
+          status: updatedCommand?.status ?? "pending",
+          command: updatedCommand,
+        });
+      } catch (err) {
+        console.error("[COMMANDS] Failed to process device command:", err);
+
+        await auditDeviceCommand(user.id, deviceId, commandType, "FAILURE", String(user.organizationId), {
+          reason: "Internal error while processing command.",
+        });
+
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to process command." });
+      }
+    }
+  );
+
+
+  // POST /api/auth/password/change
+  app.post("/api/auth/password/change", authenticate, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body ?? {};
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "currentPassword and newPassword are required.",
+        });
+        return;
+      }
+
+      const userId = req.user!.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        res.status(404).json({ error: "NOT_FOUND", message: "User not found." });
+        return;
+      }
+
+      const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
+
+      if (!passwordMatches) {
+        res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Current password is incorrect.",
+        });
+        return;
+      }
+
+      user.passwordHash = await bcrypt.hash(newPassword, 12);
+      await user.save();
+
+      res.json({
+        success: true,
+        sessionRevoked: false,
+        message: "Password changed successfully.",
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: "INTERNAL_ERROR",
+        message: err instanceof Error ? err.message : "Failed to change password.",
+      });
+    }
+  });
+  // POST /api/auth/login/password
+  app.post("/api/auth/login/password", authRateLimiter, async (req, res) => {
+    try {
+      const { email, password } = req.body ?? {};
+
+      if (!email || !password) {
+        res.status(400).json({
+          result: "failed",
+          message: "email and password are required.",
+        });
+        return;
+      }
+
+      const user = await User.findOne({ email });
+
+      if (!user || !user.isActive) {
+        res.status(401).json({
+          result: "failed",
+          message: "Email or password is incorrect.",
+        });
+        return;
+      }
+
+      const passwordMatches = await bcrypt.compare(
+        password,
+        user.passwordHash
+      );
+
+      if (!passwordMatches) {
+        res.status(401).json({
+          result: "failed",
+          message: "Email or password is incorrect.",
+        });
+        return;
+      }
+
+      const now = new Date();
+
+      const accessToken = jwt.sign(
+        {
+          sub: String(user._id),
+          role: user.role,
+          organizationId: user.organizationId
+            ? String(user.organizationId)
+            : undefined,
+        },
+        process.env.JWT_ACCESS_SECRET as string,
+        {
+          expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m") as jwt.SignOptions["expiresIn"],
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          sub: String(user._id),
+          type: "refresh",
+        },
+        process.env.JWT_REFRESH_SECRET as string,
+        {
+          expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"],
+        }
+      );
+
+      const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+      const match = refreshExpiresIn.match(/^(\d+)([smhd])$/);
+
+      if (!match) {
+        throw new Error(
+          "Invalid JWT_REFRESH_EXPIRES_IN format. Use values such as 7d, 24h, 60m."
+        );
+      }
+
+      const amount = Number(match[1]);
+      const unit = match[2];
+
+      const millisecondsPerUnit: Record<string, number> = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+      };
+
+      const expiresAt = new Date(
+        now.getTime() + amount * millisecondsPerUnit[unit]
+      );
+
+      const session = await Session.create({
+        userId: user._id,
+        refreshToken: hashRefreshToken(refreshToken),
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        expiresAt,
+      });
+
+      user.lastLoginAt = now;
+      await user.save();
+
+      res.json({
+        result: "success",
+        session: {
+          sessionId: String(session._id),
+          accountId: String(user._id),
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+          createdAt: session.createdAt
+            ? new Date(session.createdAt).toISOString()
+            : now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+          lastActivityAt: now.toISOString(),
+          status: "active",
+          mfaVerified: !user.mfaEnabled,
+          loginMethod: "password",
+          countryCode: undefined,
+        },
+        token: {
+          accessToken,
+          refreshToken,
+          expiresIn: 15 * 60,
+          tokenType: "Bearer",
+        },
+        message: "Login successful.",
+      });
+    } catch (err) {
+      console.error("[AUTH] Password login failed:", err);
+
+      res.status(500).json({
+        result: "failed",
+        message: "Login failed due to a server error.",
+      });
+    }
+  });
+
+  // GET /api/settings
+  app.get(
+    "/api/settings",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      let settings = await Settings.findOne({ organizationId: user.organizationId }).lean();
+      if (!settings) {
+        settings = await Settings.create({ organizationId: user.organizationId });
+      }
+      res.json({ settings });
+    }
+  );
+
+  // PUT /api/settings
+  app.put(
+    "/api/settings",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const updated = await Settings.findOneAndUpdate(
+          { organizationId: user.organizationId },
+          { $set: req.body },
+          { new: true, upsert: true }
+        );
+        await auditDeviceCommand(user.id, "settings", "UPDATE_SETTINGS", "SUCCESS", String(user.organizationId));
+        res.json({ settings: updated });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to save settings." });
+      }
+    }
+  );
+
+
+  // GET /api/devices — list devices for the user's organization
+  app.get("/api/devices", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const devices = await Device.find({ organizationId: user.organizationId }).lean();
+      res.json({ devices, total: devices.length });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load devices." });
+    }
+  });
+
+  // GET /api/devices/:id/state — single device current state
+  app.get("/api/devices/:id/state", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const device = await Device.findOne({
+        _id: req.params.id,
+        organizationId: user.organizationId,
+      }).lean();
+      if (!device) {
+        res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+        return;
+      }
+      res.json({ device });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device state." });
+    }
+  });
+
+  // GET /api/devices/:id — single device
+  app.get(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const device = await Device.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        }).lean();
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ device });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device." });
+      }
+    }
+  );
+
+  // POST /api/devices — create device
+  app.post(
+    "/api/devices",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const { name, deviceCode, type, status, siteId, gatewayId, firmwareVersion } = req.body || {};
+        if (!name || !deviceCode || !type) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name, deviceCode and type are required." });
+          return;
+        }
+        const exists = await Device.findOne({ deviceCode }).lean();
+        if (exists) {
+          res.status(409).json({ error: "DEVICE_CODE_TAKEN" });
+          return;
+        }
+        const device = await Device.create({
+          name,
+          deviceCode,
+          type,
+          status: status ?? "offline",
+          organizationId: user.organizationId,
+          siteId,
+          gatewayId,
+          firmwareVersion,
+        });
+        res.status(201).json({ device: device.toObject() });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create device." });
+      }
+    }
+  );
+
+  // PUT /api/devices/:id — update device
+  app.put(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const { name, type, status, siteId, gatewayId, firmwareVersion } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (status) update.status = status;
+        if (siteId !== undefined) update.siteId = siteId;
+        if (gatewayId !== undefined) update.gatewayId = gatewayId;
+        if (firmwareVersion) update.firmwareVersion = firmwareVersion;
+
+        const device = await Device.findOneAndUpdate(
+          { _id: req.params.id, organizationId: user.organizationId },
+          update,
+          { new: true }
+        ).lean();
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ device });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update device." });
+      }
+    }
+  );
+
+  // DELETE /api/devices/:id — remove device
+  app.delete(
+    "/api/devices/:id",
+    authenticate,
+    requirePermission("device:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const result = await Device.findOneAndDelete({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete device." });
+      }
+    }
+  );
+
+  app.get("/api/commands/recent", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const limit = Math.min(Number(req.query.limit) || 10, 50);
+      const deviceIds = await Device.find({ organizationId: user.organizationId }).distinct("_id");
+      const commands = await Command.find({ deviceId: { $in: deviceIds } })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .populate("deviceId", "name")
+        .populate("userId", "email")
+        .lean();
+      res.json({ commands });
+    } catch (err) {
+      console.error("[COMMANDS] Failed to load recent commands:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load recent commands." });
+    }
+  });
+
+
+  // GET /api/commands/recent — latest dispatched commands across the
+  // org, for "Live Control Activity" style feeds. Joins through Device
+  // since Command has no organizationId of its own.
+  // GET /api/commands/:id — single command status for polling.
+  // Command ownership is verified through the user's organization.
+  app.get("/api/commands/:id", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+
+    try {
+      const command = await Command.findById(req.params.id).lean();
+      if (!command) {
+        res.status(404).json({ error: "COMMAND_NOT_FOUND", message: "Command not found." });
+        return;
+      }
+
+      const device = await Device.findOne({
+        _id: command.deviceId,
+        organizationId: user.organizationId,
+      }).lean();
+
+      if (!device) {
+        res.status(404).json({ error: "COMMAND_NOT_FOUND", message: "Command not found." });
+        return;
+      }
+
+      res.json(command);
+    } catch (err) {
+      console.error("[COMMANDS] Failed to load command status:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load command status." });
+    }
+  });
+
+  // GET /api/security/threats — list threat detections for the org
+
+  // POST /api/security/threats — create a threat detection (manual entry or
+  // future automated monitor). Requires org:manage since this writes security data.
+  app.post(
+    "/api/security/threats",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const { type, severity, deviceId, ipAddress, description, requiresReview } = req.body ?? {};
+      if (!type || !severity || !description) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "type, severity, and description are required.",
+        });
+        return;
+      }
+      try {
+        const threat = await ThreatDetection.create({
+          type,
+          severity,
+          deviceId,
+          ipAddress,
+          description,
+          organizationId: user.organizationId,
+          requiresReview: requiresReview ?? true,
+        });
+        res.status(201).json({ threat });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create threat." });
+      }
+    }
+  );
+
+  app.get("/api/security/threats", authenticate, requirePermission("org:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const threats = await ThreatDetection.find({ organizationId: user.organizationId })
+        .sort({ detectedAt: -1 })
+        .lean();
+      res.json({ threats, total: threats.length });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load threats." });
+    }
+  });
+
+  // GET /api/security/sessions — active sessions for the user's organization
+  app.get(
+    "/api/security/sessions",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const orgUsers = await User.find({ organizationId: user.organizationId })
+          .select("_id firstName lastName email role")
+          .lean();
+        const userIds = orgUsers.map((u) => u._id);
+        const userById = new Map(orgUsers.map((u) => [String(u._id), u]));
+
+        const sessions = await Session.find({
+          userId: { $in: userIds },
+          revokedAt: { $exists: false },
+          expiresAt: { $gt: new Date() },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
+        const result = sessions.map((sess) => {
+          const u = userById.get(String(sess.userId));
+          const firstName = (u?.firstName as string) || "";
+          const lastName = (u?.lastName as string) || "";
+          const displayName = `${firstName} ${lastName}`.trim() || (u?.email as string) || "Unknown";
+          return {
+            sessionId: String(sess._id),
+            userId: String(sess.userId),
+            user: displayName,
+            email: u?.email ?? "",
+            role: u?.role ?? "",
+            ip: sess.ip ?? "",
+            userAgent: sess.userAgent ?? "",
+            createdAt: sess.createdAt instanceof Date ? sess.createdAt.toISOString() : new Date().toISOString(),
+            expiresAt: sess.expiresAt instanceof Date ? sess.expiresAt.toISOString() : "",
+          };
+        });
+
+        res.json({ sessions: result, total: result.length });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load sessions.",
+        });
+      }
+    }
+  );
+
+  // GET /api/security/incidents — list security incidents for the org
+  app.get("/api/security/incidents", authenticate, requirePermission("org:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const incidents = await SecurityIncident.find({ organizationId: user.organizationId })
+        .sort({ detectedAt: -1 })
+        .lean();
+      res.json({ incidents, total: incidents.length });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load incidents." });
+    }
+  });
+  // GET /api/organizations — list organizations the user belongs to
+  app.get(
+    "/api/organizations",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const orgs = await Organization.find({ _id: user.organizationId }).lean();
+        const organizations = await Promise.all(orgs.map((o) => toKSVOrganization(o as Record<string, unknown>)));
+        res.json({ organizations });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organizations." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId — single organization
+  app.get(
+    "/api/organizations/:orgId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const org = await Organization.findById(req.params.orgId).lean();
+        if (!org) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVOrganization(org as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load organization." });
+      }
+    }
+  );
+
+  // POST /api/organizations — create organization
+  app.post(
+    "/api/organizations",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const { name, countryCode, timezone } = req.body || {};
+        if (!name || typeof name !== "string") {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const org = await Organization.create({
+          name,
+          ownerId: user.id,
+          country: countryCode,
+          timezone,
+        });
+        res.status(201).json(await toKSVOrganization(org.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create organization." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId — update organization
+  app.put(
+    "/api/organizations/:orgId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, countryCode, timezone } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (countryCode) update.country = countryCode;
+        if (timezone) update.timezone = timezone;
+        const org = await Organization.findByIdAndUpdate(req.params.orgId, update, { new: true }).lean();
+        if (!org) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVOrganization(org as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update organization." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId
+  app.delete(
+    "/api/organizations/:orgId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Organization.findByIdAndDelete(req.params.orgId);
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete organization." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites — list sites
+  app.get(
+    "/api/organizations/:orgId/sites",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const sites = await Site.find({ organizationId: req.params.orgId }).lean();
+        const result = await Promise.all(sites.map((x) => toKSVSite(x as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load sites." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const site = await Site.findOne({
+          _id: req.params.siteId,
+          organizationId: req.params.orgId,
+        }).lean();
+        if (!site) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVSite(site as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load site." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites
+  app.post(
+    "/api/organizations/:orgId/sites",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, address, countryCode, timezone } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const site = await Site.create({
+          organizationId: req.params.orgId,
+          name,
+          type,
+          address,
+          country: countryCode,
+          timezone,
+        });
+        res.status(201).json(await toKSVSite(site.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create site." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, address, countryCode, timezone } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (address) update.address = address;
+        if (countryCode) update.country = countryCode;
+        if (timezone) update.timezone = timezone;
+        const site = await Site.findOneAndUpdate(
+          { _id: req.params.siteId, organizationId: req.params.orgId },
+          update,
+          { new: true }
+        ).lean();
+        if (!site) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVSite(site as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update site." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Site.findOneAndDelete({
+          _id: req.params.siteId,
+          organizationId: req.params.orgId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete site." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/members — list members
+  app.get(
+    "/api/organizations/:orgId/members",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const users = await User.find({ organizationId: req.params.orgId }).lean();
+        const members = users.map((u) => toKSVOrgMember(u as Record<string, unknown>));
+        res.json(members);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load members." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/members/:memberId
+  app.get(
+    "/api/organizations/:orgId/members/:memberId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const user = await User.findOne({
+          _id: req.params.memberId,
+          organizationId: req.params.orgId,
+        }).lean();
+        if (!user) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(toKSVOrgMember(user as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load member." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/members/:memberId/role
+  app.put(
+    "/api/organizations/:orgId/members/:memberId/role",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { newRole } = req.body || {};
+        const roleMap: Record<string, string> = {
+          owner: "Owner",
+          admin: "OrgAdmin",
+          manager: "Manager",
+          operator: "Operator",
+          viewer: "Viewer",
+          guest: "Guest",
+        };
+        const mapped = roleMap[newRole];
+        if (!mapped) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Invalid newRole" });
+          return;
+        }
+        const user = await User.findOneAndUpdate(
+          { _id: req.params.memberId, organizationId: req.params.orgId },
+          { role: mapped },
+          { new: true }
+        ).lean();
+        if (!user) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(toKSVOrgMember(user as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update member role." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/members/:memberId
+  app.delete(
+    "/api/organizations/:orgId/members/:memberId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await User.findOneAndUpdate(
+          { _id: req.params.memberId, organizationId: req.params.orgId },
+          { isActive: false },
+          { new: true }
+        );
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove member." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId/buildings
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId/buildings",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const buildings = await Building.find({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+        }).lean();
+        const result = await Promise.all(buildings.map((b) => toKSVBuilding(b as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load buildings." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites/:siteId/buildings
+  app.post(
+    "/api/organizations/:orgId/sites/:siteId/buildings",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, floorCount } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const building = await Building.create({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          name,
+          type,
+          floorCount,
+        });
+        res.status(201).json(await toKSVBuilding(building.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create building." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId/buildings/:buildingId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, type, floorCount } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (type) update.type = type;
+        if (typeof floorCount === "number") update.floorCount = floorCount;
+        const building = await Building.findOneAndUpdate(
+          {
+            _id: req.params.buildingId,
+            organizationId: req.params.orgId,
+            siteId: req.params.siteId,
+          },
+          update,
+          { new: true }
+        ).lean();
+        if (!building) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVBuilding(building as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update building." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId/buildings/:buildingId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Building.findOneAndDelete({
+          _id: req.params.buildingId,
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete building." });
+      }
+    }
+  );
+
+  // GET /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms
+  app.get(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const rooms = await Room.find({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+        }).lean();
+        const result = await Promise.all(rooms.map((r) => toKSVRoom(r as Record<string, unknown>)));
+        res.json(result);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load rooms." });
+      }
+    }
+  );
+
+  // POST /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms
+  app.post(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, floor } = req.body || {};
+        if (!name) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "name is required" });
+          return;
+        }
+        const room = await Room.create({
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+          name,
+          floor,
+        });
+        res.status(201).json(await toKSVRoom(room.toObject() as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create room." });
+      }
+    }
+  );
+
+  // PUT /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId
+  app.put(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const { name, floor } = req.body || {};
+        const update: Record<string, unknown> = {};
+        if (name) update.name = name;
+        if (typeof floor === "number") update.floor = floor;
+        const room = await Room.findOneAndUpdate(
+          {
+            _id: req.params.roomId,
+            organizationId: req.params.orgId,
+            siteId: req.params.siteId,
+            buildingId: req.params.buildingId,
+          },
+          update,
+          { new: true }
+        ).lean();
+        if (!room) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json(await toKSVRoom(room as Record<string, unknown>));
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update room." });
+      }
+    }
+  );
+
+  // DELETE /api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId
+  app.delete(
+    "/api/organizations/:orgId/sites/:siteId/buildings/:buildingId/rooms/:roomId",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const result = await Room.findOneAndDelete({
+          _id: req.params.roomId,
+          organizationId: req.params.orgId,
+          siteId: req.params.siteId,
+          buildingId: req.params.buildingId,
+        });
+        if (!result) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete room." });
+      }
+    }
+  );
+
+  // GET /api/safety/rules — list safety rules for the user's organization
+  app.get(
+    "/api/safety/rules",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const rules = await SafetyRule.find({ organizationId: user.organizationId }).lean();
+        res.json({ rules, total: rules.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety rules." });
+      }
+    }
+  );
+
+  // GET /api/gateways — list all gateways
+  app.get(
+    "/api/gateways",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "No organizationId on user.",
+        });
+        return;
+      }
+
+      try {
+        const gateways = await Gateway.find({
+          organizationId: user.organizationId,
+        }).lean();
+
+        res.json({ gateways, total: gateways.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load gateways." });
+      }
+    }
+  );
+
+
+  // GET /api/v1/gateways — organization-scoped Gateway list
+  // POST /api/v1/gateways - Register new gateway & issue provisioning token
+  app.post(
+    "/api/v1/gateways",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      try {
+        const organizationId = req.user?.organizationId;
+        if (!organizationId) {
+          return res.status(403).json({
+            error: "Unauthorized: Missing organization context",
+          });
+        }
+
+        const {
+          name,
+          type,
+          mode,
+          firmwareVersion,
+          serialNumber,
+          orgId,
+          siteId,
+          buildingId,
+          supportedProtocols,
+          isOfflineCapable,
+          offlineAuthEnabled,
+        } = req.body || {};
+
+        const allowedTypes = [
+          "home",
+          "building",
+          "industrial",
+          "vehicle",
+          "portable",
+        ];
+
+        const allowedModes = [
+          "cloud_connected",
+          "local_only",
+          "hybrid",
+        ];
+
+        const allowedProtocols = [
+          "bluetooth",
+          "wifi",
+          "mqtt",
+          "http_api",
+          "infrared",
+          "zigbee",
+          "zwave",
+          "lorawan",
+          "modbus",
+          "bacnet",
+          "can_bus",
+          "custom",
+        ];
+
+        if (!name || typeof name !== "string" || !name.trim()) {
+          return res.status(400).json({
+            error: "Validation failed: 'name' is required",
+          });
+        }
+
+        if (!allowedTypes.includes(type)) {
+          return res.status(400).json({
+            error: "Validation failed: invalid 'type'",
+          });
+        }
+
+        if (!allowedModes.includes(mode)) {
+          return res.status(400).json({
+            error: "Validation failed: invalid 'mode'",
+          });
+        }
+
+        if (
+          !firmwareVersion ||
+          typeof firmwareVersion !== "string" ||
+          !firmwareVersion.trim()
+        ) {
+          return res.status(400).json({
+            error: "Validation failed: 'firmwareVersion' is required",
+          });
+        }
+
+        if (
+          !Array.isArray(supportedProtocols) ||
+          supportedProtocols.length === 0 ||
+          supportedProtocols.some(
+            (protocol) => !allowedProtocols.includes(protocol)
+          )
+        ) {
+          return res.status(400).json({
+            error:
+              "Validation failed: 'supportedProtocols' must contain only supported DeviceProtocol values",
+          });
+        }
+
+        if (typeof isOfflineCapable !== "boolean") {
+          return res.status(400).json({
+            error: "Validation failed: 'isOfflineCapable' must be a boolean",
+          });
+        }
+
+        if (typeof offlineAuthEnabled !== "boolean") {
+          return res.status(400).json({
+            error: "Validation failed: 'offlineAuthEnabled' must be a boolean",
+          });
+        }
+
+        if (offlineAuthEnabled && !isOfflineCapable) {
+          return res.status(400).json({
+            error:
+              "Validation failed: offline authentication requires offline capability",
+          });
+        }
+
+        if (orgId && orgId !== organizationId) {
+          return res.status(403).json({
+            error: "Organization mismatch",
+          });
+        }
+
+        if (siteId) {
+          if (!mongoose.Types.ObjectId.isValid(siteId)) {
+            return res.status(400).json({
+              error: "Validation failed: invalid 'siteId'",
+            });
+          }
+
+          const site = await Site.findOne({
+            _id: siteId,
+            organizationId,
+          });
+
+          if (!site) {
+            return res.status(403).json({
+              error: "Site does not belong to the authenticated organization",
+            });
+          }
+        }
+
+      if (!KSV_CLOUD_ENDPOINT) {
+        return res.status(503).json({
+          error: "Service unavailable: KSV_CLOUD_ENDPOINT is not configured",
+        });
+      }
+
+        const gateway = await Gateway.create({
+          name: name.trim(),
+          organizationId,
+          type,
+          mode,
+          firmwareVersion: firmwareVersion.trim(),
+          serialNumber,
+          siteId,
+          buildingId,
+          supportedProtocols,
+          isOfflineCapable,
+          offlineAuthEnabled,
+        });
+
+        const rawToken = generateSecureToken();
+        const tokenHash = hashRefreshToken(rawToken);
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+        await GatewayProvisioningToken.create({
+          gatewayId: gateway._id,
+          tokenHash,
+          expiresAt,
+          createdBy: req.user!.id,
+        });
+
+      return res.status(201).json({
+        success: true,
+        gateway: {
+          gatewayId: gateway._id.toString(),
+          name: gateway.name,
+          type: gateway.type,
+          firmwareVersion: gateway.firmwareVersion,
+          serialNumber: gateway.serialNumber,
+          status: gateway.status,
+          mode: gateway.mode,
+          supportedProtocols: gateway.supportedProtocols,
+          connectedDeviceCount: gateway.deviceCount ?? 0,
+          ownerAccountId: req.user!.id,
+          orgId: gateway.organizationId.toString(),
+          siteId: gateway.siteId?.toString(),
+          buildingId: gateway.buildingId?.toString(),
+          lastSeenAt: gateway.lastPingAt?.toISOString(),
+          isOfflineCapable: gateway.isOfflineCapable,
+          offlineAuthEnabled: gateway.offlineAuthEnabled,
+          ipAddress: gateway.ipAddress,
+          cpuUsage: gateway.cpuUsage,
+          memUsage: gateway.memUsage,
+          createdAt: gateway.createdAt.toISOString(),
+        },
+        provisioningToken: rawToken,
+        cloudEndpoint: KSV_CLOUD_ENDPOINT,
+        message: "Gateway registered successfully",
+      });
+      } catch (err: unknown) {
+        return res.status(500).json({
+          error: "Internal server error",
+          details: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  );
+
+app.get(
+    "/api/v1/gateways",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "No organizationId on user.",
+        });
+        return;
+      }
+
+      try {
+        const gatewayIds = await Device.find({
+          organizationId: user.organizationId,
+          gatewayId: { $ne: null },
+        }).distinct("gatewayId");
+
+        const gateways = await Gateway.find({
+          _id: { $in: gatewayIds },
+        }).lean();
+
+        res.json({ gateways, total: gateways.length });
+      } catch {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: "Failed to load gateways.",
+        });
+      }
+    }
+  );
+
+  // GET /api/v1/gateways/:gatewayId — organization-scoped Gateway detail
+  app.get(
+    "/api/v1/gateways/:gatewayId",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({
+          error: "BAD_REQUEST",
+          message: "No organizationId on user.",
+        });
+        return;
+      }
+
+      try {
+        const device = await Device.findOne({
+          organizationId: user.organizationId,
+          gatewayId: req.params.gatewayId,
+        }).lean();
+
+        if (!device) {
+          res.status(404).json({
+            error: "NOT_FOUND",
+            message: "Gateway not found.",
+          });
+          return;
+        }
+
+        const gateway = await Gateway.findById(req.params.gatewayId).lean();
+
+        if (!gateway) {
+          res.status(404).json({
+            error: "NOT_FOUND",
+            message: "Gateway not found.",
+          });
+          return;
+        }
+
+        res.json({ gateway });
+      } catch {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: "Failed to load gateway.",
+        });
+      }
+    }
+  );
+
+  // GET /api/audit/events — AuditLog entries reshaped for AuditView.tsx
+  // (audit.log.ts writes AuditLog docs; this maps them to the
+  // { id, actor, action, target, result, category, ip, timestamp }
+  // shape the frontend's AuditEventEntry expects.)
+  app.get(
+    "/api/audit/events",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const limit = Math.min(Number(req.query.limit) || 200, 500);
+      try {
+        const logs = await AuditLog.find({ organizationId: user.organizationId })
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .populate("userId", "email")
+          .lean();
+
+        const RESULT_MAP: Record<string, string> = {"SUCCESS":"success","BLOCKED":"denied","FAILURE":"error"};
+
+        const categoryOf = (action: string) => {
+          const prefix = String(action).split(":")[0];
+          if (prefix === "auth") return "auth";
+          if (prefix === "device") return "device";
+          if (prefix === "safety") return "safety";
+          if (prefix === "settings" || prefix === "org") return "admin";
+          return "network";
+        };
+
+        const events = logs.map((log) => ({
+          id: String(log._id),
+          actor: log.userId && typeof log.userId === "object" ? log.userId.email : "system",
+          action: log.action,
+          target: log.deviceId ? String(log.deviceId) : (log.reason || log.action),
+          result: RESULT_MAP[log.result] || "error",
+          category: categoryOf(log.action),
+          ip: log.ip || "",
+          timestamp: log.createdAt,
+        }));
+
+        res.json({ events, total: events.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit events." });
+      }
+    }
+  );
+
+  // GET /api/audit/logs — list audit log entries for the user's organization
+  app.get(
+    "/api/audit/logs",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const limit = Math.min(Number(req.query.limit) || 50, 200);
+      try {
+        const logs = await AuditLog.find({ organizationId: user.organizationId })
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .lean();
+        res.json({ logs, total: logs.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load audit logs." });
+      }
+    }
+  );
+
+  // GET /api/protocols — list all protocol adapters
+  app.get(
+    "/api/protocols",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      try {
+        const protocols = await Protocol.find().lean();
+        res.json({ protocols, total: protocols.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load protocols." });
+      }
+    }
+  );
+
+  // GET /api/protocols/adapters — protocol adapters with device counts
+  app.get(
+    "/api/protocols/adapters",
+    authenticate,
+    requirePermission("org:read"),
+    async (_req, res) => {
+      try {
+        const protocols = await Protocol.find().lean();
+        const adapters = await Promise.all(
+          protocols.map(async (p) => {
+            const currentDeviceCount = await Device.countDocuments({
+              "protocol": p.code,
+            });
+            return {
+              adapterId: String(p._id),
+              protocol: p.code,
+              name: p.name,
+              version: "1.0.0",
+              status: "active",
+              supportedManufacturers: [],
+              supportedDeviceTypes: [],
+              isSecureChannel: Boolean(p.securityType),
+              requiresGateway: false,
+              maxDevicesPerAdapter: 10000,
+              currentDeviceCount,
+              createdAt: new Date().toISOString(),
+            };
+          })
+        );
+        res.json({ adapters });
+      } catch {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: "Failed to load protocol adapters.",
+        });
+      }
+    }
+  );
+
+  // GET /api/identity/account — returns the authenticated user's own account
+  app.get(
+    "/api/identity/account",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const account = await User.findById(user.id).select("-passwordHash").lean();
+        if (!account) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+        res.json({ account });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load account." });
+      }
+    }
+  );
+
+  // GET /api/notifications — list notifications for the authenticated user
+  app.get(
+    "/api/notifications",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const notifications = await Notification.find({ accountId: user.id })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+        const unreadCount = await Notification.countDocuments({ accountId: user.id, isRead: false });
+        res.json({ notifications, unreadCount, total: notifications.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load notifications." });
+      }
+    }
+  );
+
+  // GET /api/map/devices — devices with coordinates for the interactive map
+  app.get(
+    "/api/map/devices",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const devices = await Device.find({
+          organizationId: user.organizationId,
+          latitude: { $exists: true, $ne: null },
+          longitude: { $exists: true, $ne: null },
+        })
+          .select("deviceCode name type status latitude longitude siteId firmwareVersion lastSeenAt")
+          .lean();
+
+        const siteIds = Array.from(
+          new Set(devices.map((d) => d.siteId).filter(Boolean).map((id) => String(id)))
+        );
+        const sites = await Site.find({ _id: { $in: siteIds } }).lean();
+        const siteById = new Map(sites.map((s) => [String(s._id), s]));
+
+        const result = devices.map((d) => {
+          const site = d.siteId ? siteById.get(String(d.siteId)) : undefined;
+          return {
+            deviceId: String(d._id),
+            deviceCode: d.deviceCode,
+            name: d.name,
+            type: d.type,
+            status: d.status,
+            latitude: d.latitude,
+            longitude: d.longitude,
+            site: site?.name ?? "",
+            country: site?.country ?? "",
+            firmwareVersion: d.firmwareVersion ?? "",
+          };
+        });
+
+        res.json({ devices: result, total: result.length });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load map devices.",
+        });
+      }
+    }
+  );
+
+  // GET /api/international/countries — list all countries
+  app.get(
+    "/api/international/countries",
+    async (_req, res) => {
+      try {
+        const docs = await Country.find().sort({ name: 1 }).lean();
+        const countries = docs.map((c) => ({
+          code: c.code,
+          name: c.name,
+          timezone: c.timezone ?? "UTC",
+          timezones: c.timezones ?? [],
+          dialCode: c.dialCode ?? "",
+        }));
+        res.json(countries);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load countries." });
+      }
+    }
+  );
+
+  // GET /api/automation/rules — list automation rules for the user's organization
+  app.get(
+    "/api/automation/rules",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const rules = await AutomationRule.find({ organizationId: user.organizationId }).lean();
+        res.json({ rules, total: rules.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load automation rules." });
+      }
+    }
+  );
+
+  // GET /api/discovery/devices — list recently discovered (unpaired) devices
+  app.get(
+    "/api/discovery/devices",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const deviceIds = await Device.find({
+          organizationId: user.organizationId,
+        }).distinct("_id");
+
+        const discovered = await Discovery.find({
+          deviceId: { $in: deviceIds },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
+        res.json({ devices: discovered, total: discovered.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load discovered devices." });
+      }
+    }
+  );
+
+  // GET /api/international/languages — list all supported languages
+  app.get(
+    "/api/international/languages",
+    async (req, res) => {
+      try {
+        const languages = await Language.find().lean();
+        res.json({ languages, total: languages.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load languages." });
+      }
+    }
+  );
+
+  // GET /api/safety/events — list recent safety log events
+  app.get(
+    "/api/safety/events",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const deviceIds = await Device.find({
+          organizationId: user.organizationId,
+        }).distinct("_id");
+
+        const events = await SafetyLog.find({
+          deviceId: { $in: deviceIds },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+
+        res.json({ events, total: events.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load safety events." });
+      }
+    }
+  );
+
+  // GET /api/telemetry/devices/:id — telemetry/log history for a device
+  app.get(
+    "/api/telemetry/devices/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const device = await Device.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        })
+          .select({ _id: 1 })
+          .lean();
+
+        if (!device) {
+          res.status(404).json({ error: "DEVICE_NOT_FOUND" });
+          return;
+        }
+
+        const logs = await DeviceLog.find({ deviceId: device._id })
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .lean();
+
+        res.json({ logs, total: logs.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device telemetry." });
+      }
+    }
+  );
+
+  // GET /api/billing/invoices — list invoices for the user's organization
+  app.get(
+    "/api/billing/invoices",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const invoices = await Invoice.find({ organizationId: user.organizationId }).sort({ issuedAt: -1 }).lean();
+        res.json({ invoices, total: invoices.length });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load invoices." });
+      }
+    }
+  );
+
+  // GET /api/billing/invoices/:id/download — download an invoice
+  // NOTE: no PDF library is available in this project yet (checked
+  // package.json). Returns a plain-text invoice summary as a downloadable
+  // file for now — matches the frontend's .blob() contract without
+  // pretending a real PDF exists. Swap for real PDF generation once a
+  // library (e.g. pdfkit) is added.
+  app.get(
+    "/api/billing/invoices/:id/download",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const invoice = await Invoice.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        }).lean();
+        if (!invoice) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Invoice not found." });
+          return;
+        }
+
+        const text = [
+          "KSV Invoice",
+          `Invoice ID: ${invoice._id}`,
+          `Organization: ${invoice.organizationId}`,
+          `Amount: ${invoice.amount} ${invoice.currency}`,
+          `Status: ${invoice.status}`,
+          `Issued: ${invoice.issuedAt}`,
+          `Due: ${invoice.dueAt || "N/A"}`,
+        ].join("\n");
+
+        res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoice._id}.txt"`);
+        res.send(text);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to download invoice." });
+      }
+    }
+  );
+
+  // POST /api/billing/payment-methods — add a payment method
+  // "token" is a payment-processor token (e.g. Stripe), never a raw
+  // card number — only last4 is ever stored (FULL_CARD_NUMBER_NEVER_STORED).
+  app.post(
+    "/api/billing/payment-methods",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const _user = req.user!;
+      const { type, token } = req.body || {};
+
+      const validTypes = ["card", "bank", "wallet"];
+      if (!type || !validTypes.includes(type)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `type must be one of: ${validTypes.join(", ")}` });
+        return;
+      }
+      if (!token || typeof token !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "token (payment processor token) is required." });
+        return;
+      }
+
+      // KSV currently has no payment-processor integration.
+      // Do not derive or invent last4 from an opaque processor token.
+      // A real processor integration must provide the verified last4.
+      res.status(503).json({
+        error: "PAYMENT_PROCESSOR_NOT_CONFIGURED",
+        message: "Payment processor integration is not configured.",
+      });
+    }
+  );
+
+  // DELETE /api/billing/payment-methods/:id — remove a payment method
+  app.delete(
+    "/api/billing/payment-methods/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const result = await PaymentMethod.deleteOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (result.deletedCount === 0) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Payment method not found." });
+          return;
+        }
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to remove payment method." });
+      }
+    }
+  );
+
+  // GET /api/billing/usage — current usage vs plan limit
+  // NOTE: only "devices" is reported — the only metric with real tracked
+  // data (Device count). "commands" and "storage" usage are not tracked
+  // anywhere in this codebase yet, so they are omitted rather than faked.
+  app.get(
+    "/api/billing/usage",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const planDeviceLimits: Record<string, number> = { free: 5, pro: 50, enterprise: 9999 };
+      try {
+        const subscription = await OrganizationSubscription.findOne({ organizationId: user.organizationId }).lean();
+        const planId = subscription?.planId || "free";
+        const limit = planDeviceLimits[planId] ?? planDeviceLimits.free;
+        const currentValue = await Device.countDocuments({ organizationId: user.organizationId });
+
+        res.json({
+          usage: [
+            { organizationId: String(user.organizationId), metricType: "devices", currentValue, limit },
+          ],
+        });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage." });
+      }
+    }
+  );
+
+  // GET /api/billing/subscriptions — current subscription for the organization
+  app.get(
+    "/api/billing/subscriptions",
+    authenticate,
+    requirePermission("org:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const subscription = await OrganizationSubscription.findOne({ organizationId: user.organizationId }).lean();
+        res.json({ subscription });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load subscription." });
+      }
+    }
+  );
+
+  // PUT /api/billing/subscriptions/:id — upgrade or downgrade the plan
+  app.put(
+    "/api/billing/subscriptions/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      const { planId } = req.body || {};
+
+      const planDeviceLimits: Record<string, number> = {"free":5,"pro":50,"enterprise":9999};
+      if (!planId || !(planId in planDeviceLimits)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `planId must be one of: ${Object.keys(planDeviceLimits).join(", ")}` });
+        return;
+      }
+
+      try {
+        const subscription = await OrganizationSubscription.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!subscription) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Subscription not found." });
+          return;
+        }
+
+        const newLimit = planDeviceLimits[planId];
+        const deviceCount = await Device.countDocuments({ organizationId: user.organizationId });
+        if (deviceCount > newLimit) {
+          res.status(400).json({
+            error: "DEVICE_LIMIT_EXCEEDED",
+            message: `Cannot downgrade to '${planId}' (limit ${newLimit}): organization has ${deviceCount} devices. Archive/remove devices first.`,
+          });
+          return;
+        }
+
+        subscription.planId = planId;
+        await subscription.save();
+
+        res.json({ subscription });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update subscription." });
+      }
+    }
+  );
+
+  // DELETE /api/billing/subscriptions/:id — cancel a subscription
+  app.delete(
+    "/api/billing/subscriptions/:id",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const subscription = await OrganizationSubscription.findOne({
+          _id: req.params.id,
+          organizationId: user.organizationId,
+        });
+        if (!subscription) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Subscription not found." });
+          return;
+        }
+
+        subscription.status = "cancelled";
+        await subscription.save();
+
+        res.json({ subscription });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to cancel subscription." });
+      }
+    }
+  );
+
+  // POST /api/billing/subscriptions — subscribe the organization to a plan
+  app.post(
+    "/api/billing/subscriptions",
+    authenticate,
+    requirePermission("org:manage"),
+    async (req, res) => {
+      const user = req.user!;
+      const { planId } = req.body || {};
+
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const validPlanIds = ["free","pro","enterprise"];
+      if (!planId || !validPlanIds.includes(planId)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `planId must be one of: ${validPlanIds.join(", ")}` });
+        return;
+      }
+
+      try {
+        const existing = await OrganizationSubscription.findOne({ organizationId: user.organizationId });
+        if (existing) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Organization already has a subscription. Use PUT to change plans." });
+          return;
+        }
+
+        const renewalDate = new Date();
+        renewalDate.setMonth(renewalDate.getMonth() + 1);
+
+        const subscription = await OrganizationSubscription.create({
+          organizationId: user.organizationId,
+          planId,
+          status: "active",
+          renewalDate,
+        });
+
+        res.status(201).json({ subscription });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create subscription." });
+      }
+    }
+  );
+
+
+
+  // ============================================================
+// AI Device Entity Resolution
+// Resolves a natural-language device reference only inside the
+// authenticated user's organization. No command is executed here.
+// ============================================================
+async function resolveAIDevice(
+  naturalLanguageInput: string,
+  organizationId: unknown,
+) {
+  if (!organizationId) {
+    return {
+      status: "error" as const,
+      reason: "Authenticated user has no organizationId.",
+    };
+  }
+
+  const text = naturalLanguageInput.trim();
+  if (!text) {
+    return {
+      status: "not_found" as const,
+      reason: "No device reference was provided.",
+    };
+  }
+
+  const orgId = String(organizationId);
+
+  // Prefer an explicit device code such as DEV-04821.
+  const codeMatch = text.match(/\bDEV-[A-Z0-9_-]+\b/i);
+
+  if (codeMatch) {
+    const deviceCode = codeMatch[0].toUpperCase();
+
+    const device = await Device.findOne({
+      deviceCode,
+      organizationId,
+    }).lean();
+
+    if (!device) {
+      return {
+        status: "not_found" as const,
+        reason: `Device code ${deviceCode} was not found in the authenticated organization.`,
+      };
+    }
+
+    return {
+      status: "resolved" as const,
+      device,
+      matchedBy: "deviceCode" as const,
+    };
+  }
+
+  // Otherwise match the device name within the authenticated organization.
+  const devices = await Device.find({
+    organizationId,
+    name: { $regex: text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" },
+  })
+    .select("_id name deviceCode type status organizationId")
+    .limit(10)
+    .lean();
+
+  if (devices.length === 1) {
+    return {
+      status: "resolved" as const,
+      device: devices[0],
+      matchedBy: "name" as const,
+    };
+  }
+
+  if (devices.length > 1) {
+    return {
+      status: "ambiguous" as const,
+      devices,
+      reason: `Multiple devices matched the reference inside organization ${orgId}.`,
+    };
+  }
+
+  return {
+    status: "not_found" as const,
+    reason: "No matching device was found in the authenticated organization.",
+  };
+}
+
+// POST /api/v1/ai/interpret — AI Orchestration (MOCK)
+  // NOTE: no AI provider API key is configured yet. This uses a simple
+  // keyword-matching stub so the pipeline (auth -> session -> audit) can
+  // be built and tested now, and swapped for a real model call later
+  // without changing the route contract.
+  app.post(
+    "/api/v1/ai/interpret",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { naturalLanguageInput, sessionId } = req.body || {};
+
+      if (!naturalLanguageInput || typeof naturalLanguageInput !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "naturalLanguageInput is required." });
+        return;
+      }
+
+      try {
+        // --- Deterministic intent interpretation ---
+        // Interpretation produces intent only. It does not execute a device command.
+        // Command types are restricted to the real KSV command contract.
+        const intentResult = interpretIntent({ text: naturalLanguageInput });
+
+        let resolvedDevice: Awaited<ReturnType<typeof resolveAIDevice>> | null = null;
+        let deviceResolutionReason: string | undefined;
+
+        if (intentResult.intent === "control_request") {
+          resolvedDevice = await resolveAIDevice(
+            naturalLanguageInput,
+            user.organizationId,
+          );
+
+          if (resolvedDevice.status !== "resolved") {
+            deviceResolutionReason = resolvedDevice.reason;
+          }
+        }
+
+        const resolvedDeviceData =
+          resolvedDevice?.status === "resolved"
+            ? resolvedDevice.device
+            : null;
+
+        const commandReady =
+          intentResult.intent === "control_request" &&
+          !!intentResult.commandType &&
+          resolvedDeviceData !== null;
+
+        const requiresClarification =
+          intentResult.requiresClarification ||
+          (intentResult.intent === "control_request" && !commandReady);
+
+        const assistantMessage =
+          intentResult.intent === "greeting"
+            ? "សួស្ដីបង 👋 ខ្ញុំជា KHOEM-AI។ បងអាចសួរខ្ញុំអំពីឧបករណ៍ ស្ថានភាព ឬសកម្មភាពដែលបងចង់ធ្វើបាន។"
+            : intentResult.intent === "question"
+              ? "បានបង។ បងអាចសួរខ្ញុំបានដោយផ្ទាល់ ហើយខ្ញុំនឹងព្យាយាមយល់សំណួរ និងឆ្លើយតាមអ្វីដែល KHOEM-AI អាចធ្វើបាន។"
+              : undefined;
+
+        const result = {
+          requestId: `ai-${Date.now()}`,
+          confidence: commandReady
+            ? intentResult.confidence
+            : Math.min(intentResult.confidence, 0.2),
+          intent: intentResult.intent,
+          assistantMessage: guardRespectfulResponse(naturalLanguageInput, /[\u1780-\u17FF]/.test(naturalLanguageInput) ? "km" : "en") ?? assistantMessage,
+          structuredCommand: commandReady
+            ? {
+                deviceId: String(resolvedDeviceData!._id),
+                commandType: intentResult.commandType,
+              }
+            : undefined,
+          requiresClarification,
+          ambiguityOptions: requiresClarification
+            ? [{
+                label:
+                  deviceResolutionReason ||
+                  "សូមបញ្ជាក់ឧបករណ៍ និងសកម្មភាពដែលបងត្រូវការ។",
+                structuredCommand: null,
+              }]
+            : undefined,
+          reasoning: deviceResolutionReason
+            ? `${intentResult.reason} ${deviceResolutionReason}`
+            : intentResult.reason,
+        };
+
+        // Persist / append to conversation session
+        let session;
+        if (sessionId) {
+          session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.id });
+        }
+        if (!session) {
+          session = new AIConversationSession({
+            accountId: user.id,
+            organizationId: user.organizationId,
+            turns: [],
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+          });
+        }
+        session.turns.push({ role: "user", text: naturalLanguageInput, createdAt: new Date() });
+        session.turns.push({ role: "assistant", text: JSON.stringify(result), createdAt: new Date() });
+        await session.save();
+
+        res.json({ ...result, sessionId: String(session._id) });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to interpret input." });
+      }
+    }
+  );
+
+
+  // GET /api/v1/ai/sessions/:id — fetch one AI conversation session
+  app.get(
+    "/api/v1/ai/sessions/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const session = await AIConversationSession.findOne({
+          _id: req.params.id,
+          accountId: user.id,
+        }).lean();
+        if (!session) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+        res.json({ session });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load session." });
+      }
+    }
+  );
+
+  // DELETE /api/v1/ai/sessions/:id — delete a session (privacy)
+  app.delete(
+    "/api/v1/ai/sessions/:id",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const result = await AIConversationSession.deleteOne({
+          _id: req.params.id,
+          accountId: user.id,
+        });
+        if (result.deletedCount === 0) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+        res.status(204).send();
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete session." });
+      }
+    }
+  );
+
+
+  // POST /api/v1/ai/interpret/confirm — user confirms an ambiguous
+  // AI interpretation by picking one of the ambiguityOptions returned
+  // from /api/v1/ai/interpret.
+  app.post(
+    "/api/v1/ai/interpret/confirm",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { sessionId, structuredCommand } = req.body || {};
+
+      if (!sessionId || !structuredCommand || typeof structuredCommand !== "object") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "sessionId and structuredCommand are required." });
+        return;
+      }
+      if (!structuredCommand.deviceId || !structuredCommand.commandType) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "structuredCommand must include deviceId and commandType." });
+        return;
+      }
+
+      try {
+        const session = await AIConversationSession.findOne({ _id: sessionId, accountId: user.id });
+        if (!session) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Session not found." });
+          return;
+        }
+
+        // NOTE: this only records the confirmation. Actually dispatching
+        // structuredCommand through the Command Pipeline (authenticate ->
+        // authorize -> safety -> execute -> audit) is a separate step,
+        // shared with manually typed commands — not duplicated here.
+        session.turns.push({
+          role: "user",
+          text: `[confirmed] ${JSON.stringify(structuredCommand)}`,
+          createdAt: new Date(),
+        });
+        await session.save();
+
+        res.json({ confirmed: true, structuredCommand, sessionId: String(session._id) });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to confirm interpretation." });
+      }
+    }
+  );
+
+
+  // GET /api/v1/ai/models — list AI model profiles the org may use
+  // NOTE: static list for now (no AIModelProfile DB table yet — no real
+  // provider is configured). Only "internal" (the mock interpreter) is
+  // enabled. Swap for a DB-backed list once Anthropic/OpenAI keys exist.
+  app.get(
+    "/api/v1/ai/models",
+    authenticate,
+    requirePermission("device:read"),
+    async (_req, res) => {
+      const models = [
+        {
+          modelId: "internal-mock-v1",
+          provider: "internal",
+          version: "1.0.0-mock",
+          allowedScopes: ["device:read"],
+          isEnabled: true,
+        },
+        {
+          modelId: "anthropic-claude",
+          provider: "anthropic",
+          version: "not-configured",
+          allowedScopes: [],
+          isEnabled: false,
+        },
+        {
+          modelId: "openai-gpt",
+          provider: "openai",
+          version: "not-configured",
+          allowedScopes: [],
+          isEnabled: false,
+        },
+      ];
+      res.json({ models });
+    }
+  );
+
+
+  // POST /api/v1/ai/models/:id/enable — Admin: toggle a model's enabled flag
+  // NOTE: models are a static in-memory list for now (no AIModelProfile DB
+  // table — no real provider configured yet). "internal-mock-v1" cannot be
+  // disabled since it is the only working interpreter right now.
+  app.post(
+    "/api/v1/ai/models/:id/enable",
+    authenticate,
+    requireMinRole("OrgAdmin"),
+    async (req, res) => {
+      const rawId = req.params.id;
+      if (typeof rawId !== "string") {
+        res.status(400).json({ error: "INVALID_MODEL_ID" });
+        return;
+      }
+      const id = rawId;
+      const { isEnabled } = req.body || {};
+
+      if (typeof isEnabled !== "boolean") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "isEnabled (boolean) is required." });
+        return;
+      }
+
+      const knownModelIds = ["internal-mock-v1", "anthropic-claude", "openai-gpt"];
+      if (!knownModelIds.includes(id)) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Unknown modelId." });
+        return;
+      }
+      if (id === "internal-mock-v1" && !isEnabled) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "internal-mock-v1 cannot be disabled (no other provider is configured)." });
+        return;
+      }
+      if ((id === "anthropic-claude" || id === "openai-gpt") && isEnabled) {
+        res.status(400).json({ error: "BAD_REQUEST", message: `${id} has no API key configured yet and cannot be enabled.` });
+        return;
+      }
+
+      // NOTE: no persistence yet (static list) — this confirms the request
+      // is valid and well-formed. Once AIModelProfile is a real DB model,
+      // this will update it and return the new state.
+      res.json({ modelId: id, isEnabled, persisted: false });
+    }
+  );
+
+  app.get("/api/dashboard/stats", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) { res.status(400).json({ error: "BAD_REQUEST" }); return; }
+    try {
+      const orgId = user.organizationId;
+      const totalDevices = await Device.countDocuments({ organizationId: orgId });
+      const onlineDevices = await Device.countDocuments({ organizationId: orgId, status: "online" });
+      const safetyRules = await SafetyRule.countDocuments({ organizationId: orgId, isEnabled: true });
+      const gatewayIds = await Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId");
+      const gateways = await Gateway.countDocuments({ _id: { $in: gatewayIds }, status: "online" });
+      const warningDevices = await Device.countDocuments({ organizationId: orgId, status: "warning" });
+      const countriesDeployed = (await Site.distinct("country", { organizationId: orgId, country: { $ne: null } })).length;
+      res.json({ totalDevices, onlineDevices, safetyRules, gateways, warningDevices, countriesDeployed });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR" });
+    }
+  });
+
+
+  // GET /api/dashboard/full — full dashboard data in one call
+  app.get(
+    "/api/dashboard/full",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      const orgId = user.organizationId;
+      try {
+        const now = new Date();
+        const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const since24d = new Date(now.getTime() - 24 * 24 * 60 * 60 * 1000);
+
+        const [
+          totalDevices,
+          onlineDevices,
+          warningDevices,
+          safetyRulesCount,
+          gatewayIdsForCount,
+          countriesDeployed,
+          trafficRaw,
+          alertRaw,
+          openAlerts,
+          latencyRaw,
+          org,
+        ] = await Promise.all([
+          Device.countDocuments({ organizationId: orgId }),
+          Device.countDocuments({ organizationId: orgId, status: "online" }),
+          Device.countDocuments({ organizationId: orgId, status: "warning" }),
+          SafetyRule.countDocuments({ organizationId: orgId, isEnabled: true }),
+          Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId"),
+          Site.distinct("country", { organizationId: orgId, country: { $ne: null } }),
+          Command.aggregate([
+            { $match: { createdAt: { $gte: since24h } } },
+            { $group: { _id: { $hour: "$createdAt" }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ]),
+          SafetyLog.aggregate([
+            { $match: { createdAt: { $gte: since24d } } },
+            { $group: { _id: { day: { $dayOfMonth: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } },
+            { $limit: 24 },
+          ]),
+          SecurityIncident.countDocuments({ organizationId: orgId, status: { $ne: "resolved" } }),
+          Command.aggregate([
+            {
+              $match: {
+                sentAt: { $gte: since24h, $ne: null },
+                completedAt: { $ne: null },
+              },
+            },
+            {
+              $project: {
+                latency: { $subtract: ["$completedAt", "$sentAt"] },
+              },
+            },
+            { $group: { _id: null, avg: { $avg: "$latency" } } },
+          ]),
+          Organization.findById(orgId).lean(),
+        ]);
+
+        const gatewaysOnline = await Gateway.countDocuments({
+          _id: { $in: gatewayIdsForCount },
+          status: "online",
+        });
+
+        // Fill 24 hourly buckets
+        const trafficByHour: Record<number, number> = {};
+        for (const t of trafficRaw) trafficByHour[t._id] = t.count;
+        const traffic: number[] = [];
+        for (let h = 0; h < 24; h++) traffic.push(trafficByHour[h] ?? 0);
+
+        // Alert trend → last 24 points (fill zeros if missing)
+        const alertTrend: number[] = alertRaw.map((a: { count: number }) => a.count);
+        while (alertTrend.length < 24) alertTrend.unshift(0);
+
+        const avgLatencyMs = latencyRaw.length > 0 ? Math.round(latencyRaw[0].avg) : 0;
+
+        const createdAt = org?.createdAt instanceof Date ? org.createdAt : now;
+        const uptimeDays = Math.max(1, Math.floor((now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000)));
+
+        // Top sites by device count
+        const topSitesRaw = await Device.aggregate([
+          { $match: { organizationId: orgId, siteId: { $ne: null } } },
+          {
+            $group: {
+              _id: "$siteId",
+              total: { $sum: 1 },
+              online: { $sum: { $cond: [{ $eq: ["$status", "online"] }, 1, 0] } },
+            },
+          },
+          { $sort: { total: -1 } },
+          { $limit: 5 },
+        ]);
+        const siteIds = topSitesRaw.map((s: { _id: unknown }) => s._id);
+        const siteDocs = await Site.find({ _id: { $in: siteIds } }).lean();
+        const siteById = new Map(siteDocs.map((s) => [String(s._id), s]));
+        const topSites = topSitesRaw.map((s: { _id: unknown; total: number; online: number }) => {
+          const site = siteById.get(String(s._id));
+          return {
+            name: site?.name ?? "Unknown",
+            devices: s.total,
+            load: s.total > 0 ? Math.round((s.online / s.total) * 100) : 0,
+          };
+        });
+
+        // Recent devices
+        const recentDevicesRaw = await Device.find({ organizationId: orgId })
+          .sort({ updatedAt: -1 })
+          .limit(5)
+          .lean();
+
+        // Recent safety rules
+        const recentSafetyRules = await SafetyRule.find({ organizationId: orgId })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .lean();
+
+        // Protocols
+        const protocols = await Protocol.find().limit(10).lean();
+
+        // Gateways (top 6)
+        const gatewaysRaw = await Gateway.find({ _id: { $in: gatewayIdsForCount } })
+          .limit(6)
+          .lean();
+
+        res.json({
+          stats: {
+            totalDevices,
+            onlineDevices,
+            safetyRules: safetyRulesCount,
+            gateways: gatewaysOnline,
+            warningDevices,
+            countriesDeployed: countriesDeployed.length,
+          },
+          traffic,
+          alertTrend,
+          openAlerts,
+          avgLatencyMs,
+          uptimeDays,
+          topSites,
+          recentDevices: recentDevicesRaw,
+          recentSafetyRules,
+          protocols,
+          gateways: gatewaysRaw,
+        });
+      } catch (err) {
+        res.status(500).json({
+          error: "INTERNAL_ERROR",
+          message: err instanceof Error ? err.message : "Failed to load dashboard.",
+        });
+      }
+    }
+  );
+
+  // GET /api/v1/ai/usage — AI interpretation usage stats for the account
+  // NOTE: derived from AIConversationSession.turns (no separate usage
+  // table yet). Counts "user" turns as interpretation requests made.
+  app.get(
+    "/api/v1/ai/usage",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      try {
+        const sessions = await AIConversationSession.find({ accountId: user.id })
+          .select("turns createdAt")
+          .lean();
+
+        let totalRequests = 0;
+        let lastRequestAt = null;
+        for (const session of sessions) {
+          for (const turn of session.turns) {
+            if (turn.role === "user") {
+              totalRequests += 1;
+              if (!lastRequestAt || turn.createdAt > lastRequestAt) {
+                lastRequestAt = turn.createdAt;
+              }
+            }
+          }
+        }
+
+        res.json({
+          accountId: String(user.id),
+          totalSessions: sessions.length,
+          totalInterpretationRequests: totalRequests,
+          lastRequestAt,
+        });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load usage stats." });
+      }
+    }
+  );
+
+
+  // POST /api/v1/ai/feedback — user feedback on an AI interpretation result
+  // (helps track/improve accuracy over time). Stored as an AuditLog entry
+  // since there is no dedicated feedback table yet.
+  app.post(
+    "/api/v1/ai/feedback",
+    authenticate,
+    requirePermission("device:read"),
+    async (req, res) => {
+      const user = req.user!;
+      const { sessionId, requestId, rating, comment } = req.body || {};
+
+      if (!requestId || typeof requestId !== "string") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "requestId is required." });
+        return;
+      }
+      if (rating !== "positive" && rating !== "negative") {
+        res.status(400).json({ error: "BAD_REQUEST", message: "rating must be 'positive' or 'negative'." });
+        return;
+      }
+
+      try {
+        await AuditLog.create({
+          userId: user.id,
+          organizationId: user.organizationId,
+          action: "ai.feedback.submitted",
+          result: "SUCCESS",
+          reason: rating,
+          details: JSON.stringify({ requestId, sessionId, comment: comment || null }),
+        });
+
+        res.status(201).json({ recorded: true, requestId, rating });
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to record feedback." });
+      }
+    }
+  );
+
+
+  // GET /api/billing/plans — list available subscription plans
+  // NOTE: static list for now (no SubscriptionPlan DB table yet — plans
+  // are fixed tiers, not per-organization data).
+  app.get(
+    "/api/billing/plans",
+    authenticate,
+    requirePermission("org:read"),
+    async (_req, res) => {
+      const plans = [
+        { planId: "free", name: "Free", tier: "free", deviceLimit: 5, priceMonthly: 0, currency: "USD" },
+        { planId: "pro", name: "Pro", tier: "pro", deviceLimit: 50, priceMonthly: 49, currency: "USD" },
+        { planId: "enterprise", name: "Enterprise", tier: "enterprise", deviceLimit: 9999, priceMonthly: 499, currency: "USD" },
+      ];
+      res.json({ plans });
+    }
+  );
+
+  // POST /api/authz/check
+  app.post(
+    "/api/authz/check",
+    authenticate,
+    async (req, res) => {
+      const user = req.user!;
+      const { resourceType, resourceId, action } = req.body ?? {};
+
+      if (!resourceType || !resourceId || !action) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "resourceType, resourceId, and action are required." });
+        return;
+      }
+
+      let allowed = false;
+      let reason = "Resource not in user's organization.";
+
+      if (resourceType === "organization" && resourceId === user.organizationId) {
+        allowed = true;
+        reason = "Resource belongs to user's organization.";
+      } else if (resourceType === "device") {
+        const device = await Device.findOne({ _id: resourceId, organizationId: user.organizationId }).lean();
+        if (device) {
+          allowed = true;
+          reason = "Device belongs to user's organization.";
+        }
+      }
+
+      res.json({ allowed, reason });
+    }
+  );
+
+  app.listen(PORT, () => {
+    console.log(`[Server] KSV API running on http://localhost:${PORT}`);
+  });
+
+  // Start MQTT client (optional — logs failure but never crashes the app).
+  try {
+    startMqttClient();
+  } catch (err) {
+    console.error("[MQTT] Failed to start:", err instanceof Error ? err.message : err);
+  }
+}
+
+main().catch((err) => {
+  console.error("[Server] Fatal startup error:", err);
+  process.exit(1);
+});

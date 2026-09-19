@@ -7,7 +7,7 @@
  * component but not another.
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 // Mirrors the commandType strings the backend (safety.engine.ts,
 // command.routes.ts) expects. Import these instead of typing raw

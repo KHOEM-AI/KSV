@@ -28,7 +28,7 @@ export class OrganizationController {
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await organizationService.getById(
-        req.params.orgId,
+        (req.params.orgId as string),
         req.user!.id
       );
       res.json(result);
@@ -40,7 +40,7 @@ export class OrganizationController {
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await organizationService.update(
-        req.params.orgId,
+        (req.params.orgId as string),
         req.user!.id,
         req.body
       );
@@ -52,7 +52,7 @@ export class OrganizationController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      await organizationService.delete(req.params.orgId, req.user!.id);
+      await organizationService.delete((req.params.orgId as string), req.user!.id);
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -62,7 +62,7 @@ export class OrganizationController {
   async addMember(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await organizationService.addMember(
-        req.params.orgId,
+        (req.params.orgId as string),
         req.user!.id,
         req.body
       );
@@ -75,9 +75,9 @@ export class OrganizationController {
   async removeMember(req: Request, res: Response, next: NextFunction) {
     try {
       await organizationService.removeMember(
-        req.params.orgId,
+        (req.params.orgId as string),
         req.user!.id,
-        req.params.userId
+        (req.params.userId as string)
       );
       res.status(204).send();
     } catch (err) {
@@ -88,9 +88,9 @@ export class OrganizationController {
   async updateMemberRole(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await organizationService.updateMemberRole(
-        req.params.orgId,
+        (req.params.orgId as string),
         req.user!.id,
-        req.params.userId,
+        (req.params.userId as string),
         req.body
       );
       res.json(result);

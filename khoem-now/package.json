@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
     "@supabase/supabase-js": "^2.57.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

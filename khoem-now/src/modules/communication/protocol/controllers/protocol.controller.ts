@@ -29,7 +29,7 @@ export class ProtocolController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await protocolService.getById(req.params.protocolId);
+      const result = await protocolService.getById((req.params.protocolId as string));
       res.json(result);
     } catch (err) {
       next(err);
@@ -39,7 +39,7 @@ export class ProtocolController {
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await protocolService.update(
-        req.params.protocolId,
+        (req.params.protocolId as string),
         req.body
       );
       res.json(result);
@@ -50,7 +50,7 @@ export class ProtocolController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      await protocolService.delete(req.params.protocolId);
+      await protocolService.delete((req.params.protocolId as string));
       res.status(204).send();
     } catch (err) {
       next(err);

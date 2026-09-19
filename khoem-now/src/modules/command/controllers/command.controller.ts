@@ -12,7 +12,7 @@ export class CommandController {
   async dispatch(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
-      const orgId = req.user!.organizationId;
+      const orgId = (req.user!.organizationId as string);
 
       if (!orgId) {
         res.status(400).json({ error: 'NO_ORGANIZATION', message: 'User has no organizationId.' });
@@ -65,7 +65,7 @@ export class CommandController {
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
+      const orgId = (req.user!.organizationId as string)!;
       const result = await commandService.list(orgId, {
         deviceId: req.query.deviceId as string,
         status: req.query.status as any,
@@ -81,7 +81,7 @@ export class CommandController {
 
   async listRecent(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
+      const orgId = (req.user!.organizationId as string)!;
       const limit = req.query.limit ? Number(req.query.limit) : 10;
       const commands = await commandService.listRecent(orgId, limit);
       res.json({ commands });
@@ -92,8 +92,8 @@ export class CommandController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
-      const result = await commandService.getById(req.params.commandId, orgId);
+      const orgId = (req.user!.organizationId as string)!;
+      const result = await commandService.getById((req.params.commandId as string), orgId);
       res.json(result);
     } catch (err) {
       next(err);

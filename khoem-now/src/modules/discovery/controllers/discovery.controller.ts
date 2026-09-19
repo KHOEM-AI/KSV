@@ -11,7 +11,7 @@ export class DiscoveryController {
     try {
       const result = await discoveryService.announce(
         req.user!.id,
-        req.user!.organizationId,
+        (req.user!.organizationId as string),
         req.body
       );
       res.status(201).json(result);
@@ -22,7 +22,7 @@ export class DiscoveryController {
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await discoveryService.list(req.user!.organizationId, {
+      const result = await discoveryService.list((req.user!.organizationId as string), {
         status: req.query.status as any,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         offset: req.query.offset ? Number(req.query.offset) : undefined,
@@ -36,8 +36,8 @@ export class DiscoveryController {
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await discoveryService.getById(
-        req.params.discoveryId,
-        req.user!.organizationId
+        (req.params.discoveryId as string),
+        (req.user!.organizationId as string)
       );
       res.json(result);
     } catch (err) {
@@ -48,8 +48,8 @@ export class DiscoveryController {
   async ignore(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await discoveryService.ignore(
-        req.params.discoveryId,
-        req.user!.organizationId
+        (req.params.discoveryId as string),
+        (req.user!.organizationId as string)
       );
       res.json(result);
     } catch (err) {
@@ -60,8 +60,8 @@ export class DiscoveryController {
   async block(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await discoveryService.block(
-        req.params.discoveryId,
-        req.user!.organizationId
+        (req.params.discoveryId as string),
+        (req.user!.organizationId as string)
       );
       res.json(result);
     } catch (err) {
@@ -72,8 +72,8 @@ export class DiscoveryController {
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
       await discoveryService.remove(
-        req.params.discoveryId,
-        req.user!.organizationId
+        (req.params.discoveryId as string),
+        (req.user!.organizationId as string)
       );
       res.status(204).send();
     } catch (err) {

@@ -10,7 +10,7 @@ export class DeviceController {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
-      const orgId = req.user!.organizationId;
+      const orgId = (req.user!.organizationId as string);
       if (!orgId) {
         res.status(400).json({ error: 'NO_ORGANIZATION', message: 'User has no organizationId.' });
         return;
@@ -27,7 +27,7 @@ export class DeviceController {
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
+      const orgId = (req.user!.organizationId as string)!;
       const result = await deviceService.list(orgId, {
         status: req.query.status as any,
         category: req.query.category as any,
@@ -43,8 +43,8 @@ export class DeviceController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
-      const result = await deviceService.getById(req.params.deviceId, orgId);
+      const orgId = (req.user!.organizationId as string)!;
+      const result = await deviceService.getById((req.params.deviceId as string), orgId);
       res.json(result);
     } catch (err) {
       next(err);
@@ -53,8 +53,8 @@ export class DeviceController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
-      const result = await deviceService.update(req.params.deviceId, orgId, req.body);
+      const orgId = (req.user!.organizationId as string)!;
+      const result = await deviceService.update((req.params.deviceId as string), orgId, req.body);
       res.json(result);
     } catch (err) {
       next(err);
@@ -63,8 +63,8 @@ export class DeviceController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
-      await deviceService.delete(req.params.deviceId, orgId);
+      const orgId = (req.user!.organizationId as string)!;
+      await deviceService.delete((req.params.deviceId as string), orgId);
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -73,7 +73,7 @@ export class DeviceController {
 
   async mapDevices(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = req.user!.organizationId!;
+      const orgId = (req.user!.organizationId as string)!;
       const devices = await deviceService.getMapDevices(orgId);
       res.json({ total: devices.length, devices });
     } catch (err) {

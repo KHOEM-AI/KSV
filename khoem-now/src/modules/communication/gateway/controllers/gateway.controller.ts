@@ -9,7 +9,7 @@ export class GatewayController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await gatewayService.create(
-        req.user!.organizationId,
+        (req.user!.organizationId as string),
         req.body
       );
       res.status(201).json(result);
@@ -20,7 +20,7 @@ export class GatewayController {
 
   async listMine(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await gatewayService.listByOrg(req.user!.organizationId);
+      const result = await gatewayService.listByOrg((req.user!.organizationId as string));
       res.json({ total: result.length, data: result });
     } catch (err) {
       next(err);
@@ -30,8 +30,8 @@ export class GatewayController {
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await gatewayService.getById(
-        req.params.gatewayId,
-        req.user!.organizationId
+        (req.params.gatewayId as string),
+        (req.user!.organizationId as string)
       );
       res.json(result);
     } catch (err) {
@@ -42,8 +42,8 @@ export class GatewayController {
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await gatewayService.update(
-        req.params.gatewayId,
-        req.user!.organizationId,
+        (req.params.gatewayId as string),
+        (req.user!.organizationId as string),
         req.body
       );
       res.json(result);
@@ -55,8 +55,8 @@ export class GatewayController {
   async heartbeat(req: Request, res: Response, next: NextFunction) {
     try {
       await gatewayService.heartbeat(
-        req.params.gatewayId,
-        req.user!.organizationId
+        (req.params.gatewayId as string),
+        (req.user!.organizationId as string)
       );
       res.status(204).send();
     } catch (err) {
@@ -67,8 +67,8 @@ export class GatewayController {
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
       await gatewayService.delete(
-        req.params.gatewayId,
-        req.user!.organizationId
+        (req.params.gatewayId as string),
+        (req.user!.organizationId as string)
       );
       res.status(204).send();
     } catch (err) {

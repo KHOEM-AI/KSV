@@ -190,7 +190,7 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
       intent = "unknown";
     }
 
-    const respectfulResponse = guardRespectfulResponse(text, language);
+    const respectfulResponse = guardRespectfulResponse(text, language as "km" | "en");
     const responseText = respectfulResponse || getIntentText(language, intent);
 
     const aiMessage: Message = {

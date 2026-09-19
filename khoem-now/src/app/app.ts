@@ -9,7 +9,7 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
 import mainRouter from '../routes';
-import { errorHandler } from '../core/middleware/error-handler';
+import { errorHandler } from '../middleware/error-handler';
 import { requestLogger } from '../core/logger/request-logger';
 
 export function createApp(): Express {
