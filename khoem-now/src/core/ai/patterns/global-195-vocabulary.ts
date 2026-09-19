@@ -16,6 +16,21 @@ export type GlobalVocabularyEntry = {
 export const GLOBAL_195_VOCABULARY: readonly GlobalVocabularyEntry[] = [
   { term: "សួស្តី", language: "km", countries: ["KH"], category: "greeting", aliases: ["សួស្ដី"] },
   { term: "hello", language: "en", countries: ["US", "GB", "CA", "AU"], category: "greeting", aliases: ["hi", "hey"] },
+  { term: "អរគុណ", language: "km", countries: ["KH"], category: "gratitude", aliases: ["អរគុណច្រើន"] },
+  { term: "សុំទោស", language: "km", countries: ["KH"], category: "apology", aliases: ["សូមទោស"] },
+  { term: "បាទ", language: "km", countries: ["KH"], category: "affirmation", aliases: ["ចាស"] },
+  { term: "ទេ", language: "km", countries: ["KH"], category: "negation", aliases: ["អត់ទេ"] },
+  { term: "ជួយ", language: "km", countries: ["KH"], category: "help_request", aliases: ["ជួយផង"] },
+  { term: "សូម", language: "km", countries: ["KH"], category: "politeness_marker", aliases: [] },
+  { term: "យល់ព្រម", language: "km", countries: ["KH"], category: "acknowledgment", aliases: ["ព្រម"] },
+  { term: "ល្អ", language: "km", countries: ["KH"], category: "positive_feedback", aliases: ["ល្អណាស់"] },
+  { term: "មិនល្អ", language: "km", countries: ["KH"], category: "negative_feedback", aliases: ["អាក្រក់"] },
+  { term: "បញ្ហា", language: "km", countries: ["KH"], category: "issue_report", aliases: [] },
+  { term: "បន្ទាន់", language: "km", countries: ["KH"], category: "urgency", aliases: [] },
+  { term: "តម្លៃ", language: "km", countries: ["KH"], category: "pricing_inquiry", aliases: ["ថ្លៃប៉ុន្មាន"] },
+  { term: "ថ្លៃ", language: "km", countries: ["KH"], category: "pricing_feedback", aliases: [] },
+  { term: "ខូច", language: "km", countries: ["KH"], category: "issue_report", aliases: ["ខូចហើយ"] },
+  { term: "ជំរាបលា", language: "km", countries: ["KH"], category: "farewell", aliases: [] },
 ];
 
 export function getLanguageByCode(language: string): GlobalVocabularyEntry | undefined {
