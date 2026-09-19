@@ -29,7 +29,7 @@ KSV កំពុងធ្វើ migration ពី monolith (`src/server.ts`, ក�
 
 - [x] `src/modules/discovery/` — org-scoping + RBAC ធ្វើរួច
 - [x] `src/modules/identity/` — field name, updateProfile allow-list, JWT secret, token claims (sub/role/organizationId) ធ្វើរួច; នៅសល់៖ requirePermission សម្រាប់ /me និងភ្ជាប់ organizationId ជាមួយ organization module
-- [ ] `src/modules/organization/`
+- [~] `src/modules/organization/` — membership check, field name, requirePermission ធ្វើរួច; នៅសល់ update mass-assignment, addMember/updateMemberRole ដាក់ role owner បាន, ឈ្មោះ role មិនដូច RBAC
 - [ ] `src/modules/safety/`
 - [ ] `src/modules/communication/gateway/`
 - [ ] `src/modules/communication/protocol/`

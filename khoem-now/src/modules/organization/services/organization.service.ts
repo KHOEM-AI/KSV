@@ -5,6 +5,7 @@
 
 import crypto from 'node:crypto';
 import { organizationRepository } from '../repositories/organization.repository';
+import type { OrgRole } from '../models/organization.model';
 import type {
   CreateOrganizationDto,
   UpdateOrganizationDto,
@@ -13,6 +14,9 @@ import type {
   OrganizationResponseDto,
   MemberResponseDto,
 } from '../dto/organization.dto';
+
+const MANAGE_ROLES: OrgRole[] = ['owner', 'admin'];
+const OWNER_ONLY: OrgRole[] = ['owner'];
 
 export class OrganizationService {
   private toResponse(org: any): OrganizationResponseDto {
@@ -34,6 +38,19 @@ export class OrganizationService {
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  // ផ្ទៀងផ្ទាត់ថា caller ជា member ពិតប្រាកដ (ពី database មិនមែនពី client)
+  private async requireMember(
+    orgId: string,
+    callerId: string,
+    allowed?: OrgRole[]
+  ) {
+    const org = await organizationRepository.findByOrgId(orgId);
+    const member = org?.members.find((m) => m.userId === callerId);
+    if (!org || !member) throw new Error('Organization not found');
+    if (allowed && !allowed.includes(member.role)) throw new Error('Forbidden');
+    return org;
   }
 
   async create(
@@ -65,30 +82,37 @@ export class OrganizationService {
     return orgs.map((o) => this.toResponse(o));
   }
 
-  async getById(orgId: string): Promise<OrganizationResponseDto> {
-    const org = await organizationRepository.findByOrgId(orgId);
-    if (!org) throw new Error('Organization not found');
+  async getById(
+    orgId: string,
+    callerId: string
+  ): Promise<OrganizationResponseDto> {
+    const org = await this.requireMember(orgId, callerId);
     return this.toResponse(org);
   }
 
   async update(
     orgId: string,
+    callerId: string,
     dto: UpdateOrganizationDto
   ): Promise<OrganizationResponseDto> {
+    await this.requireMember(orgId, callerId, MANAGE_ROLES);
     const org = await organizationRepository.update(orgId, dto as any);
     if (!org) throw new Error('Organization not found');
     return this.toResponse(org);
   }
 
-  async delete(orgId: string): Promise<void> {
+  async delete(orgId: string, callerId: string): Promise<void> {
+    await this.requireMember(orgId, callerId, OWNER_ONLY);
     const ok = await organizationRepository.delete(orgId);
     if (!ok) throw new Error('Organization not found');
   }
 
   async addMember(
     orgId: string,
+    callerId: string,
     dto: AddMemberDto
   ): Promise<MemberResponseDto[]> {
+    await this.requireMember(orgId, callerId, MANAGE_ROLES);
     const org = await organizationRepository.addMember(orgId, {
       userId: dto.userId,
       role: dto.role,
@@ -101,16 +125,23 @@ export class OrganizationService {
     }));
   }
 
-  async removeMember(orgId: string, userId: string): Promise<void> {
+  async removeMember(
+    orgId: string,
+    callerId: string,
+    userId: string
+  ): Promise<void> {
+    await this.requireMember(orgId, callerId, MANAGE_ROLES);
     const org = await organizationRepository.removeMember(orgId, userId);
     if (!org) throw new Error('Organization or member not found');
   }
 
   async updateMemberRole(
     orgId: string,
+    callerId: string,
     userId: string,
     dto: UpdateMemberRoleDto
   ): Promise<MemberResponseDto[]> {
+    await this.requireMember(orgId, callerId, MANAGE_ROLES);
     const org = await organizationRepository.updateMemberRole(
       orgId,
       userId,
