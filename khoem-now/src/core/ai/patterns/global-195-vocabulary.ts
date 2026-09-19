@@ -30001,6 +30001,14 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
   "ar:أجل": "affirmation",
   "ar:حسناً": "acknowledgment",
   "ar:حسنا": "acknowledgment",
+  "en:good": "positive_feedback",
+  "en:okay": "acknowledgment",
+  "en:ok": "acknowledgment",
+  "en:sorry": "apology",
+  "en:thank": "gratitude",
+  "en:bad": "negative_feedback",
+  "en:hi": "greeting",
+  "en:problem": "issue_report",
 };
 
 const GENERATED_VOCABULARY: readonly GlobalVocabularyEntry[] = GENERATED_VOCABULARY_ROWS.map(([language, term]) => ({
