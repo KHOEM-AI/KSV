@@ -96,7 +96,10 @@ export class OrganizationService {
     dto: UpdateOrganizationDto
   ): Promise<OrganizationResponseDto> {
     await this.requireMember(orgId, callerId, MANAGE_ROLES);
-    const org = await organizationRepository.update(orgId, dto as any);
+    const allowed: UpdateOrganizationDto = {};
+    if (dto.name !== undefined) allowed.name = dto.name;
+    if (dto.plan !== undefined) allowed.plan = dto.plan;
+    const org = await organizationRepository.update(orgId, allowed as any);
     if (!org) throw new Error('Organization not found');
     return this.toResponse(org);
   }
@@ -113,6 +116,7 @@ export class OrganizationService {
     dto: AddMemberDto
   ): Promise<MemberResponseDto[]> {
     await this.requireMember(orgId, callerId, MANAGE_ROLES);
+    if (dto.role === 'owner') throw new Error('Forbidden');
     const org = await organizationRepository.addMember(orgId, {
       userId: dto.userId,
       role: dto.role,
@@ -142,6 +146,7 @@ export class OrganizationService {
     dto: UpdateMemberRoleDto
   ): Promise<MemberResponseDto[]> {
     await this.requireMember(orgId, callerId, MANAGE_ROLES);
+    if (dto.role === 'owner') throw new Error('Forbidden');
     const org = await organizationRepository.updateMemberRole(
       orgId,
       userId,
