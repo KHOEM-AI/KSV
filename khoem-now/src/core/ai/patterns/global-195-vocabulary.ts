@@ -29996,11 +29996,18 @@ const GENERATED_VOCABULARY_ROWS: readonly GeneratedVocabularyRow[] = [
   ["vi", "mơ"],
 ] as const;
 
+const CATEGORY_OVERRIDES: Record<string, string> = {
+  "ar:نعم": "affirmation",
+  "ar:أجل": "affirmation",
+  "ar:حسناً": "acknowledgment",
+  "ar:حسنا": "acknowledgment",
+};
+
 const GENERATED_VOCABULARY: readonly GlobalVocabularyEntry[] = GENERATED_VOCABULARY_ROWS.map(([language, term]) => ({
   term,
   language,
   countries: getLanguageByCode(language)?.countries ?? [],
-  category: "common",
+  category: CATEGORY_OVERRIDES[`${language}:${term}`] ?? "common",
 }));
 
 export const GLOBAL_195_VOCABULARY_30K: readonly GlobalVocabularyEntry[] = [
