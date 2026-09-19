@@ -18,7 +18,14 @@ import type {
 } from '../dto/identity.dto';
 
 const BCRYPT_ROUNDS = 12;
-const JWT_SECRET = process.env.JWT_ACCESS_SECRET || 'dev-secret-change-me';
+const JWT_SECRET = process.env.JWT_ACCESS_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET is not set. Refusing to start without it.');
+}
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET is not set. Refusing to start without it.');
+}
 const JWT_EXPIRES = '15m';
 const REFRESH_EXPIRES = '30d';
 
@@ -64,14 +71,18 @@ export class IdentityService {
     if (!valid) throw new Error('Invalid credentials');
 
     const accessToken = jwt.sign(
-      { userId: user.userId, email: user.email },
+      {
+        sub: user.userId,
+        role: user.role || 'Viewer',
+        organizationId: user.organizationId,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES }
     );
 
     const refreshToken = jwt.sign(
-      { userId: user.userId, type: 'refresh' },
-      JWT_SECRET,
+      { sub: user.userId, type: 'refresh' },
+      JWT_REFRESH_SECRET,
       { expiresIn: REFRESH_EXPIRES }
     );
 
@@ -92,7 +103,13 @@ export class IdentityService {
     userId: string,
     dto: UpdateIdentityDto
   ): Promise<IdentityResponseDto> {
-    const user = await identityRepository.update(userId, dto as any);
+    const allowed: Partial<UpdateIdentityDto> = {};
+    if (dto.displayName !== undefined) allowed.displayName = dto.displayName;
+    if (dto.phone !== undefined) allowed.phone = dto.phone;
+    if (dto.twoFactorEnabled !== undefined) {
+      allowed.twoFactorEnabled = dto.twoFactorEnabled;
+    }
+    const user = await identityRepository.update(userId, allowed as any);
     if (!user) throw new Error('User not found');
     return this.toResponse(user);
   }

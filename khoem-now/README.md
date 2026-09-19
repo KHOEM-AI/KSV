@@ -28,7 +28,7 @@ KSV កំពុងធ្វើ migration ពី monolith (`src/server.ts`, ក�
 ## 🔲 Module មិនទាន់ audit (ប្រហែលមាន pattern ដូចគ្នា)
 
 - [x] `src/modules/discovery/` — org-scoping + RBAC ធ្វើរួច
-- [~] `src/modules/identity/` — កែ field name bug រួច; នៅសល់ updateProfile mass-assignment, JWT_SECRET fallback, refresh token check
+- [x] `src/modules/identity/` — field name, updateProfile allow-list, JWT secret, token claims (sub/role/organizationId) ធ្វើរួច; នៅសល់៖ requirePermission សម្រាប់ /me និងភ្ជាប់ organizationId ជាមួយ organization module
 - [ ] `src/modules/organization/`
 - [ ] `src/modules/safety/`
 - [ ] `src/modules/communication/gateway/`

@@ -13,6 +13,8 @@ export interface IIdentity extends Document {
   phone?: string;
   displayName: string;
   passwordHash: string;
+  role: string;
+  organizationId?: string;
   status: 'active' | 'suspended' | 'deleted';
   emailVerified: boolean;
   phoneVerified: boolean;
@@ -28,6 +30,8 @@ const IdentitySchema = new Schema<IIdentity>(
     phone: { type: String, unique: true, sparse: true },
     displayName: { type: String, required: true },
     passwordHash: { type: String, required: true },
+    role: { type: String, default: 'Viewer' },
+    organizationId: { type: String, index: true },
     status: {
       type: String,
       enum: ['active', 'suspended', 'deleted'],
