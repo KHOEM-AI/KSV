@@ -8,23 +8,25 @@ import type { DiscoveryListQueryDto } from '../dto/discovery.dto';
 
 export class DiscoveryRepository {
   async findByDiscoveryId(
-    discoveryId: string
+    discoveryId: string,
+    orgId: string
   ): Promise<IDiscovery | null> {
-    return Discovery.findOne({ discoveryId });
+    return Discovery.findOne({ discoveryId, orgId });
   }
 
   async findPendingByDeviceCode(
-    deviceCode: string
+    deviceCode: string,
+    orgId: string
   ): Promise<IDiscovery | null> {
-    return Discovery.findOne({ deviceCode, status: 'pending' });
+    return Discovery.findOne({ deviceCode, orgId, status: 'pending' });
   }
 
   async list(
-    query: DiscoveryListQueryDto
+    query: DiscoveryListQueryDto,
+    orgId: string
   ): Promise<{ items: IDiscovery[]; total: number }> {
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { orgId };
     if (query.status) filter.status = query.status;
-    if (query.orgId) filter.orgId = query.orgId;
 
     const limit = Math.min(query.limit ?? 50, 200);
     const offset = query.offset ?? 0;
@@ -43,17 +45,18 @@ export class DiscoveryRepository {
 
   async updateStatus(
     discoveryId: string,
+    orgId: string,
     status: string
   ): Promise<IDiscovery | null> {
     return Discovery.findOneAndUpdate(
-      { discoveryId },
+      { discoveryId, orgId },
       { $set: { status } },
       { new: true }
     );
   }
 
-  async delete(discoveryId: string): Promise<boolean> {
-    const result = await Discovery.deleteOne({ discoveryId });
+  async delete(discoveryId: string, orgId: string): Promise<boolean> {
+    const result = await Discovery.deleteOne({ discoveryId, orgId });
     return result.deletedCount === 1;
   }
 

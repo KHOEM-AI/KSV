@@ -35,15 +35,18 @@ export class DiscoveryService {
 
   async announce(
     userId: string,
+    orgId: string,
     dto: AnnounceDiscoveryDto
   ): Promise<DiscoveryResponseDto> {
     // បើមាន Pending រួចហើយ → Update ជំនួសបង្កើតថ្មី
     const existing = await discoveryRepository.findPendingByDeviceCode(
-      dto.deviceCode
+      dto.deviceCode,
+      orgId
     );
     if (existing) {
       const updated = await discoveryRepository.updateStatus(
         existing.discoveryId,
+        orgId,
         'pending'
       );
       return this.toResponse(updated);
@@ -65,6 +68,7 @@ export class DiscoveryService {
       signalStrength: dto.signalStrength,
       metadata: dto.metadata,
       discoveredByUserId: userId,
+      orgId,
       status: 'pending',
       expiresAt: new Date(Date.now() + DISCOVERY_TTL_MS),
     });
@@ -73,36 +77,54 @@ export class DiscoveryService {
   }
 
   async list(
+    orgId: string,
     query: DiscoveryListQueryDto
   ): Promise<{ total: number; data: DiscoveryResponseDto[] }> {
-    const { items, total } = await discoveryRepository.list(query);
+    const { items, total } = await discoveryRepository.list(query, orgId);
     return { total, data: items.map((d) => this.toResponse(d)) };
   }
 
-  async getById(discoveryId: string): Promise<DiscoveryResponseDto> {
-    const d = await discoveryRepository.findByDiscoveryId(discoveryId);
+  async getById(
+    discoveryId: string,
+    orgId: string
+  ): Promise<DiscoveryResponseDto> {
+    const d = await discoveryRepository.findByDiscoveryId(discoveryId, orgId);
     if (!d) throw new Error('Discovery not found');
     return this.toResponse(d);
   }
 
-  async ignore(discoveryId: string): Promise<DiscoveryResponseDto> {
-    const d = await discoveryRepository.updateStatus(discoveryId, 'ignored');
+  async ignore(
+    discoveryId: string,
+    orgId: string
+  ): Promise<DiscoveryResponseDto> {
+    const d = await discoveryRepository.updateStatus(
+      discoveryId,
+      orgId,
+      'ignored'
+    );
     if (!d) throw new Error('Discovery not found');
     return this.toResponse(d);
   }
 
-  async block(discoveryId: string): Promise<DiscoveryResponseDto> {
-    const d = await discoveryRepository.updateStatus(discoveryId, 'blocked');
+  async block(
+    discoveryId: string,
+    orgId: string
+  ): Promise<DiscoveryResponseDto> {
+    const d = await discoveryRepository.updateStatus(
+      discoveryId,
+      orgId,
+      'blocked'
+    );
     if (!d) throw new Error('Discovery not found');
     return this.toResponse(d);
   }
 
-  async markAsPaired(discoveryId: string): Promise<void> {
-    await discoveryRepository.updateStatus(discoveryId, 'paired');
+  async markAsPaired(discoveryId: string, orgId: string): Promise<void> {
+    await discoveryRepository.updateStatus(discoveryId, orgId, 'paired');
   }
 
-  async remove(discoveryId: string): Promise<void> {
-    const ok = await discoveryRepository.delete(discoveryId);
+  async remove(discoveryId: string, orgId: string): Promise<void> {
+    const ok = await discoveryRepository.delete(discoveryId, orgId);
     if (!ok) throw new Error('Discovery not found');
   }
 

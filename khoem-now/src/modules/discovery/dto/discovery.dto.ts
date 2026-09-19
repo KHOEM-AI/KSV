@@ -40,7 +40,6 @@ export interface DiscoveryResponseDto {
 
 export interface DiscoveryListQueryDto {
   status?: DiscoveryStatus;
-  orgId?: string;
   limit?: number;
   offset?: number;
 }
