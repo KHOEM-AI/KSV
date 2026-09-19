@@ -39,7 +39,12 @@ export class GatewayService {
     const gateway = await gatewayRepository.create({
       gatewayId,
       orgId,
-      ...dto,
+      name: dto.name,
+      kind: dto.kind,
+      site: dto.site,
+      ipAddress: dto.ipAddress,
+      port: dto.port,
+      firmwareVersion: dto.firmwareVersion,
     });
 
     return this.toResponse(gateway);
@@ -50,27 +55,44 @@ export class GatewayService {
     return list.map((g) => this.toResponse(g));
   }
 
-  async getById(gatewayId: string): Promise<GatewayResponseDto> {
-    const g = await gatewayRepository.findByGatewayId(gatewayId);
+  async getById(
+    gatewayId: string,
+    orgId: string
+  ): Promise<GatewayResponseDto> {
+    const g = await gatewayRepository.findByGatewayId(gatewayId, orgId);
     if (!g) throw new Error('Gateway not found');
     return this.toResponse(g);
   }
 
   async update(
     gatewayId: string,
+    orgId: string,
     dto: UpdateGatewayDto
   ): Promise<GatewayResponseDto> {
-    const g = await gatewayRepository.update(gatewayId, dto as any);
+    const allowed: UpdateGatewayDto = {};
+    const keys = [
+      'name',
+      'status',
+      'site',
+      'ipAddress',
+      'port',
+      'firmwareVersion',
+    ] as const;
+    for (const k of keys) {
+      if (dto[k] !== undefined) (allowed as any)[k] = dto[k];
+    }
+    const g = await gatewayRepository.update(gatewayId, orgId, allowed as any);
     if (!g) throw new Error('Gateway not found');
     return this.toResponse(g);
   }
 
-  async heartbeat(gatewayId: string): Promise<void> {
-    await gatewayRepository.heartbeat(gatewayId);
+  async heartbeat(gatewayId: string, orgId: string): Promise<void> {
+    const g = await gatewayRepository.heartbeat(gatewayId, orgId);
+    if (!g) throw new Error('Gateway not found');
   }
 
-  async delete(gatewayId: string): Promise<void> {
-    const ok = await gatewayRepository.delete(gatewayId);
+  async delete(gatewayId: string, orgId: string): Promise<void> {
+    const ok = await gatewayRepository.delete(gatewayId, orgId);
     if (!ok) throw new Error('Gateway not found');
   }
 }

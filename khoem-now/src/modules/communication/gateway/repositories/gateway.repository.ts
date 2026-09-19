@@ -5,8 +5,11 @@
 import { Gateway, type IGateway } from '../models/gateway.model';
 
 export class GatewayRepository {
-  async findByGatewayId(gatewayId: string): Promise<IGateway | null> {
-    return Gateway.findOne({ gatewayId });
+  async findByGatewayId(
+    gatewayId: string,
+    orgId: string
+  ): Promise<IGateway | null> {
+    return Gateway.findOne({ gatewayId, orgId });
   }
 
   async listByOrg(orgId: string): Promise<IGateway[]> {
@@ -19,25 +22,29 @@ export class GatewayRepository {
 
   async update(
     gatewayId: string,
+    orgId: string,
     data: Partial<IGateway>
   ): Promise<IGateway | null> {
     return Gateway.findOneAndUpdate(
-      { gatewayId },
+      { gatewayId, orgId },
       { $set: data },
       { new: true }
     );
   }
 
-  async heartbeat(gatewayId: string): Promise<IGateway | null> {
+  async heartbeat(
+    gatewayId: string,
+    orgId: string
+  ): Promise<IGateway | null> {
     return Gateway.findOneAndUpdate(
-      { gatewayId },
+      { gatewayId, orgId },
       { $set: { status: 'online', lastHeartbeatAt: new Date() } },
       { new: true }
     );
   }
 
-  async delete(gatewayId: string): Promise<boolean> {
-    const result = await Gateway.deleteOne({ gatewayId });
+  async delete(gatewayId: string, orgId: string): Promise<boolean> {
+    const result = await Gateway.deleteOne({ gatewayId, orgId });
     return result.deletedCount === 1;
   }
 }

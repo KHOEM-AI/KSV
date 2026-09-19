@@ -8,8 +8,10 @@ import { gatewayService } from '../services/gateway.service';
 export class GatewayController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = (req as any).user?.orgId || req.body.orgId;
-      const result = await gatewayService.create(orgId, req.body);
+      const result = await gatewayService.create(
+        req.user!.organizationId,
+        req.body
+      );
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -18,8 +20,7 @@ export class GatewayController {
 
   async listMine(req: Request, res: Response, next: NextFunction) {
     try {
-      const orgId = (req as any).user?.orgId;
-      const result = await gatewayService.listByOrg(orgId);
+      const result = await gatewayService.listByOrg(req.user!.organizationId);
       res.json({ total: result.length, data: result });
     } catch (err) {
       next(err);
@@ -28,7 +29,10 @@ export class GatewayController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await gatewayService.getById(req.params.gatewayId);
+      const result = await gatewayService.getById(
+        req.params.gatewayId,
+        req.user!.organizationId
+      );
       res.json(result);
     } catch (err) {
       next(err);
@@ -39,6 +43,7 @@ export class GatewayController {
     try {
       const result = await gatewayService.update(
         req.params.gatewayId,
+        req.user!.organizationId,
         req.body
       );
       res.json(result);
@@ -49,7 +54,10 @@ export class GatewayController {
 
   async heartbeat(req: Request, res: Response, next: NextFunction) {
     try {
-      await gatewayService.heartbeat(req.params.gatewayId);
+      await gatewayService.heartbeat(
+        req.params.gatewayId,
+        req.user!.organizationId
+      );
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -58,7 +66,10 @@ export class GatewayController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      await gatewayService.delete(req.params.gatewayId);
+      await gatewayService.delete(
+        req.params.gatewayId,
+        req.user!.organizationId
+      );
       res.status(204).send();
     } catch (err) {
       next(err);
