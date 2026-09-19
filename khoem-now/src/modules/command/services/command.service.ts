@@ -63,19 +63,23 @@ export class CommandService {
   }
 
   async list(
+    orgId: string,
     query: CommandListQueryDto
   ): Promise<{ total: number; data: CommandResponseDto[] }> {
-    const { items, total } = await commandRepository.list(query);
+    // orgId always comes from the authenticated user, never from the
+    // client-supplied query — a client-supplied orgId here would let a
+    // user read another organization's commands.
+    const { items, total } = await commandRepository.list({ ...query, orgId });
     return { total, data: items.map((c) => this.toResponse(c)) };
   }
 
-  async listRecent(limit = 10): Promise<CommandResponseDto[]> {
-    const items = await commandRepository.listRecent(limit);
+  async listRecent(orgId: string, limit = 10): Promise<CommandResponseDto[]> {
+    const items = await commandRepository.listRecent(orgId, limit);
     return items.map((c) => this.toResponse(c));
   }
 
-  async getById(commandId: string): Promise<CommandResponseDto> {
-    const c = await commandRepository.findByCommandId(commandId);
+  async getById(commandId: string, orgId: string): Promise<CommandResponseDto> {
+    const c = await commandRepository.findByCommandId(commandId, orgId);
     if (!c) throw new Error('Command not found');
     return this.toResponse(c);
   }

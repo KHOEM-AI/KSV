@@ -8,9 +8,10 @@ import type { CommandListQueryDto } from '../dto/command.dto';
 
 export class CommandRepository {
   async findByCommandId(
-    commandId: string
+    commandId: string,
+    orgId: string
   ): Promise<ICommand | null> {
-    return Command.findOne({ commandId });
+    return Command.findOne({ commandId, orgId });
   }
 
   async list(
@@ -33,8 +34,8 @@ export class CommandRepository {
     return { items, total };
   }
 
-  async listRecent(limit = 10): Promise<ICommand[]> {
-    return Command.find().sort({ createdAt: -1 }).limit(limit);
+  async listRecent(orgId: string, limit = 10): Promise<ICommand[]> {
+    return Command.find({ orgId }).sort({ createdAt: -1 }).limit(limit);
   }
 
   async create(data: Partial<ICommand>): Promise<ICommand> {
