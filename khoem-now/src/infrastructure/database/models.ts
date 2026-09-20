@@ -29,6 +29,10 @@ const userSchema = new Schema(
     lastName: String,
     isActive: { type: Boolean, default: true },
     mfaEnabled: { type: Boolean, default: false },
+    mfaMethod: { type: String, enum: ["totp", "sms_otp", "email_otp", "hardware_key"], default: null },
+    mfaSecret: { type: String, default: null },
+    mfaPhoneNumber: String,
+    mfaEmail: String,
     lastLoginAt: Date,
     organizationId: { type: ObjectId, ref: "Organization" },
   },
@@ -704,3 +708,22 @@ permissionSchema.index({
 
 export const Permission =
   models.Permission || model("Permission", permissionSchema);
+
+// ============================================================
+// MFA CHALLENGE (login-time OTP/TOTP verification)
+// ============================================================
+
+const mfaChallengeSchema = new Schema(
+  {
+    userId: { type: ObjectId, ref: "User", required: true },
+    method: { type: String, required: true },
+    codeHash: String, // for sms_otp / email_otp only — TOTP needs no stored code
+    expiresAt: { type: Date, required: true },
+    attemptsRemaining: { type: Number, default: 5 },
+    consumedAt: Date,
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+export const MFAChallenge =
+  models.MFAChallenge || model("MFAChallenge", mfaChallengeSchema);

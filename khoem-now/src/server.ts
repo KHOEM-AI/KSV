@@ -12,7 +12,7 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
-import { User, Session } from "./infrastructure/database/models.ts";
+import { User, Session, MFAChallenge } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
@@ -25,6 +25,7 @@ import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import * as otplib from "otplib";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { GLOBAL_195_VOCABULARY_30K as GLOBAL_195_VOCABULARY } from "./core/ai/patterns/global-195-vocabulary.ts";
@@ -32,6 +33,15 @@ import { guardRespectfulResponse } from "./core/ai/khoem-ai-conduct.ts";
 
 function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function maskDestination(value?: string): string | undefined {
+  if (!value) return undefined;
+  if (value.includes("@")) {
+    const [name, domain] = value.split("@");
+    return `${name.slice(0, 1)}***@${domain}`;
+  }
+  return `***${value.slice(-3)}`;
 }
 
 
@@ -694,6 +704,31 @@ async function main() {
         return;
       }
 
+      if (user.mfaEnabled) {
+        const challenge = await MFAChallenge.create({
+          userId: user._id,
+          method: user.mfaMethod || "totp",
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        });
+
+        res.json({
+          result: "mfa_required",
+          mfaChallenge: {
+            challengeId: String(challenge._id),
+            method: challenge.method,
+            expiresAt: challenge.expiresAt.toISOString(),
+            maskedDestination:
+              user.mfaMethod === "sms_otp"
+                ? maskDestination(user.mfaPhoneNumber)
+                : user.mfaMethod === "email_otp"
+                ? maskDestination(user.mfaEmail)
+                : undefined,
+          },
+          message: "MFA verification required.",
+        });
+        return;
+      }
+
       const now = new Date();
 
       const accessToken = jwt.sign(
@@ -788,6 +823,253 @@ async function main() {
         result: "failed",
         message: "Login failed due to a server error.",
       });
+    }
+  });
+
+  // POST /api/auth/mfa/enroll
+  app.post("/api/auth/mfa/enroll", authenticate, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { method, phoneNumber, email } = req.body ?? {};
+
+      if (!method) {
+        res.status(400).json({ success: false, message: "method is required." });
+        return;
+      }
+
+      const dbUser = await User.findById(user.id);
+      if (!dbUser) {
+        res.status(404).json({ success: false, message: "User not found." });
+        return;
+      }
+
+      let totpSecret: string | undefined;
+
+      if (method === "totp") {
+        totpSecret = otplib.generateSecret();
+        dbUser.mfaSecret = totpSecret;
+      } else if (method === "sms_otp") {
+        if (!phoneNumber) {
+          res.status(400).json({ success: false, message: "phoneNumber is required for sms_otp." });
+          return;
+        }
+        dbUser.mfaPhoneNumber = phoneNumber;
+      } else if (method === "email_otp") {
+        if (!email) {
+          res.status(400).json({ success: false, message: "email is required for email_otp." });
+          return;
+        }
+        dbUser.mfaEmail = email;
+      }
+
+      dbUser.mfaMethod = method;
+      // mfaEnabled stays false until enroll/confirm succeeds
+      await dbUser.save();
+
+      res.json({
+        success: true,
+        method,
+        totpSecret: method === "totp" ? totpSecret : undefined,
+        confirmationRequired: true,
+        message: "Enrollment started. Confirm with a verification code to activate.",
+      });
+    } catch (err) {
+      console.error("[AUTH] MFA enroll failed:", err);
+      res.status(500).json({ success: false, message: "MFA enroll failed due to a server error." });
+    }
+  });
+
+  // POST /api/auth/mfa/enroll/confirm
+  app.post("/api/auth/mfa/enroll/confirm", authenticate, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { method, verificationCode } = req.body ?? {};
+
+      if (!method || !verificationCode) {
+        res.status(400).json({ success: false, message: "method and verificationCode are required." });
+        return;
+      }
+
+      const dbUser = await User.findById(user.id);
+      if (!dbUser || dbUser.mfaMethod !== method) {
+        res.status(400).json({ success: false, message: "No matching pending enrollment found." });
+        return;
+      }
+
+      if (method === "totp") {
+        if (!dbUser.mfaSecret) {
+          res.status(400).json({ success: false, message: "No TOTP secret on file." });
+          return;
+        }
+        const result = await otplib.verify({ secret: dbUser.mfaSecret, token: verificationCode, strategy: "totp" });
+        if (!result.valid) {
+          res.status(401).json({ success: false, message: "Invalid verification code." });
+          return;
+        }
+      }
+      // sms_otp / email_otp confirmation would check a sent code here (not wired to an SMS/email provider yet)
+
+      dbUser.mfaEnabled = true;
+      await dbUser.save();
+
+      res.json({ success: true, message: "MFA enabled successfully." });
+    } catch (err) {
+      console.error("[AUTH] MFA enroll confirm failed:", err);
+      res.status(500).json({ success: false, message: "MFA confirmation failed due to a server error." });
+    }
+  });
+
+  // POST /api/auth/mfa/disable
+  app.post("/api/auth/mfa/disable", authenticate, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { method, confirmCode } = req.body ?? {};
+
+      const dbUser = await User.findById(user.id);
+      if (!dbUser || !dbUser.mfaEnabled) {
+        res.status(400).json({ success: false, message: "MFA is not currently enabled." });
+        return;
+      }
+
+      if (dbUser.mfaMethod === "totp") {
+        if (!dbUser.mfaSecret) {
+          res.status(400).json({ success: false, message: "No TOTP secret on file." });
+          return;
+        }
+        const result = await otplib.verify({ secret: dbUser.mfaSecret, token: confirmCode, strategy: "totp" });
+        if (!result.valid) {
+          res.status(401).json({ success: false, message: "Invalid confirmation code." });
+          return;
+        }
+      }
+
+      dbUser.mfaEnabled = false;
+      dbUser.mfaMethod = null;
+      dbUser.mfaSecret = null;
+      await dbUser.save();
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[AUTH] MFA disable failed:", err);
+      res.status(500).json({ success: false, message: "MFA disable failed due to a server error." });
+    }
+  });
+
+  // POST /api/auth/mfa/verify  (called after login returns mfa_required)
+  app.post("/api/auth/mfa/verify", authRateLimiter, async (req, res) => {
+    try {
+      const { challengeId, code } = req.body ?? {};
+
+      if (!challengeId || !code) {
+        res.status(400).json({ success: false, message: "challengeId and code are required." });
+        return;
+      }
+
+      const challenge = await MFAChallenge.findById(challengeId);
+      if (!challenge || challenge.consumedAt || challenge.expiresAt < new Date()) {
+        res.status(401).json({ success: false, message: "Challenge is invalid or expired." });
+        return;
+      }
+
+      if (challenge.attemptsRemaining <= 0) {
+        res.status(401).json({ success: false, message: "No attempts remaining." });
+        return;
+      }
+
+      const dbUser = await User.findById(challenge.userId);
+      if (!dbUser) {
+        res.status(401).json({ success: false, message: "User not found." });
+        return;
+      }
+
+      let valid = false;
+      if (challenge.method === "totp") {
+        if (dbUser.mfaSecret) {
+          const result = await otplib.verify({ secret: dbUser.mfaSecret, token: code, strategy: "totp" });
+          valid = result.valid;
+        }
+      }
+      // sms_otp / email_otp would compare against challenge.codeHash here
+
+      if (!valid) {
+        challenge.attemptsRemaining -= 1;
+        await challenge.save();
+        res.status(401).json({
+          success: false,
+          attemptsRemaining: challenge.attemptsRemaining,
+          message: "Invalid code.",
+        });
+        return;
+      }
+
+      challenge.consumedAt = new Date();
+      await challenge.save();
+
+      const now = new Date();
+      const accessToken = jwt.sign(
+        {
+          sub: String(dbUser._id),
+          role: dbUser.role,
+          organizationId: dbUser.organizationId ? String(dbUser.organizationId) : undefined,
+        },
+        process.env.JWT_ACCESS_SECRET as string,
+        { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m") as jwt.SignOptions["expiresIn"] }
+      );
+      const refreshToken = jwt.sign(
+        { sub: String(dbUser._id), type: "refresh" },
+        process.env.JWT_REFRESH_SECRET as string,
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"] }
+      );
+
+      const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+      const match = refreshExpiresIn.match(/^(\d+)([smhd])$/);
+      if (!match) {
+        throw new Error("Invalid JWT_REFRESH_EXPIRES_IN format. Use values such as 7d, 24h, 60m.");
+      }
+      const amount = Number(match[1]);
+      const unit = match[2];
+      const millisecondsPerUnit: Record<string, number> = {
+        s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000,
+      };
+      const expiresAt = new Date(now.getTime() + amount * millisecondsPerUnit[unit]);
+
+      const session = await Session.create({
+        userId: dbUser._id,
+        refreshToken: hashRefreshToken(refreshToken),
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        expiresAt,
+      });
+
+      dbUser.lastLoginAt = now;
+      await dbUser.save();
+
+      res.json({
+        success: true,
+        session: {
+          sessionId: String(session._id),
+          accountId: String(dbUser._id),
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+          createdAt: session.createdAt ? new Date(session.createdAt).toISOString() : now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+          lastActivityAt: now.toISOString(),
+          status: "active",
+          mfaVerified: true,
+          loginMethod: "password",
+          countryCode: undefined,
+        },
+        token: {
+          accessToken,
+          refreshToken,
+          expiresIn: 15 * 60,
+          tokenType: "Bearer",
+        },
+        message: "MFA verified. Login successful.",
+      });
+    } catch (err) {
+      console.error("[AUTH] MFA verify failed:", err);
+      res.status(500).json({ success: false, message: "MFA verification failed due to a server error." });
     }
   });
 
