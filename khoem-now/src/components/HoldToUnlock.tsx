@@ -14,7 +14,7 @@ const GRADIENT =
 export default function HoldToUnlock({
   durationMs = 30000,
   label = "Hold to unlock",
-  doneLabel = "បានដោះសោ ✓",
+  doneLabel = "Unlocked ✓",
   disabled = false,
   onComplete,
 }: Props) {
@@ -162,7 +162,7 @@ export default function HoldToUnlock({
           <span>{doneLabel}</span>
         ) : holding ? (
           <span>
-            {pct}% · នៅសល់ {secondsLeft} វិនាទី
+            {pct}% · {secondsLeft}s left
           </span>
         ) : (
           <span>🔒 {label}</span>
