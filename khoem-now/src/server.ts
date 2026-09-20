@@ -1339,7 +1339,12 @@ async function main() {
         return;
       }
       try {
-        const { name, deviceCode, type, status, siteId, gatewayId, firmwareVersion } = req.body || {};
+        const { name, deviceCode, type, status, siteId, gatewayId, firmwareVersion, criticality } = req.body || {};
+        const CRITICALITY_LEVELS = ["life_support", "clinical", "robot_mobile", "facility", "consumer"];
+        if (criticality !== undefined && !CRITICALITY_LEVELS.includes(criticality)) {
+          res.status(400).json({ error: "BAD_REQUEST", message: `criticality must be one of: ${CRITICALITY_LEVELS.join(", ")}.` });
+          return;
+        }
         if (!name || !deviceCode || !type) {
           res.status(400).json({ error: "BAD_REQUEST", message: "name, deviceCode and type are required." });
           return;
@@ -1358,6 +1363,7 @@ async function main() {
           siteId,
           gatewayId,
           firmwareVersion,
+          criticality: criticality ?? "facility",
         });
         res.status(201).json({ device: device.toObject() });
       } catch {

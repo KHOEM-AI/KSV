@@ -42,6 +42,7 @@ export interface SafetyCheckResult {
 export interface CommandContext {
   deviceId: string;
   deviceType: string; // "door" | "vehicle" | "industrial" | ...
+  criticality?: string; // life_support | clinical | robot_mobile | facility | consumer
   organizationId: string;
   commandType: string; // "UNLOCK", "IMMOBILIZE", "SPEED_LIMIT", ...
   isCompanyFleet?: boolean; // true = company-owned vehicle/asset, subject to business-hours rules
@@ -318,6 +319,9 @@ const RULE_EVALUATORS: Record<string, RuleEvaluator> = {
 export async function evaluateSafety(
   ctx: CommandContext
 ): Promise<SafetyCheckResult> {
+  const criticalBlock = await evaluateCriticality(ctx);
+  if (criticalBlock) return criticalBlock;
+
   let rules;
   try {
     rules = await SafetyRule.find({
@@ -398,10 +402,43 @@ export async function evaluateSafetyForDevice(
   return evaluateSafety({
     deviceId,
     deviceType: device.type,
+    criticality: (device as { criticality?: string }).criticality,
     organizationId,
     commandType,
     isCompanyFleet: Boolean((device as { isCompanyFleet?: boolean }).isCompanyFleet),
     payload: options?.payload,
     signals: options?.signals,
   });
+}
+
+
+// ============================================================
+// Criticality policy (runs BEFORE DB rules — cannot be disabled)
+// ============================================================
+// life_support devices (ventilators, oxygen systems, infusion pumps...) are
+// READ-ONLY inside KSV: monitoring + alarms only. Remote control of these
+// devices must never go through the generic command path.
+const KNOWN_CRITICALITY = ["life_support", "clinical", "robot_mobile", "facility", "consumer"];
+const LIFE_SUPPORT_READ_ONLY = ["READ_STATUS", "GET_STATUS", "READ_TELEMETRY", "PING"];
+
+async function evaluateCriticality(ctx: CommandContext): Promise<SafetyCheckResult | null> {
+  const level = ctx.criticality ?? "facility";
+  let reason: string | null = null;
+  if (!KNOWN_CRITICALITY.includes(level)) {
+    reason = `Unknown device criticality "${level}" — command blocked as a precaution.`;
+  } else if (level === "life_support" && !LIFE_SUPPORT_READ_ONLY.includes(String(ctx.commandType).toUpperCase())) {
+    reason = "Life-support devices are read-only in KSV. Remote control commands are blocked.";
+  }
+  if (!reason) return null;
+  try {
+    await SafetyLog.create({
+      deviceId: ctx.deviceId,
+      eventType: `SAFETY_BLOCKED:${ctx.commandType}`,
+      severity: "critical",
+      message: reason,
+    });
+  } catch (err) {
+    console.error("[SAFETY] Failed to write criticality log", err);
+  }
+  return { decision: "BLOCKED", reason, ruleName: "criticality_policy" };
 }
