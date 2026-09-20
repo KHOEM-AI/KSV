@@ -396,6 +396,28 @@ const roomSchema = new Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 export const Room = models.Room || model("Room", roomSchema);
+const pairingSessionSchema = new Schema(
+  {
+    discoveryId: { type: ObjectId, ref: "Discovery", required: true },
+    deviceId: { type: ObjectId, ref: "Device", required: true },
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    requestedBy: { type: ObjectId, ref: "User", required: true },
+    method: { type: String, required: true }, // device_code | qr | pin | manufacturer_credential | certificate
+    proofHash: { type: String, required: true }, // SHA-256 only — raw proof is never stored
+    status: { type: String, default: "owner_verification_pending" },
+    attempts: { type: Number, default: 0 },
+    ownerVerifiedBy: { type: ObjectId, ref: "User" },
+    ownerVerifiedAt: Date,
+    pairedAt: Date,
+    revokedAt: Date,
+    revokeReason: String,
+    expiresAt: { type: Date, required: true },
+  },
+  { timestamps: true }
+);
+export const PairingSession =
+  models.PairingSession || model("PairingSession", pairingSessionSchema);
+
 export const Device = models.Device || model("Device", deviceSchema);
 export const Discovery = models.Discovery || model("Discovery", discoverySchema);
 export const Command = models.Command || model("Command", commandSchema);

@@ -12,7 +12,7 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
-import { User, Session, MFAChallenge } from "./infrastructure/database/models.ts";
+import { User, Session, MFAChallenge, PairingSession } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
@@ -2975,6 +2975,264 @@ app.get(
       }
     }
   );
+
+  // ============================================================
+  // PAIRING  (Discovery → Owner verified → Permission → Ready)
+  // ============================================================
+  const PAIRING_TTL_MS = 10 * 60 * 1000;
+  const PAIRING_MAX_ATTEMPTS = 5;
+  const PAIRING_METHODS = ["device_code", "qr", "pin", "manufacturer_credential", "certificate"];
+  const hashProof = (p: string) => crypto.createHash("sha256").update(p).digest("hex");
+  const proofMatches = (p: string, storedHash: string) => {
+    const a = Buffer.from(hashProof(p), "hex");
+    const b = Buffer.from(storedHash, "hex");
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  };
+  const pairView = (doc: any) => {
+    const o: any = typeof doc.toObject === "function" ? doc.toObject() : { ...doc };
+    delete o.proofHash;
+    return o;
+  };
+  const pairAudit = async (user: any, action: string, result: string, deviceId?: unknown, reason?: string) => {
+    try {
+      await AuditLog.create({ userId: user.id, organizationId: user.organizationId, deviceId, action, result, reason });
+    } catch (err) {
+      console.error("[pairing] audit write failed", err);
+    }
+  };
+
+  // POST /api/pairing/sessions — start pairing for a discovered device
+  app.post("/api/pairing/sessions", authenticate, requirePermission("device:pair"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    const { discoveryId, method, proof } = req.body ?? {};
+    if (
+      !mongoose.isValidObjectId(discoveryId) ||
+      typeof method !== "string" || !PAIRING_METHODS.includes(method) ||
+      typeof proof !== "string" || proof.length < 1 || proof.length > 256
+    ) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "discoveryId, method and proof are required." });
+      return;
+    }
+    try {
+      const discovery = await Discovery.findById(discoveryId).lean();
+      const device = discovery
+        ? await Device.findOne({ _id: discovery.deviceId, organizationId: user.organizationId }).lean()
+        : null;
+      if (!discovery || !device) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Discovered device not found." });
+        return;
+      }
+      const existing = await PairingSession.findOne({
+        deviceId: device._id,
+        revokedAt: null,
+        $or: [
+          { status: "ready" },
+          { status: { $in: ["owner_verification_pending", "permission_pending"] }, expiresAt: { $gt: new Date() } },
+        ],
+      }).lean();
+      if (existing) {
+        res.status(409).json({ error: "CONFLICT", message: "Device already paired or has an active pairing session." });
+        return;
+      }
+      const session = await PairingSession.create({
+        discoveryId: discovery._id,
+        deviceId: device._id,
+        organizationId: user.organizationId,
+        requestedBy: user.id,
+        method,
+        proofHash: hashProof(proof),
+        expiresAt: new Date(Date.now() + PAIRING_TTL_MS),
+      });
+      await pairAudit(user, "pairing:start", "SUCCESS", device._id, method);
+      res.status(201).json(pairView(session));
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to start pairing." });
+    }
+  });
+
+  // GET /api/pairing/sessions/:id
+  app.get("/api/pairing/sessions/:id", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid session id." });
+      return;
+    }
+    try {
+      const session = await PairingSession.findOne({ _id: id, organizationId: user.organizationId }).select("-proofHash").lean();
+      if (!session) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Pairing session not found." });
+        return;
+      }
+      res.json(session);
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load pairing session." });
+    }
+  });
+
+  // POST /api/pairing/sessions/:id/verify-owner — owner approves with proof
+  app.post("/api/pairing/sessions/:id/verify-owner", authenticate, requirePermission("device:manage"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    const { proof } = req.body ?? {};
+    if (!mongoose.isValidObjectId(id) || typeof proof !== "string" || proof.length < 1 || proof.length > 256) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Valid session id and proof are required." });
+      return;
+    }
+    try {
+      const session = await PairingSession.findOne({ _id: id, organizationId: user.organizationId });
+      if (!session) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Pairing session not found." });
+        return;
+      }
+      if (session.status !== "owner_verification_pending") {
+        res.status(409).json({ error: "CONFLICT", message: "Session is not awaiting owner verification." });
+        return;
+      }
+      if (session.expiresAt.getTime() < Date.now()) {
+        session.status = "expired";
+        await session.save();
+        res.status(410).json({ error: "EXPIRED", message: "Pairing session expired." });
+        return;
+      }
+      if (session.attempts >= PAIRING_MAX_ATTEMPTS) {
+        session.status = "failed";
+        await session.save();
+        await pairAudit(user, "pairing:verify-owner", "BLOCKED", session.deviceId, "too_many_attempts");
+        res.status(429).json({ error: "TOO_MANY_ATTEMPTS", message: "Too many attempts. Start a new session." });
+        return;
+      }
+      if (!proofMatches(proof, session.proofHash)) {
+        session.attempts += 1;
+        await session.save();
+        await pairAudit(user, "pairing:verify-owner", "FAILURE", session.deviceId, "proof_mismatch");
+        res.status(401).json({ error: "PROOF_INVALID", message: "Proof does not match." });
+        return;
+      }
+      session.status = "permission_pending";
+      session.ownerVerifiedBy = user.id;
+      session.ownerVerifiedAt = new Date();
+      await session.save();
+      await pairAudit(user, "pairing:verify-owner", "SUCCESS", session.deviceId);
+      res.json(pairView(session));
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to verify owner." });
+    }
+  });
+
+  // POST /api/pairing/sessions/:id/confirm — finalize pairing
+  app.post("/api/pairing/sessions/:id/confirm", authenticate, requirePermission("device:manage"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid session id." });
+      return;
+    }
+    try {
+      const session = await PairingSession.findOne({ _id: id, organizationId: user.organizationId });
+      if (!session) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Pairing session not found." });
+        return;
+      }
+      if (session.status !== "permission_pending") {
+        res.status(409).json({ error: "CONFLICT", message: "Owner must be verified before confirming." });
+        return;
+      }
+      if (session.expiresAt.getTime() < Date.now()) {
+        session.status = "expired";
+        await session.save();
+        res.status(410).json({ error: "EXPIRED", message: "Pairing session expired." });
+        return;
+      }
+      session.status = "ready";
+      session.pairedAt = new Date();
+      await session.save();
+      await pairAudit(user, "pairing:confirm", "SUCCESS", session.deviceId, session.method);
+      res.json(pairView(session));
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to confirm pairing." });
+    }
+  });
+
+  // DELETE /api/pairing/sessions/:id — cancel an unfinished session
+  app.delete("/api/pairing/sessions/:id", authenticate, requirePermission("device:pair"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid session id." });
+      return;
+    }
+    try {
+      const session = await PairingSession.findOne({ _id: id, organizationId: user.organizationId });
+      if (!session) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Pairing session not found." });
+        return;
+      }
+      if (session.status === "ready") {
+        res.status(409).json({ error: "CONFLICT", message: "Already paired. Use unpair instead." });
+        return;
+      }
+      session.status = "failed";
+      await session.save();
+      await pairAudit(user, "pairing:cancel", "SUCCESS", session.deviceId);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to cancel pairing." });
+    }
+  });
+
+  // GET /api/pairing/devices — currently paired devices
+  app.get("/api/pairing/devices", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    try {
+      const paired = await PairingSession.find({
+        organizationId: user.organizationId,
+        status: "ready",
+        revokedAt: null,
+      })
+        .select("-proofHash")
+        .sort({ pairedAt: -1 })
+        .limit(200)
+        .lean();
+      res.json({ devices: paired, total: paired.length });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to list paired devices." });
+    }
+  });
+
+  // POST /api/pairing/devices/:deviceId/unpair
+  app.post("/api/pairing/devices/:deviceId/unpair", authenticate, requirePermission("device:manage"), async (req, res) => {
+    const user = req.user!;
+    const deviceId = String(req.params.deviceId);
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.slice(0, 200) : undefined;
+    if (!mongoose.isValidObjectId(deviceId)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid device id." });
+      return;
+    }
+    try {
+      const session = await PairingSession.findOne({
+        deviceId,
+        organizationId: user.organizationId,
+        status: "ready",
+        revokedAt: null,
+      });
+      if (!session) {
+        res.status(404).json({ error: "NOT_FOUND", message: "No active pairing for this device." });
+        return;
+      }
+      session.revokedAt = new Date();
+      session.revokeReason = reason;
+      await session.save();
+      await pairAudit(user, "pairing:unpair", "SUCCESS", session.deviceId, reason);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to unpair device." });
+    }
+  });
 
   // GET /api/international/languages — list all supported languages
   app.get(
