@@ -151,3 +151,85 @@ The Safety Engine evaluates it **before** any database rule, so it cannot be dis
 - Domains still missing on the server: recovery, admin, telemetry, push, files, reports, webhooks, geo, tickets
 - `KhoemAIPanel.tsx` calls `/api/v1/ai-brain/recent-decisions`, which is not implemented server-side
 - Healthcare / robotics integrations (see `DOCUMENTATION/healthcare-robotics.md`)
+
+
+## Lock & Sign-in System — 2026-09-20 (English)
+
+Scope: every lock, password and sign-in step in the web app (khoem-now). Read-only inspection; only what was actually read is listed as verified. Technical audit with findings: `DOCUMENTATION/auth-and-locks-audit.md`.
+
+### 1. Order of screens (src/App.tsx)
+1. Not signed in (no `ksv_access_token` in localStorage): Login screen. From there the user can switch to Register.
+2. Register: pick one of the 9 sign-up buttons (see section 6), then fill the Register form.
+3. Signed in: **AppLockScreen** (hold to unlock) -> **LocationGate** -> **FinalLockScreen** (face scan or pattern) -> the app.
+
+The three lock states are plain React state and start as "locked", so every page load or refresh shows all three locks again. The token in localStorage is kept.
+
+### 2. Lock 1 - Hold to unlock (highest priority)
+- What the user sees: title "KSV Secured", the text "Hold the button to confirm you're a human before entering the platform.", and a big button "Hold to unlock".
+- How to use: press and hold the button until the bar fills (default 10 seconds, `holdMs` in AppLockScreen). While holding it shows "{percent}% · {seconds}s left". Releasing early resets the progress to 0. Keyboard: hold Space or Enter. When complete it shows "Unlocked ✓" and continues.
+- Where it is used: AppLockScreen (10 s) and the Change Password card in Settings (10 s, dark 3D style, hint "Hold for 10 seconds to change your password").
+- Component: `src/components/HoldToUnlock.tsx`. Props: `durationMs`, `label`, `doneLabel`, `disabled`, `variant` ("light" | "dark"), `hint`, `height`, `fontSize`, `onComplete`.
+- Important: this is a UI-only "human presence" gate. It makes no server call and protects nothing by itself.
+
+### 3. Lock 2 - Location gate
+`src/components/LocationGate.tsx` asks the browser for the device location (`navigator.geolocation.getCurrentPosition`) and continues when it succeeds.
+Not verified: only a search of this file was read. What happens when permission is denied or geolocation is unavailable, and whether the location is sent to the server (`POST /api/auth/location` exists), is unknown.
+
+### 4. Lock 3 - Final Lock: face scan or pattern (highest priority)
+Files: `src/components/FinalLockScreen.tsx`, `src/components/PatternLock.tsx`, `src/lib/finalLock.ts`.
+
+**First time (no pattern saved):** draw a new pattern on the 3x3 pad (at least 4 dots), then draw it again to confirm. Then, if the phone supports it, the app asks "Turn on face scan?" (Enable / Skip).
+
+**Every later unlock:**
+- Face scan enabled: the "Scan face" button is shown and the pad is hidden. A successful scan unlocks immediately, no pattern needed. If the scan fails or is cancelled, the message "Face scan failed. Please draw your pattern" appears and the pattern pad is shown. The link "Use pattern instead" shows the pad at any time.
+- Face scan not enabled: the pattern pad is shown. After a correct pattern, if the phone supports face scan and it is not enabled, the app offers "Turn on face scan?" again. "Skip" is remembered only for the current browser session (sessionStorage `ksv.faceOfferSkipped.v1.<userId>`), so the offer returns in the next session.
+
+**Limits:** 5 wrong patterns lock the pad for 60 seconds. A wrong try shows "Wrong pattern".
+
+**Forgot pattern?** Clears the saved pattern, the failure counter and the saved face credential id, then signs the user out locally (tokens removed, all gates reset, Login shown). It does not call `/api/auth/logout`, so the server session (refresh token) stays valid until it expires.
+
+**How it works:** the pattern is stored as a salted PBKDF2-SHA256 hash (150,000 iterations), never as raw dots. Face scan uses the phone's own WebAuthn platform authenticator (`userVerification: required`); KSV never sees or stores a face image. The phone decides whether it asks for face, fingerprint or screen lock; the web page cannot force "face only". Pattern and face need a secure context (HTTPS or localhost).
+
+**Storage:** localStorage `ksv.finalLock.v1.<userId>` (pattern hash, credential id, failure counter, lock time). `<userId>` comes from `getCurrentUser()` in `src/lib/auth.ts` (localStorage `ksv_current_user`), or the text `local` when there is no user. Not verified: whether login writes `ksv_current_user` (`saveSession` is not called in LoginView or RegisterView).
+
+**Important:** this is a LOCAL gate. Face results are not verified by a server, and clearing site data resets the pattern, the counter and the lock. It protects against someone picking up a phone that is already signed in. It does not replace the account password or MFA.
+
+Not verified: face scan enrollment and unlock have not been confirmed on a real phone yet.
+
+### 5. Account sign-in and passwords
+- **Login** (`src/views/LoginView.tsx`): email + password. If the account has MFA, a second step asks for the 6-digit code ("Enter the code from your authenticator app" or "Enter the code sent to <masked destination>"); wrong codes show the remaining attempts.
+- **Register** (`src/views/RegisterView.tsx`): first name, last name, organization name, email, password, confirm password. The client requires a password of at least 6 characters with letter/number/symbol checks (exact rule not read) and a matching confirmation. The server repeats these checks.
+- **Change password** (Settings > Security, `ChangePasswordCard.tsx`): hold the button (10 s), then enter the current password, the new password (at least 12 characters in the UI) and a confirmation. The new password must differ from the current one (UI check). The card is meant to call `POST /api/auth/password/change`; the wiring in SettingsView was not read.
+- **MFA (server):** TOTP with an authenticator app, or an OTP by SMS or email. Endpoints: `/api/auth/mfa/enroll`, `/enroll/confirm`, `/disable`, `/verify`. TOTP is verified with otplib. SMS/email delivery was not inspected.
+- **Account recovery (server):** `/api/recovery/initiate` -> `/otp/verify` -> `/password/reset` (and `/cancel`). The OTP is stored as an HMAC with an expiry and an attempt limit; a reset signs out all sessions of that user. No email/SMS provider is configured: outside development the code is not delivered, and in development it is printed in the server console.
+- **Server rules that are verified:** passwords are hashed with bcrypt (cost 12); access token 15 minutes and refresh token 7 days by default (separate secrets); auth routes are limited to 5 requests per 15 minutes (in memory); protected routes use `authenticate`, which checks only the JWT.
+
+### 6. The 9 sign-up programs (Google, Facebook, TikTok, Apple, Microsoft, GitHub, X, LinkedIn, PayPal)
+`src/components/ProviderSelectScreen.tsx` shows a "Sign up with" screen with these 9 buttons before the Register form.
+
+**Current state: they are placeholders.** Choosing one only moves to the Register form: App.tsx ignores the chosen value (`onSelect={() => setProviderChosen(true)}`), RegisterView does not receive it, and the register request sends only email, password, first name, last name and organization name. There is no OAuth, no account check, and nothing is stored about the choice. The Login screen has no provider buttons. Server-side provider handling was not checked.
+
+Do not describe these buttons as working social login until OAuth is really implemented.
+
+### 7. Do / Next / Do not
+**Do**
+- Keep the order Login -> Hold to unlock -> Location -> Final Lock. Any new lock must fail closed (deny when unsure).
+- Treat the client locks as convenience gates. Real security is the server: bcrypt, JWT, MFA, rate limits, RBAC.
+- Test on the phone at `localhost:5173` (localhost counts as a secure context).
+- Record only what was actually read or tested; mark the rest "not verified".
+
+**Next (suggested, not done)**
+1. Test face scan on the phone: enable it after a correct pattern, then unlock with "Scan face".
+2. Decide about the 9 provider buttons: implement real OAuth (and pass the provider to register) or remove them / label them "coming soon".
+3. Make `authenticate` check the session (or shorten the access token), because a token stays valid after logout or password change until it expires.
+4. Password change: enforce the 12-character rule on the server, add a rate limit, and revoke other sessions.
+5. Confirm token refresh: LoginView and RegisterView store only the access token (not the refresh token); the behavior after the 15-minute expiry was not verified.
+6. Confirm whether `saveSession` is called anywhere, so the Final Lock user id is not always `local`.
+7. Fix or remove the "Argon2id" text in Settings (the code uses bcrypt).
+8. Configure an email/SMS provider for recovery and MFA codes.
+
+**Do not**
+- Do not remove or reorder a lock without recording it here.
+- Do not present a feature as done if it was only discussed or not pushed.
+- Do not put secrets or `.env` values in this file.
+- Do not call the provider buttons working sign-in.

@@ -91,10 +91,10 @@ const styles = {
 
 const skipKey = (u: string) => `ksv.faceOfferSkipped.v1.${u}`;
 const faceOfferSkipped = (u: string) => {
-  try { return localStorage.getItem(skipKey(u)) === "1"; } catch { return false; }
+  try { return sessionStorage.getItem(skipKey(u)) === "1"; } catch { return false; }
 };
 const markFaceOfferSkipped = (u: string) => {
-  try { localStorage.setItem(skipKey(u), "1"); } catch { /* ignore */ }
+  try { sessionStorage.setItem(skipKey(u), "1"); } catch { /* ignore */ }
 };
 
 export function FinalLockScreen({ userId, onUnlocked, onForgot }: Props) {
