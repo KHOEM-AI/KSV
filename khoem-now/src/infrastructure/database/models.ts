@@ -149,6 +149,8 @@ const automationRuleSchema = new Schema(
     trigger: Schema.Types.Mixed, // e.g. { type: "time", value: "18:00" }
     action: Schema.Types.Mixed, // e.g. { deviceId, commandType, payload }
     isEnabled: { type: Boolean, default: true },
+    lastRunKey: String, // "YYYY-MM-DD HH:MM" of last execution (prevents double-run)
+    lastRunAt: Date,
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

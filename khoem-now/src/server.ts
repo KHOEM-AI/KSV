@@ -21,6 +21,7 @@ import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { startMqttClient } from "./infrastructure/mqtt/client.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
+import { startAutomationEngine } from "./core/automation/automation.engine.ts";
 import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
@@ -4835,6 +4836,7 @@ async function resolveAIDevice(
   // Start MQTT client (optional — logs failure but never crashes the app).
   try {
     startMqttClient();
+    startAutomationEngine({ dispatcher: gatewayDispatcher, emergencyStop: EmergencyStop });
   } catch (err) {
     console.error("[MQTT] Failed to start:", err instanceof Error ? err.message : err);
   }
