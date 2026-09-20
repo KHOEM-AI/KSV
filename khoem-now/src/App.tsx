@@ -21,6 +21,8 @@ import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
 import { LoginView } from '@/views/LoginView';
 import AppLockScreen from '@/components/AppLockScreen';
+import { FinalLockScreen } from '@/components/FinalLockScreen';
+import { getCurrentUser as getLockUser, clearSession as clearLockSession } from '@/lib/auth';
 import LocationGate from '@/components/LocationGate';
 import { RegisterView } from '@/views/RegisterView';
 import ProviderSelectScreen from '@/components/ProviderSelectScreen';
@@ -219,6 +221,7 @@ export default function App() {
   );
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [locationOk, setLocationOk] = useState(false);
+  const [finalUnlocked, setFinalUnlocked] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [providerChosen, setProviderChosen] = useState(false);
 
@@ -259,6 +262,21 @@ export default function App() {
 
   if (!locationOk) {
     return <LocationGate onGranted={() => setLocationOk(true)} />;
+  }
+
+  if (!finalUnlocked) {
+    return (
+      <FinalLockScreen
+        userId={String(getLockUser()?.id ?? 'local')}
+        onUnlocked={() => setFinalUnlocked(true)}
+        onForgot={() => {
+          clearLockSession();
+          setIsUnlocked(false);
+          setLocationOk(false);
+          setIsAuthenticated(false);
+        }}
+      />
+    );
   }
 
   return <AuthenticatedApp />;

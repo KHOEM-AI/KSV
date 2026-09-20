@@ -53,7 +53,7 @@ function toB64(input: ArrayBuffer | Uint8Array): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function fromB64(str: string): Uint8Array<ArrayBuffer> {
+function fromB64(str: string): Uint8Array {
   const b64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
   const out = new Uint8Array(bin.length);
@@ -72,7 +72,7 @@ function safeEqual(a: string, b: string): boolean {
 
 async function hashPattern(
   pattern: number[],
-  salt: Uint8Array<ArrayBuffer>,
+  salt: Uint8Array,
   iterations: number,
 ): Promise<string> {
   const subtle = globalThis.crypto?.subtle;
