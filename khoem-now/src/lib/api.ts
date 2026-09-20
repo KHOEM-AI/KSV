@@ -2130,3 +2130,10 @@ export interface IncidentEntry {
 export async function getIncidents(): Promise<{ incidents: IncidentEntry[]; total: number }> {
   return apiFetch('/security/incidents');
 }
+
+export async function updateMyLocation(lat: number, lng: number): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/auth/location`, {
+    method: "POST",
+    body: JSON.stringify({ lat, lng }),
+  });
+}

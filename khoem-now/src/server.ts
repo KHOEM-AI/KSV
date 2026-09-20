@@ -554,6 +554,27 @@ async function main() {
   });
 
   // POST /api/auth/logout  body: { sessionId? | refreshToken? | allSessions? }
+  app.post("/api/auth/location", authenticate, async (req, res) => {
+    try {
+      const { lat, lng } = req.body ?? {};
+      if (
+        typeof lat !== "number" || typeof lng !== "number" ||
+        !Number.isFinite(lat) || !Number.isFinite(lng) ||
+        lat < -90 || lat > 90 || lng < -180 || lng > 180
+      ) {
+        return res.status(400).json({ error: "invalid_coordinates" });
+      }
+      await User.updateOne(
+        { _id: req.user!.id },
+        { $set: { lastKnownLocation: { lat, lng, updatedAt: new Date() } } }
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error("location update failed", err);
+      return res.status(500).json({ error: "location_update_failed" });
+    }
+  });
+
   app.post("/api/auth/logout", authenticate, async (req, res) => {
     try {
       const userId = req.user!.id;

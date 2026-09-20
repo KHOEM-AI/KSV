@@ -33,6 +33,7 @@ const userSchema = new Schema(
     mfaSecret: { type: String, default: null },
     mfaPhoneNumber: String,
     mfaEmail: String,
+    lastKnownLocation: { lat: Number, lng: Number, updatedAt: Date },
     lastLoginAt: Date,
     organizationId: { type: ObjectId, ref: "Organization" },
   },

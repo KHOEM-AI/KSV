@@ -21,6 +21,7 @@ import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
 import { LoginView } from '@/views/LoginView';
 import AppLockScreen from '@/components/AppLockScreen';
+import LocationGate from '@/components/LocationGate';
 import { RegisterView } from '@/views/RegisterView';
 import ProviderSelectScreen from '@/components/ProviderSelectScreen';
 
@@ -217,6 +218,7 @@ export default function App() {
     () => !!localStorage.getItem('ksv_access_token')
   );
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [locationOk, setLocationOk] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [providerChosen, setProviderChosen] = useState(false);
 
@@ -253,6 +255,10 @@ export default function App() {
 
   if (!isUnlocked) {
     return <AppLockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
+  if (!locationOk) {
+    return <LocationGate onGranted={() => setLocationOk(true)} />;
   }
 
   return <AuthenticatedApp />;
