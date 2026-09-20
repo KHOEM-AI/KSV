@@ -20,6 +20,8 @@ import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
 import { LoginView } from '@/views/LoginView';
+import AppLockScreen from '@/components/AppLockScreen';
+import { RegisterView } from '@/views/RegisterView';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -213,9 +215,28 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !!localStorage.getItem('ksv_access_token')
   );
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   if (!isAuthenticated) {
-    return <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />;
+    if (authMode === 'register') {
+      return (
+        <RegisterView
+          onRegisterSuccess={() => setIsAuthenticated(true)}
+          onSwitchToLogin={() => setAuthMode('login')}
+        />
+      );
+    }
+    return (
+      <LoginView
+        onLoginSuccess={() => setIsAuthenticated(true)}
+        onSwitchToRegister={() => setAuthMode('register')}
+      />
+    );
+  }
+
+  if (!isUnlocked) {
+    return <AppLockScreen onUnlock={() => setIsUnlocked(true)} />;
   }
 
   return <AuthenticatedApp />;

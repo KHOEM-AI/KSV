@@ -22,7 +22,12 @@ const buttonStyle: React.CSSProperties = {
   fontWeight: 600,
 };
 
-export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
+interface Props {
+  onLoginSuccess: () => void;
+  onSwitchToRegister: () => void;
+}
+
+export function LoginView({ onLoginSuccess, onSwitchToRegister }: Props) {
   const { t } = useLanguage();
   const [email, setEmail] = useState('admin@ksv.com');
   const [password, setPassword] = useState('');
@@ -118,6 +123,13 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
           {error && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 10 }}>{error}</p>}
           <button type="submit" disabled={loading} style={buttonStyle}>
             {loading ? 'Logging in…' : 'Log in'}
+          </button>
+          <button
+            type="button"
+            onClick={onSwitchToRegister}
+            style={{ width: '100%', padding: 8, marginTop: 10, background: 'transparent', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+          >
+            Don't have an account? Sign up
           </button>
         </form>
       ) : (

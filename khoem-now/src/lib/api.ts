@@ -161,9 +161,18 @@ import type {
   MFAEnrollResponse,
   MFAConfirmEnrollRequest,
   MFADisableRequest,
+  RegisterRequest,
+  RegisterResponse,
   ChangePasswordRequest,
   ChangePasswordResponse,
 } from "../../API/authentication";
+
+export async function register(req: RegisterRequest): Promise<RegisterResponse> {
+  return apiFetch<RegisterResponse>(`/auth/register`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
 
 export async function loginWithPassword(req: PasswordLoginRequest): Promise<LoginResponse> {
   return apiFetch<LoginResponse>(`/auth/login/password`, {

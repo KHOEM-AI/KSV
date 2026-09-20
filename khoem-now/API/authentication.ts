@@ -52,6 +52,21 @@ export interface PasswordLoginRequest {
   password: string;             // Sent over TLS; hashed server-side; never stored plain
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;         // minimum 6 characters, must include a letter, a number, and a symbol
+  firstName: string;
+  lastName: string;
+  organizationName: string; // the organization created for this user
+}
+
+export interface RegisterResponse {
+  result: 'success' | 'failed';
+  session?: KSVSession;
+  token?: KSVToken;
+  message: string;
+}
+
 export interface OAuthLoginRequest {
   provider: 'google' | 'facebook' | 'tiktok' | 'apple' | 'microsoft';
   providerToken: string;        // ID token from provider — KSV validates it

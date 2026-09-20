@@ -15,7 +15,7 @@ const input: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-export default function ChangePasswordCard({ onSubmit, holdMs = 30000 }: Props) {
+export default function ChangePasswordCard({ onSubmit, holdMs = 10000 }: Props) {
   const [unlocked, setUnlocked] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");

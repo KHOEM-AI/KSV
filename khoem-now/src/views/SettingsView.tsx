@@ -3,6 +3,8 @@ import { Settings2, Bell, Shield, Globe, Database, Save } from 'lucide-react';
 import { Panel, SectionHeader, Toggle, Badge } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { getSettings, updateSettings, type KSVSettings } from '@/lib/api';
+import { changePassword } from '@/lib/api';
+import ChangePasswordCard from '@/components/ChangePasswordCard';
 
 type ToggleKey = 'autoUpdate' | 'offlineMode' | 'auditLog' | 'twoFactor' | 'zeroPlaintext' | 'safetyOverride' | 'emailAlerts' | 'smsAlerts';
 
@@ -146,6 +148,20 @@ export function SettingsView() {
               <Badge variant="success">{t('view.settings.backupInterval', { hours: 6 })}</Badge>
             </div>
           </div>
+        </Panel>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Panel className="p-5 animate-fade-in">
+          <SectionHeader title="Security" subtitle="Change your account password" icon={<Shield size={18} />} />
+          <ChangePasswordCard
+            onSubmit={async (currentPassword, newPassword) => {
+              const res = await changePassword({ currentPassword, newPassword });
+              if (!res.success) {
+                throw new Error(res.message || 'Failed to change password');
+              }
+            }}
+          />
         </Panel>
       </div>
 

@@ -669,6 +669,130 @@ async function main() {
     }
   });
   // POST /api/auth/login/password
+  // POST /api/auth/register
+  app.post("/api/auth/register", authRateLimiter, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, organizationName } = req.body ?? {};
+
+      if (!email || !password || !firstName || !lastName || !organizationName) {
+        res.status(400).json({
+          result: "failed",
+          message: "email, password, firstName, lastName, and organizationName are required.",
+        });
+        return;
+      }
+
+      if (password.length < 6) {
+        res.status(400).json({
+          result: "failed",
+          message: "Password must be at least 6 characters.",
+        });
+        return;
+      }
+
+      const hasLetter = /[A-Za-z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSymbol = /[^A-Za-z0-9]/.test(password);
+      if (!hasLetter || !hasNumber || !hasSymbol) {
+        res.status(400).json({
+          result: "failed",
+          message: "Password must include at least one letter, one number, and one symbol.",
+        });
+        return;
+      }
+
+      const existing = await User.findOne({ email });
+      if (existing) {
+        res.status(409).json({
+          result: "failed",
+          message: "An account with this email already exists.",
+        });
+        return;
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      // Each self-registered user gets their own organization and becomes
+      // its OrgAdmin (full control of their own org, not platform-wide).
+      const organization = await Organization.create({
+        name: organizationName,
+        ownerId: new mongoose.Types.ObjectId(), // placeholder, corrected below
+      });
+
+      const user = await User.create({
+        email,
+        passwordHash,
+        role: "OrgAdmin",
+        firstName,
+        lastName,
+        isActive: true,
+        organizationId: organization._id,
+      });
+
+      organization.ownerId = user._id;
+      await organization.save();
+
+      const now = new Date();
+      const accessToken = jwt.sign(
+        { sub: String(user._id), role: user.role, organizationId: String(organization._id) },
+        process.env.JWT_ACCESS_SECRET as string,
+        { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m") as jwt.SignOptions["expiresIn"] }
+      );
+      const refreshToken = jwt.sign(
+        { sub: String(user._id), type: "refresh" },
+        process.env.JWT_REFRESH_SECRET as string,
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"] }
+      );
+
+      const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+      const match = refreshExpiresIn.match(/^(\d+)([smhd])$/);
+      if (!match) {
+        throw new Error("Invalid JWT_REFRESH_EXPIRES_IN format. Use values such as 7d, 24h, 60m.");
+      }
+      const amount = Number(match[1]);
+      const unit = match[2];
+      const millisecondsPerUnit: Record<string, number> = {
+        s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000,
+      };
+      const expiresAt = new Date(now.getTime() + amount * millisecondsPerUnit[unit]);
+
+      const session = await Session.create({
+        userId: user._id,
+        refreshToken: hashRefreshToken(refreshToken),
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        expiresAt,
+      });
+
+      res.status(201).json({
+        result: "success",
+        session: {
+          sessionId: String(session._id),
+          accountId: String(user._id),
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+          createdAt: now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+          lastActivityAt: now.toISOString(),
+          status: "active",
+          mfaVerified: true,
+          loginMethod: "password",
+          countryCode: undefined,
+        },
+        token: {
+          accessToken,
+          refreshToken,
+          expiresIn: 15 * 60,
+          tokenType: "Bearer",
+        },
+        message: "Account created successfully.",
+      });
+    } catch (err) {
+      console.error("[AUTH] Register failed:", err);
+      res.status(500).json({ result: "failed", message: "Registration failed due to a server error." });
+    }
+  });
+
   app.post("/api/auth/login/password", authRateLimiter, async (req, res) => {
     try {
       const { email, password } = req.body ?? {};

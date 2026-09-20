@@ -9,7 +9,7 @@ interface Props {
 }
 
 const GRADIENT =
-  "linear-gradient(90deg,#38bdf8 0%,#818cf8 30%,#f472b6 55%,#facc15 80%,#22c55e 100%)";
+  "linear-gradient(90deg,#ef4444 0%,#38bdf8 50%,#22c55e 100%)";
 
 export default function HoldToUnlock({
   durationMs = 30000,
