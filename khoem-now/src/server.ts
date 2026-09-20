@@ -3440,6 +3440,126 @@ app.get(
     );
   }
 
+  // ============================================================
+  // SAFETY CHECK (dry-run) + DEVICE SAFETY STATUS
+  // ============================================================
+  // POST /api/safety/check  body: { deviceId, commandType, payload? }
+  // Dry-run: runs the SAME emergency-stop guard + Safety Engine as a real
+  // command, but creates NO command and dispatches NOTHING to the device.
+  // (A BLOCKED result is still recorded in SafetyLog by the engine.)
+  app.post("/api/safety/check", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    const { deviceId, commandType, payload } = req.body ?? {};
+    if (
+      !mongoose.isValidObjectId(deviceId) ||
+      typeof commandType !== "string" || commandType.length < 1 || commandType.length > 64 ||
+      (payload !== undefined && (typeof payload !== "object" || payload === null || Array.isArray(payload)))
+    ) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "deviceId and commandType are required; payload must be an object." });
+      return;
+    }
+    try {
+      const device = await Device.findOne({ _id: deviceId, organizationId: user.organizationId })
+        .select("name type criticality")
+        .lean();
+      if (!device) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Device not found." });
+        return;
+      }
+      const criticality = (device as { criticality?: string }).criticality ?? "facility";
+
+      const activeStop = await EmergencyStop.findOne({
+        organizationId: user.organizationId,
+        releasedAt: { $exists: false },
+        $or: [{ scope: "organization" }, { deviceId }],
+      }).lean();
+      if (activeStop) {
+        res.json({
+          dryRun: true,
+          allowed: false,
+          requiresConfirmation: false,
+          criticality,
+          ruleName: "EMERGENCY_STOP",
+          blockingReason: "Emergency stop active: " + activeStop.reason,
+          message: "Command would be blocked.",
+        });
+        return;
+      }
+
+      const result = await evaluateSafetyForDevice(deviceId, user.organizationId, commandType, { payload });
+      const allowed = result.decision === "ALLOWED";
+      res.json({
+        dryRun: true,
+        allowed,
+        requiresConfirmation: false,
+        criticality,
+        ruleId: result.ruleId,
+        ruleName: result.ruleName,
+        blockingReason: allowed ? undefined : result.reason,
+        message: allowed ? "Command would pass the safety check." : "Command would be blocked.",
+      });
+    } catch (err) {
+      console.error("[SAFETY] check failed:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Safety check failed (treat as blocked)." });
+    }
+  });
+
+  // GET /api/safety/devices — safety status of every device in the organization
+  app.get("/api/safety/devices", authenticate, requirePermission("device:read"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const devices = await Device.find({ organizationId: user.organizationId })
+        .select("name deviceCode type status criticality")
+        .limit(500)
+        .lean();
+      const stops = await EmergencyStop.find({
+        organizationId: user.organizationId,
+        releasedAt: { $exists: false },
+      }).lean();
+      const orgStop = stops.find((x: any) => x.scope === "organization");
+      const ids = devices.map((d: any) => d._id);
+      const lastEvents = ids.length
+        ? await SafetyLog.aggregate([
+            { $match: { deviceId: { $in: ids } } },
+            { $sort: { createdAt: -1 } },
+            { $group: { _id: "$deviceId", eventType: { $first: "$eventType" }, severity: { $first: "$severity" }, message: { $first: "$message" }, occurredAt: { $first: "$createdAt" } } },
+          ])
+        : [];
+      const lastById = new Map(lastEvents.map((e: any) => [String(e._id), e]));
+      const out = devices.map((d: any) => {
+        const own = stops.find((x: any) => x.deviceId && String(x.deviceId) === String(d._id));
+        const stopped = Boolean(orgStop || own);
+        const critical = (d.criticality ?? "facility") === "life_support";
+        const last = lastById.get(String(d._id));
+        return {
+          deviceId: d._id,
+          name: d.name,
+          deviceCode: d.deviceCode,
+          type: d.type,
+          status: d.status,
+          criticality: d.criticality ?? "facility",
+          controlMode: critical ? "read_only" : "controlled",
+          isEmergencyStopped: stopped,
+          lastEvent: last
+            ? { eventType: last.eventType, severity: last.severity, message: last.message, occurredAt: last.occurredAt }
+            : undefined,
+        };
+      });
+      res.json({ devices: out, total: out.length, emergencyStopActive: stops.length > 0 });
+    } catch (err) {
+      console.error("[SAFETY] device status failed:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device safety status." });
+    }
+  });
+
   // GET /api/international/languages — list all supported languages
   app.get(
     "/api/international/languages",
