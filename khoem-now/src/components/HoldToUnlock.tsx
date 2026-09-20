@@ -18,7 +18,7 @@ const DARK_GRADIENT =
   "linear-gradient(90deg,#b91c1c 0%,#0284c7 50%,#15803d 100%)";
 
 export default function HoldToUnlock({
-  durationMs = 30000,
+  durationMs = 10000,
   label = "Hold to unlock",
   doneLabel = "Unlocked ✓",
   disabled = false,

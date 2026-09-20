@@ -223,7 +223,7 @@ Do not describe these buttons as working social login until OAuth is really impl
 2. Decide about the 9 provider buttons: implement real OAuth (and pass the provider to register) or remove them / label them "coming soon".
 3. Make `authenticate` check the session (or shorten the access token), because a token stays valid after logout or password change until it expires.
 4. Password change: enforce the 12-character rule on the server, add a rate limit, and revoke other sessions.
-5. Token refresh: verified by a search of src/ that nothing stores the refresh token (LoginView and RegisterView save only the access token), so the web app cannot use `/api/auth/token/refresh`. What the app does when the 15-minute access token expires was not verified (see `src/lib/api.ts`). Decide: store the refresh token and refresh silently, or accept a new login.
+5. Token refresh: verified by a search of src/ that nothing stores the refresh token (LoginView and RegisterView save only the access token), so the web app cannot use `/api/auth/token/refresh`. Verified in `src/lib/api.ts` (apiFetch): any 401 response removes `ksv_access_token` and reloads the page, so when the 15-minute access token expires the user is sent back to Login and must pass all the locks again (they reset on reload). The code comment says there is no manual sign-out flow. Decide: store the refresh token and refresh silently, lengthen the access token, or accept a new login.
 6. Call `saveSession` (or write `ksv_current_user`) at login and register, so the Final Lock user id is the real account id and accounts on one device do not share a pattern.
 7. Fix or remove the "Argon2id" text in Settings (the code uses bcrypt).
 8. Configure an email/SMS provider for recovery and MFA codes.
