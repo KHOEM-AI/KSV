@@ -5,7 +5,7 @@ Only what was actually read is listed as verified. Secrets and .env values were 
 
 ## 1. Gate order in the app (src/App.tsx)
 Provider select / Register -> Login -> AppLockScreen (hold to unlock) -> LocationGate -> FinalLockScreen (pattern, optional face scan) -> app.
-Verified from grep of imports/state (lines ~222-274), not read in full.
+Verified: imports/state by grep (lines ~222-274) and the gate section (lines ~256-285) read directly. isUnlocked and finalUnlocked start as false in React state, so a page reload asks for the locks again (the token in localStorage is kept). FinalLockScreen gets userId = getLockUser()?.id, falling back to the text local when there is no user. Forgot pattern (onForgot) calls clearLockSession(), resets the gates and sets isAuthenticated to false, which shows the Login screen again (inferred from the Login branch near line 252).
 
 ## 2. Client-side locks
 | Lock | Files | What it does | State lives in | Verified |
@@ -14,8 +14,8 @@ Verified from grep of imports/state (lines ~222-274), not read in full.
 | Final lock pattern | PatternLock.tsx, FinalLockScreen.tsx, lib/finalLock.ts | 3x3 pad, min 4 dots. PBKDF2-SHA256, 150,000 iterations, per-user salt. 5 wrong tries = 60 s lockout | localStorage `ksv.finalLock.v1.<userId>` | Most of finalLock.ts read (lines ~90-120 not seen) |
 | Face scan | lib/finalLock.ts | WebAuthn platform authenticator, userVerification required. Stores only a credential id. The phone decides whether it uses face or fingerprint | localStorage (same key) | Read |
 | Face offer skip flag | FinalLockScreen.tsx | Remembers "Skip" so the offer is not repeated | localStorage `ksv.faceOfferSkipped.v1.<userId>` | Read |
-| Location gate | LocationGate.tsx | Not inspected. Server has POST /api/auth/location | unknown | No |
-| AppLockScreen | AppLockScreen.tsx | Wraps HoldToUnlock. Rest not inspected | React state | Partly |
+| Location gate | LocationGate.tsx | Uses navigator.geolocation.getCurrentPosition and calls onGranted() on success. Only a grep of the file was read. No fetch/api call matched, so it looks like a browser-only check. Denied/failed behavior not seen. Whether POST /api/auth/location is called elsewhere was not checked | React state | Partly (grep only) |
+| AppLockScreen | AppLockScreen.tsx | Title KSV Secured. Wraps HoldToUnlock (default hold 10 s, shown at zoom 1.25). Pure UI gate, no server call, no stored state | React state | Read in full |
 
 Flow of the final lock: face success skips the pattern; face failure/cancel shows the pattern pad. After a correct pattern, if face is supported and not enabled and not skipped, the app offers "Turn on face scan?".
 
@@ -52,11 +52,13 @@ src/lib/auth.ts stores access token, refresh token and user object in localStora
 2. Password change does not validate new password strength on the server (UI asks for 12+ characters, register only 6+) and does not reject new == current (UI does).
 3. /api/auth/password/change has no rate limiter, only authenticate.
 4. Settings UI text mentions Argon2id but the code uses bcrypt. Fix the text or migrate.
-5. authenticate appears to check only the JWT. No sessionId/revoked check was found by grep, so an access token may still work after logout until it expires (up to 15 min). Inference, confirm by reading auth.middleware.ts fully.
+5. CONFIRMED by reading authenticate (auth.middleware.ts lines ~56-100): it only verifies the JWT (signature, expiry, sub and role claims present) and sets req.user from the token. There is no database lookup, no session check and no revocation check. So after logout, session delete or password change, an existing access token stays valid until it expires (default 15 min), and a role change or disabled user only takes effect when the token expires. The refresh route was not read.
 6. Two auth implementations exist: server.ts and modules/identity/services/identity.service.ts (both use bcrypt and sign JWTs). Confirm which is live and document or remove the other.
 7. Recovery OTP is not delivered in production until an email/SMS provider is configured. In non-production the OTP is printed to the server console.
 8. Tokens are kept in localStorage.
 9. In-memory rate limiting resets on restart and is not shared across instances.
+10. lib/auth.ts isLoggedIn() only checks that an access token exists in localStorage, not that it is valid or unexpired. api.ts, App.tsx, LoginView and RegisterView also read or write ksv_access_token directly instead of going through auth.ts, so the token key is handled in several places.
+11. OPEN QUESTION (possible lockout loop): Forgot pattern only calls clearLockSession() and forces login again. Whether clearLockSession/getLockUser also remove the stored pattern (clearFinalLock in finalLock.ts) was not inspected. If they do not, the user comes back to the same pattern screen after logging in.
 
 ## 7. Not yet inspected
-AppLockScreen internals, LocationGate behavior, LoginView/RegisterView logic, lib/auth.ts beyond storage keys, rest of auth.middleware.ts, identity.service.ts usage, SMS/email MFA delivery, RBAC files (rbac.policy.ts, authorization.*), finalLock.ts lines ~90-120.
+LocationGate (full file, denied/failed permission behavior), LoginView/RegisterView logic, where getLockUser and clearLockSession are defined and what they clear, lib/api.ts token refresh handling, the optional-auth variant in auth.middleware.ts (line ~105 onward) and where it is used, identity.service.ts usage, SMS/email MFA delivery, RBAC files (rbac.policy.ts, authorization.*), finalLock.ts lines ~91-119.
