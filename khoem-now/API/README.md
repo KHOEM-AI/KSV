@@ -90,7 +90,7 @@ Verified: ran twice in a row, device count stayed at 20 both times
 
 ### ⚠️ សុវត្ថិភាព (ត្រូវធ្វើមុនប្រើជាមួយ device ពិត)
 1. MQTT ភ្ជាប់ `test.mosquitto.org` (broker សាធារណៈ) ត្រូវប្តូរទៅ broker ផ្ទាល់ខ្លួន + username/password + TLS
-2. ត្រូវពិនិត្យថា AI `interpret/confirm` មិនរំលង emergency-stop guard
+2. ✅ ពិនិត្យរួច (2026-09-20)៖ AI `interpret/confirm` ត្រឹមតែកត់ត្រា មិនបញ្ជាឧបករណ៍ទេ។ `dispatch` មានតែ ៣ កន្លែង (command route, scenes, automation engine) ហើយទាំងអស់ឆ្លង e-stop + Safety Engine។ `node scripts/check-command-paths.mjs` ការពារកុំឱ្យមានផ្លូវថ្មីដោយគ្មាន guard
 3. កុំសរសេរពាក្យសម្ងាត់ក្នុង command line (នៅសល់ក្នុង history)
 
 ### នៅសល់ត្រូវធ្វើ (⚠️ SUPERSEDED — see the English status section at the end of this file)
