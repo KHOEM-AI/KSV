@@ -3234,6 +3234,206 @@ app.get(
     }
   });
 
+  // ============================================================
+  // AUTOMATION RULES (CRUD only — execution must go through the same
+  // permission + safety pipeline as manual commands; not enabled here)
+  // ============================================================
+  const isPlainObject = (v: unknown): v is Record<string, any> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+  const smallJson = (v: unknown) => JSON.stringify(v).length <= 4096;
+  const autoAudit = async (user: any, action: string, result: string, reason?: string) => {
+    try {
+      await AuditLog.create({ userId: user.id, organizationId: user.organizationId, action, result, reason });
+    } catch (err) {
+      console.error("[automation] audit write failed", err);
+    }
+  };
+  const validateRuleParts = async (
+    orgId: unknown,
+    body: any,
+    partial: boolean
+  ): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> => {
+    const data: Record<string, unknown> = {};
+    if (!partial || body.name !== undefined) {
+      if (typeof body.name !== "string" || body.name.trim().length < 1 || body.name.length > 100) {
+        return { ok: false, message: "name must be 1-100 characters." };
+      }
+      data.name = body.name.trim();
+    }
+    if (!partial || body.trigger !== undefined) {
+      const t = body.trigger;
+      if (!isPlainObject(t) || typeof t.type !== "string" || t.type.length < 1 || t.type.length > 32 || !smallJson(t)) {
+        return { ok: false, message: "trigger must be an object with a string type." };
+      }
+      data.trigger = t;
+    }
+    if (!partial || body.action !== undefined) {
+      const a = body.action;
+      if (
+        !isPlainObject(a) ||
+        !mongoose.isValidObjectId(a.deviceId) ||
+        typeof a.commandType !== "string" || a.commandType.length < 1 || a.commandType.length > 64 ||
+        (a.payload !== undefined && !isPlainObject(a.payload)) ||
+        !smallJson(a)
+      ) {
+        return { ok: false, message: "action must include deviceId, commandType and optional payload object." };
+      }
+      const owned = await Device.exists({ _id: a.deviceId, organizationId: orgId });
+      if (!owned) return { ok: false, message: "action.deviceId does not belong to your organization." };
+      data.action = a;
+    }
+    if (body.isEnabled !== undefined) {
+      if (typeof body.isEnabled !== "boolean") return { ok: false, message: "isEnabled must be boolean." };
+      data.isEnabled = body.isEnabled;
+    }
+    return { ok: true, data };
+  };
+
+  // POST /api/automation/rules — create (starts DISABLED unless isEnabled:true)
+  app.post(
+    "/api/automation/rules",
+    authenticate,
+    requirePermission("automation:manage"),
+    requirePermission("device:command"),
+    async (req, res) => {
+      const user = req.user!;
+      if (!user.organizationId) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+        return;
+      }
+      try {
+        const body = req.body ?? {};
+        const v = await validateRuleParts(user.organizationId, body, false);
+        if (!v.ok) {
+          res.status(400).json({ error: "BAD_REQUEST", message: v.message });
+          return;
+        }
+        const rule = await AutomationRule.create({
+          organizationId: user.organizationId,
+          isEnabled: false,
+          ...v.data,
+        });
+        await autoAudit(user, "automation:rule.create", "SUCCESS", String(rule._id));
+        res.status(201).json(rule);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create rule." });
+      }
+    }
+  );
+
+  // GET /api/automation/rules/:id
+  app.get("/api/automation/rules/:id", authenticate, requirePermission("automation:read"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid rule id." });
+      return;
+    }
+    try {
+      const rule = await AutomationRule.findOne({ _id: id, organizationId: user.organizationId }).lean();
+      if (!rule) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Rule not found." });
+        return;
+      }
+      res.json(rule);
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load rule." });
+    }
+  });
+
+  // PATCH /api/automation/rules/:id
+  app.patch(
+    "/api/automation/rules/:id",
+    authenticate,
+    requirePermission("automation:manage"),
+    requirePermission("device:command"),
+    async (req, res) => {
+      const user = req.user!;
+      const id = String(req.params.id);
+      if (!mongoose.isValidObjectId(id)) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "Invalid rule id." });
+        return;
+      }
+      try {
+        const v = await validateRuleParts(user.organizationId, req.body ?? {}, true);
+        if (!v.ok) {
+          res.status(400).json({ error: "BAD_REQUEST", message: v.message });
+          return;
+        }
+        if (Object.keys(v.data).length === 0) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Nothing to update." });
+          return;
+        }
+        const rule = await AutomationRule.findOneAndUpdate(
+          { _id: id, organizationId: user.organizationId },
+          { $set: v.data },
+          { new: true }
+        ).lean();
+        if (!rule) {
+          res.status(404).json({ error: "NOT_FOUND", message: "Rule not found." });
+          return;
+        }
+        await autoAudit(user, "automation:rule.update", "SUCCESS", id);
+        res.json(rule);
+      } catch {
+        res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update rule." });
+      }
+    }
+  );
+
+  // DELETE /api/automation/rules/:id
+  app.delete("/api/automation/rules/:id", authenticate, requirePermission("automation:manage"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid rule id." });
+      return;
+    }
+    try {
+      const del = await AutomationRule.deleteOne({ _id: id, organizationId: user.organizationId });
+      if (del.deletedCount === 0) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Rule not found." });
+        return;
+      }
+      await autoAudit(user, "automation:rule.delete", "SUCCESS", id);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete rule." });
+    }
+  });
+
+  // POST /api/automation/rules/:id/enable | /disable
+  for (const [verb, flag] of [["enable", true], ["disable", false]] as const) {
+    app.post(
+      `/api/automation/rules/:id/${verb}`,
+      authenticate,
+      requirePermission("automation:manage"),
+      async (req, res) => {
+        const user = req.user!;
+        const id = String(req.params.id);
+        if (!mongoose.isValidObjectId(id)) {
+          res.status(400).json({ error: "BAD_REQUEST", message: "Invalid rule id." });
+          return;
+        }
+        try {
+          const rule = await AutomationRule.findOneAndUpdate(
+            { _id: id, organizationId: user.organizationId },
+            { $set: { isEnabled: flag } },
+            { new: true }
+          ).lean();
+          if (!rule) {
+            res.status(404).json({ error: "NOT_FOUND", message: "Rule not found." });
+            return;
+          }
+          await autoAudit(user, `automation:rule.${verb}`, "SUCCESS", id);
+          res.json(rule);
+        } catch {
+          res.status(500).json({ error: "INTERNAL_ERROR", message: `Failed to ${verb} rule.` });
+        }
+      }
+    );
+  }
+
   // GET /api/international/languages — list all supported languages
   app.get(
     "/api/international/languages",
