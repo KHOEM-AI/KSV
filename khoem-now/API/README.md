@@ -93,10 +93,54 @@ Verified: ran twice in a row, device count stayed at 20 both times
 2. ត្រូវពិនិត្យថា AI `interpret/confirm` មិនរំលង emergency-stop guard
 3. កុំសរសេរពាក្យសម្ងាត់ក្នុង command line (នៅសល់ក្នុង history)
 
-### នៅសល់ត្រូវធ្វើ
+### នៅសល់ត្រូវធ្វើ (⚠️ SUPERSEDED — see the English status section at the end of this file)
 - MFA (enroll/confirm/verify/disable/challenge/methods) និង `login/oauth`
 - Pairing, Automation (rules/scenes), `safety/check`, `safety/devices`
 - Domain ផ្សេងៗ (recovery, admin, telemetry, push, files, reports, webhooks, geo, tickets ...) ដែល client ហៅតែ server មិនទាន់មាន
 - បញ្ហា `KhoemAIPanel.tsx` ហៅ `/api/v1/ai-brain/recent-decisions` ដែលមិនមាននៅ server
 
 ឯកសារលម្អិត: `../DOCUMENTATION/INTEGRATION-AUDIT.md`, `../DOCUMENTATION/CLIENT_SERVER_COMPARE.md`
+
+---
+
+## Implementation Status — 2026-09-20 (English)
+
+> This section supersedes the older "remaining work" list above. Khmer translation to follow.
+
+### Implemented and verified (routes respond `401` without a token; server boots clean; `tsc` = 0 errors)
+
+| Domain | What exists | Notes |
+|---|---|---|
+| Auth / MFA | TOTP MFA (enroll, confirm, disable, verify), 2-step login challenge | `otplib` v13 (functional API) |
+| Registration | `POST /api/auth/register`, creates Organization + `OrgAdmin` user | Never creates `Owner` (platform superuser) |
+| Client gates | Hold-to-unlock App Lock, Provider select (UI only, no real OAuth), Location Gate | `POST /api/auth/location` stores `lastKnownLocation` |
+| Pairing | `PairingSession` model; start / get / verify-owner / confirm / cancel; list paired; unpair | Proof stored as SHA-256 only, timing-safe compare, 5 attempts, 10 min TTL |
+| Automation rules | CRUD + enable/disable | Rules start **disabled**. **Execution engine is not built yet** |
+| Scenes | CRUD + activate | Every action goes through e-stop guard → Safety Engine → dispatch → audit. `bypassSafety` is rejected |
+| Safety | `POST /api/safety/check` (dry-run), `GET /api/safety/devices`, device `criticality` | Dry-run creates no command and dispatches nothing |
+
+### Device criticality (safety policy)
+
+`Device.criticality` is one of `life_support | clinical | robot_mobile | facility | consumer` (default `facility`).
+The Safety Engine evaluates it **before** any database rule, so it cannot be disabled by editing rules:
+
+- `life_support` devices are **read-only** in KSV (`READ_STATUS`, `GET_STATUS`, `READ_TELEMETRY`, `PING` only). All control commands are blocked.
+- `life_support` devices cannot be added to scenes.
+- Unknown criticality values are blocked (fail closed).
+
+### Known limitations (do not ignore)
+
+1. MQTT still connects to the public `test.mosquitto.org` broker. Move to a private broker with credentials + TLS before any real device.
+2. Pairing `verify-owner` compares user-supplied proof only. Verification against the physical device (PIN / QR / certificate) needs the Gateway / Protocol adapter.
+3. Scene activation is partial-success: blocked actions do not stop the remaining actions (results are reported per action).
+4. `authRateLimiter` is in-memory (resets on restart).
+5. `ActionType` is declared in both `API/authorization.ts` and `API/automation.ts`; avoid importing both in one file.
+6. Duplicate server stack in `src/modules/*`, `src/routes/index.ts`, `src/server/server.ts` is **not** used by `npm run server`.
+
+### Remaining work
+
+- Automation execution engine (scheduler; must use the same e-stop + safety pipeline as manual commands)
+- Real OAuth (needs Client ID/Secret per provider)
+- Domains still missing on the server: recovery, admin, telemetry, push, files, reports, webhooks, geo, tickets
+- `KhoemAIPanel.tsx` calls `/api/v1/ai-brain/recent-decisions`, which is not implemented server-side
+- Healthcare / robotics integrations (see `DOCUMENTATION/healthcare-robotics.md`)
