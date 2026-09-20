@@ -25,6 +25,14 @@ import { startAutomationEngine } from "./core/automation/automation.engine.ts";
 import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
 import { generateSecureToken } from "./core/security/encryption.util.ts";
 import bcrypt from "bcryptjs";
+import { encryptField as encMfa, decryptField as decMfa } from "./core/security/encryption.util.ts";
+
+// MFA secrets are stored encrypted ("iv:tag:cipher"). Old plaintext secrets
+// (base32, no ":") are still accepted so existing users keep working.
+function readMfaSecret(stored: string | null | undefined): string {
+  if (!stored) throw new Error("mfaSecret missing");
+  return stored.includes(":") ? decMfa(stored) : stored;
+}
 import jwt from "jsonwebtoken";
 import * as otplib from "otplib";
 import crypto from "node:crypto";
@@ -993,7 +1001,7 @@ async function main() {
 
       if (method === "totp") {
         totpSecret = otplib.generateSecret();
-        dbUser.mfaSecret = totpSecret;
+        dbUser.mfaSecret = encMfa(totpSecret);
       } else if (method === "sms_otp") {
         if (!phoneNumber) {
           res.status(400).json({ success: false, message: "phoneNumber is required for sms_otp." });
@@ -1047,7 +1055,7 @@ async function main() {
           res.status(400).json({ success: false, message: "No TOTP secret on file." });
           return;
         }
-        const result = await otplib.verify({ secret: dbUser.mfaSecret, token: verificationCode, strategy: "totp" });
+        const result = await otplib.verify({ secret: readMfaSecret(dbUser.mfaSecret), token: verificationCode, strategy: "totp" });
         if (!result.valid) {
           res.status(401).json({ success: false, message: "Invalid verification code." });
           return;
@@ -1082,7 +1090,7 @@ async function main() {
           res.status(400).json({ success: false, message: "No TOTP secret on file." });
           return;
         }
-        const result = await otplib.verify({ secret: dbUser.mfaSecret, token: confirmCode, strategy: "totp" });
+        const result = await otplib.verify({ secret: readMfaSecret(dbUser.mfaSecret), token: confirmCode, strategy: "totp" });
         if (!result.valid) {
           res.status(401).json({ success: false, message: "Invalid confirmation code." });
           return;
@@ -1131,7 +1139,7 @@ async function main() {
       let valid = false;
       if (challenge.method === "totp") {
         if (dbUser.mfaSecret) {
-          const result = await otplib.verify({ secret: dbUser.mfaSecret, token: code, strategy: "totp" });
+          const result = await otplib.verify({ secret: readMfaSecret(dbUser.mfaSecret), token: code, strategy: "totp" });
           valid = result.valid;
         }
       }
