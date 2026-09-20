@@ -6,6 +6,8 @@ import {
   FaMicrosoft,
   FaGithub,
   FaXTwitter,
+  FaLinkedin,
+  FaPaypal,
 } from 'react-icons/fa6';
 
 export type SignupProvider =
@@ -15,7 +17,9 @@ export type SignupProvider =
   | 'apple'
   | 'microsoft'
   | 'github'
-  | 'x';
+  | 'x'
+  | 'linkedin'
+  | 'paypal';
 
 interface ProviderOption {
   id: SignupProvider;
@@ -32,6 +36,8 @@ const PROVIDERS: ProviderOption[] = [
   { id: 'microsoft', label: 'Microsoft', icon: FaMicrosoft, color: '#00a4ef' },
   { id: 'github', label: 'GitHub', icon: FaGithub, color: '#ffffff' },
   { id: 'x', label: 'X', icon: FaXTwitter, color: '#ffffff' },
+  { id: 'linkedin', label: 'LinkedIn', icon: FaLinkedin, color: '#0a66c2' },
+  { id: 'paypal', label: 'PayPal', icon: FaPaypal, color: '#009cde' },
 ];
 
 interface Props {
