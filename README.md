@@ -822,6 +822,116 @@ IoT System API
 ```
 (សូមមើលផ្នែក "API Route Map" ខាងលើសម្រាប់ endpoints ពេញលេញ និង example request bodies អាចរៀបតាមរចនាសម្ព័ន្ធ resource ដូចគ្នា — ឧ. Create Device: `POST /devices` ជាមួយ `{ "name", "type", "organizationId" }`; Send Command: `POST /commands` ជាមួយ `{ "deviceId", "type", "payload" }`)
 
+# KSV — Session Summary (2026-09-20, Auth/Login-OAuth domain)
+
+## រួចរាល់ 100% (verified, committed & pushed to GitHub)
+
+1. **HoldToUnlock.tsx** (`src/components/`) — hold-to-confirm slider component, reusable.
+   - Gradient updated: red (0%) → sky blue (50%) → green (100%, with ✓ checkmark).
+2. **ChangePasswordCard.tsx** (`src/components/`) — wraps HoldToUnlock, wired into
+   `SettingsView.tsx` as a new "Security" panel. `holdMs` default = **10000** (10s).
+3. **MFA (TOTP)** — fully implemented & tested end-to-end:
+   - User schema: `mfaMethod`, `mfaSecret`, `mfaPhoneNumber`, `mfaEmail`
+   - New `MFAChallenge` model
+   - Routes: `POST /api/auth/mfa/enroll`, `/enroll/confirm`, `/disable`, `/verify`
+   - `login/password` now returns `mfa_required` + challenge instead of a token when
+     `user.mfaEnabled === true`
+   - Library: `otplib@13.5.0` (note: v13 API is functional/object-based —
+     `otplib.generate({secret, strategy:'totp'})` returns a Promise<string>;
+     `otplib.verify(...)` returns `{valid, delta, epoch}`, NOT a boolean)
+   - Frontend: `LoginView.tsx` handles the 2-step challenge (password → code)
+4. **Register endpoint** — `POST /api/auth/register`
+   - Input: `email, password, firstName, lastName, organizationName`
+   - Password policy (per owner's explicit decision): **min 6 chars**, must include
+     at least one letter + one number + one symbol. No case requirement. This is
+     intentionally more lenient than typical (owner's UX choice — documented, not
+     a mistake).
+   - Creates a new `Organization` + a `User` with role **`OrgAdmin`** (NOT `Owner` —
+     `Owner` is platform-wide superuser per existing code comment:
+     `Owner: ["*"] // full platform control — grant sparingly, never by default`).
+   - Auto-login on success (returns token immediately, same shape as login).
+   - Tested: success case + duplicate-email 409 case — both pass.
+   - Frontend: `RegisterView.tsx` created, wired into `App.tsx` with a login↔register
+     toggle (`authMode` state). `LoginView` has a "Sign up" link,
+     `RegisterView` has "Already have an account? Log in".
+5. **AppLockScreen.tsx** — new hold-to-unlock gate shown AFTER login, BEFORE the
+   dashboard (`AuthenticatedApp`). Purpose per owner: NOT real auth security —
+   explicitly an "accidental-tap / are-you-a-robot" layer, not a replacement for
+   password/PIN/biometric. Uses same `HoldToUnlock`, `holdMs` default 10000.
+   Wired into `App.tsx`: `isAuthenticated` → `isUnlocked` (AppLockScreen) →
+   `AuthenticatedApp`.
+
+## កំពុងធ្វើ (IN PROGRESS — not committed yet)
+
+6. **ProviderSelectScreen.tsx** (`src/components/`) — grid of 7 provider buttons
+   (Google, Facebook, TikTok, Apple, Microsoft, GitHub, X) using `react-icons`
+   (`react-icons@5.7.0`, installed). **Important — explicit scope, confirmed with
+   owner**: these are visual/branding buttons only, NOT real OAuth — clicking one
+   just proceeds to the normal email+password RegisterView. KSV never touches or
+   stores any real GitHub/X/Google/etc. password — only its own bcrypt-hashed
+   password that the user creates fresh (6–12+ chars). This was explicitly
+   confirmed with the owner as the correct/final design (see conversation).
+   - Last known error: `Icon size={18} color={color}` — TS2322, icon prop type
+     didn't declare `color`. Fix in progress:
+     `icon: React.ComponentType<{ size?: number; color?: string }>;`
+     — re-run `npx tsc --noEmit -p tsconfig.app.json` to confirm 0 errors after
+     this fix (fix script was just sent to the user, result not yet seen).
+   - **NOT YET WIRED into App.tsx.** Needs to sit in the flow:
+     App Lock (10s hold) → ProviderSelectScreen (pick 1 of 7 icons, no real OAuth)
+     → RegisterView (email + own password) → auto-login → App Lock again? (confirm
+     with owner — see open questions below) → Dashboard.
+   - Owner wants ALL 7 icons visible BEFORE registration, and the button icons
+     should visually resemble the real apps' branding, but literal copyrighted
+     logos cannot be reproduced — using `react-icons` (FA6 set) as a legal
+     stand-in was proposed and tentatively accepted, but not explicitly
+     re-confirmed after the last message (owner ran low on time).
+
+## សំណួរបើកចំហ — ត្រូវសួរ user ជាថ្មីនៅ session ក្រោយ
+
+- Confirm exact flow order: does the 10s App Lock happen BEFORE
+  ProviderSelectScreen, or only once total per session? Owner's last message
+  implied: [10s hold] → [pick 1 of 7 icons] → [email+password register] →
+  [10s hold again] → dashboard. Re-confirm before wiring.
+- Confirm `ChangePasswordCard` hold duration: owner mentioned "changing it back to
+  30s" for password-change specifically (separate from the 10s App Lock/Login
+  lock) — this was raised but not yet actioned. Current state: ALL hold screens
+  are 10s. Ask owner to confirm whether ChangePasswordCard should go back to 30s.
+- Location Gate (mandatory geolocation permission before using the app) — fully
+  discussed and agreed in principle, but NOT YET STARTED. Needs:
+  - New User schema field: `lastKnownLocation: { lat, lng, updatedAt }`
+  - New endpoint: `POST /api/auth/location` (or similar) to persist coords
+  - Frontend: a `LocationGate` component using `navigator.geolocation`, blocking
+    access if permission is denied, shown after login (exact placement TBD —
+    likely between AppLockScreen and Dashboard, or immediately after
+    login/register).
+  - Owner's stated policy: required for ALL users regardless of how they signed
+    up (email or any of the 7 "provider" buttons); location is NOT tied to
+    OAuth providers (browser Geolocation API only); no background tracking after
+    the user stops using the app — permission checked live each session, not
+    stored as "always allowed" in a way that enables background tracking.
+
+## Domains still outstanding (per README, from original audit)
+
+- OAuth (real, credential-backed) — GitHub/X/Google/etc. actual login (current
+  work is registration UI only, not real OAuth verification — would need
+  Client ID/Secret per provider from owner)
+- Pairing, Automation (rules/scenes), `safety/check`, `safety/devices`
+- recovery, admin, telemetry, push, files, reports, webhooks, geo, tickets
+- `KhoemAIPanel.tsx` calls `/api/v1/ai-brain/recent-decisions` — not implemented
+  server-side
+
+## Environment notes (Termux-specific gotchas hit this session)
+
+- `npm run dev` (Vite) gets killed with "Stopped (tty input)" if backgrounded
+  with plain `&` in Termux — must use `nohup npm run dev > ~/vite.log 2>&1 & disown`
+- Multiple stale `node src/server.ts` / `vite` processes have caused port
+  conflicts and stale in-memory rate-limiter state — always `pgrep -af
+  "vite|server.ts"` and kill stale ones before restarting.
+- `authRateLimiter` = 5 attempts / 15 min, in-memory (resets on server restart).
+- Admin test account: `admin@ksv.com` / `Admin123!` (NOT `.local` — a doc typo
+  caused confusion earlier). MFA was enrolled then disabled again during
+  testing — should currently be OFF.
+
 ---
 
 <details>
