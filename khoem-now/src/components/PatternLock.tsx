@@ -37,7 +37,7 @@ export function PatternLock({
   disabled = false,
   error = false,
   success = false,
-  size = 264,
+  size = Math.min(340, (typeof window !== "undefined" ? window.innerWidth : 400) - 40),
 }: Props) {
   const cell = size / 3;
   const hitRadius = cell * 0.36;
@@ -145,7 +145,7 @@ export function PatternLock({
             points={path.map((i) => `${center(i).x},${center(i).y}`).join(" ")}
             fill="none"
             stroke={color}
-            strokeWidth={5}
+            strokeWidth={7}
             strokeLinecap="round"
             strokeLinejoin="round"
             opacity={0.85}
@@ -158,7 +158,7 @@ export function PatternLock({
             x2={pointer.x}
             y2={pointer.y}
             stroke={color}
-            strokeWidth={5}
+            strokeWidth={7}
             strokeLinecap="round"
             opacity={0.55}
           />
@@ -175,12 +175,12 @@ export function PatternLock({
                 fill={active ? color : "none"}
                 fillOpacity={0.14}
                 stroke={active ? color : "rgba(148,163,184,0.35)"}
-                strokeWidth={active ? 2 : 1.5}
+                strokeWidth={active ? 3 : 2}
               />
               <circle
                 cx={c.x}
                 cy={c.y}
-                r={active ? 8 : 6}
+                r={active ? cell * 0.1 : cell * 0.075}
                 fill={active ? color : "rgba(226,232,240,0.75)"}
               />
             </g>
