@@ -12,7 +12,7 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
-import { User, Session, MFAChallenge, PairingSession, AutomationScene } from "./infrastructure/database/models.ts";
+import { User, Session, MFAChallenge, PairingSession, AutomationScene, RecoverySession } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
@@ -3799,6 +3799,143 @@ app.get(
       console.error("[SCENES] activate failed:", err);
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to activate scene." });
     }
+  });
+
+  // ============================================================
+  // ACCOUNT RECOVERY (email OTP → recovery token → NEW password)
+  // Never reveals whether an account exists. OTP: 6 digits, HMAC-stored,
+  // single use, 10 min, 5 attempts. Success revokes ALL old sessions.
+  // Delivery: no email/SMS provider yet. The OTP is printed to the server
+  // log ONLY when NODE_ENV !== "production"; in production nothing is sent.
+  // ============================================================
+  const REC_OTP_MS = 10 * 60 * 1000;
+  const REC_TOKEN_MS = 15 * 60 * 1000;
+  const REC_MAX_ATTEMPTS = 5;
+  const recHmac = (sessionId: string, code: string) =>
+    crypto.createHmac("sha256", String(process.env.JWT_ACCESS_SECRET) + ":" + sessionId).update(code).digest("hex");
+  const recSha = (v: string) => crypto.createHash("sha256").update(v).digest("hex");
+  const recSafeEq = (a: string, b: string) => {
+    const x = Buffer.from(a, "hex");
+    const y = Buffer.from(b, "hex");
+    return x.length === y.length && crypto.timingSafeEqual(x, y);
+  };
+  const recPasswordOk = (pw: unknown): pw is string =>
+    typeof pw === "string" && pw.length >= 6 && pw.length <= 128 && /[A-Za-z]/.test(pw) && /\d/.test(pw) && /[^A-Za-z0-9]/.test(pw);
+  const recAudit = async (userId: unknown, orgId: unknown, action: string, result: string, reason?: string) => {
+    try {
+      await AuditLog.create({ userId, organizationId: orgId, action, result, reason });
+    } catch (err) {
+      console.error("[recovery] audit failed", err);
+    }
+  };
+
+  // POST /api/recovery/initiate  body: { email }
+  app.post("/api/recovery/initiate", authRateLimiter, async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const expiresAt = new Date(Date.now() + REC_OTP_MS);
+    const generic = (id: string) =>
+      res.json({ recoverySessionId: id, expiresAt, message: "If the account exists, a verification code has been sent." });
+    if (!email || email.length > 254) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "email is required." });
+      return;
+    }
+    try {
+      const user: any = await User.findOne({ email, isActive: true }).lean();
+      if (!user) {
+        generic(String(new mongoose.Types.ObjectId())); // same shape, nothing created
+        return;
+      }
+      const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+      const sid = new mongoose.Types.ObjectId();
+      await RecoverySession.updateMany({ userId: user._id, completedAt: null, cancelledAt: null }, { $set: { cancelledAt: new Date() } });
+      await RecoverySession.create({ _id: sid, userId: user._id, codeHash: recHmac(String(sid), code), expiresAt });
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[RECOVERY][DEV ONLY] OTP for ${email}: ${code}`);
+      } else {
+        console.warn("[RECOVERY] no email/SMS provider configured — OTP not delivered");
+      }
+      await recAudit(user._id, user.organizationId, "recovery:initiate", "SUCCESS");
+      generic(String(sid));
+    } catch (err) {
+      console.error("[recovery] initiate failed", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Recovery failed." });
+    }
+  });
+
+  // POST /api/recovery/otp/verify  body: { recoverySessionId, code }
+  app.post("/api/recovery/otp/verify", authRateLimiter, async (req, res) => {
+    const { recoverySessionId, code } = req.body ?? {};
+    if (!mongoose.isValidObjectId(recoverySessionId) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+      res.status(401).json({ error: "INVALID_CODE", message: "Invalid or expired code." });
+      return;
+    }
+    try {
+      const sess: any = await RecoverySession.findOneAndUpdate(
+        {
+          _id: recoverySessionId,
+          verifiedAt: null, completedAt: null, cancelledAt: null,
+          expiresAt: { $gt: new Date() },
+          attempts: { $lt: REC_MAX_ATTEMPTS },
+        },
+        { $inc: { attempts: 1 } },
+        { new: true }
+      );
+      if (!sess || !recSafeEq(recHmac(String(sess._id), code), sess.codeHash)) {
+        if (sess) await recAudit(sess.userId, undefined, "recovery:otp", "FAILURE", "wrong_code");
+        res.status(401).json({ error: "INVALID_CODE", message: "Invalid or expired code." });
+        return;
+      }
+      const token = crypto.randomBytes(32).toString("hex");
+      await RecoverySession.updateOne(
+        { _id: sess._id },
+        { $set: { verifiedAt: new Date(), tokenHash: recSha(token), tokenExpiresAt: new Date(Date.now() + REC_TOKEN_MS) } }
+      );
+      await recAudit(sess.userId, undefined, "recovery:otp", "SUCCESS");
+      res.json({ verified: true, recoveryToken: token, expiresAt: new Date(Date.now() + REC_TOKEN_MS) });
+    } catch (err) {
+      console.error("[recovery] verify failed", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Verification failed." });
+    }
+  });
+
+  // POST /api/recovery/password/reset  body: { recoveryToken, newPassword }
+  app.post("/api/recovery/password/reset", authRateLimiter, async (req, res) => {
+    const { recoveryToken, newPassword } = req.body ?? {};
+    if (typeof recoveryToken !== "string" || recoveryToken.length !== 64) {
+      res.status(401).json({ error: "INVALID_TOKEN", message: "Invalid or expired recovery token." });
+      return;
+    }
+    if (!recPasswordOk(newPassword)) {
+      res.status(400).json({ error: "WEAK_PASSWORD", message: "Password must be 6+ characters with a letter, a number and a symbol." });
+      return;
+    }
+    try {
+      const sess: any = await RecoverySession.findOneAndUpdate(
+        { tokenHash: recSha(recoveryToken), verifiedAt: { $ne: null }, completedAt: null, cancelledAt: null, tokenExpiresAt: { $gt: new Date() } },
+        { $set: { completedAt: new Date() } }
+      );
+      if (!sess) {
+        res.status(401).json({ error: "INVALID_TOKEN", message: "Invalid or expired recovery token." });
+        return;
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      const user: any = await User.findByIdAndUpdate(sess.userId, { $set: { passwordHash } });
+      await Session.deleteMany({ userId: sess.userId }); // revoke all old sessions
+      await recAudit(sess.userId, user?.organizationId, "recovery:password.reset", "SUCCESS");
+      res.json({ success: true, message: "Password updated. Please log in again." });
+    } catch (err) {
+      console.error("[recovery] reset failed", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Password reset failed." });
+    }
+  });
+
+  // POST /api/recovery/cancel  body: { recoverySessionId }
+  app.post("/api/recovery/cancel", authRateLimiter, async (req, res) => {
+    const id = req.body?.recoverySessionId;
+    if (mongoose.isValidObjectId(id)) {
+      await RecoverySession.updateOne({ _id: id, completedAt: null }, { $set: { cancelledAt: new Date() } }).catch(() => {});
+    }
+    res.json({ success: true }); // same answer whether or not it existed
   });
 
   // GET /api/international/languages — list all supported languages

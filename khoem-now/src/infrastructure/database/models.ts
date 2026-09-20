@@ -442,6 +442,23 @@ const automationSceneSchema = new Schema(
 export const AutomationScene =
   models.AutomationScene || model("AutomationScene", automationSceneSchema);
 
+const recoverySessionSchema = new Schema(
+  {
+    userId: { type: ObjectId, ref: "User", required: true },
+    codeHash: { type: String, required: true }, // HMAC of the OTP, never the OTP
+    attempts: { type: Number, default: 0 },
+    verifiedAt: Date,
+    tokenHash: String, // SHA-256 of the recovery token (issued after OTP verified)
+    tokenExpiresAt: Date,
+    completedAt: Date,
+    cancelledAt: Date,
+    expiresAt: { type: Date, required: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+export const RecoverySession =
+  models.RecoverySession || model("RecoverySession", recoverySessionSchema);
+
 export const Device = models.Device || model("Device", deviceSchema);
 export const Discovery = models.Discovery || model("Discovery", discoverySchema);
 export const Command = models.Command || model("Command", commandSchema);
