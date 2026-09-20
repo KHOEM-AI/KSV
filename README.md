@@ -932,6 +932,85 @@ IoT System API
   caused confusion earlier). MFA was enrolled then disabled again during
   testing — should currently be OFF.
 
+PROJECT HANDOFF - KSV lock screens (repo KHOEM-AI/KSV, folder ~/KSV/khoem-now, Termux on phone)
+
+HOW I WORK
+- I do not use nano. You write read-only inspection commands; I run them in Termux and paste the output.
+- Changes are python patch scripts with asserts. Then: git add <specific files>, commit, git pull --no-rebase, git push.
+- Do NOT touch or commit src/App.tsx (it has 18 uncommitted lines that are not from this work).
+- Chat replies to me in Khmer. README files are English only, written for people and AI (what to do / next / not to do). Record only what was actually read or tested; mark the rest "not verified".
+
+DONE AND PUSHED
+- Lock screens in English, bigger pattern pad (00033fba); Hold-to-unlock labels English (bf5892b9, 7b235ac2).
+- Dark 3D Hold-to-unlock with English hint in Settings > Security (ChangePasswordCard), face scan offered after a correct pattern unlock (94014159); face-offer Skip is session-only (21e6063b).
+- Audit: DOCUMENTATION/auth-and-locks-audit.md. Guide: section "Lock & Sign-in System" at the end of khoem-now/API/README.md (51699b26, 56bb39ae, 21e6063b, f44153e4).
+
+PATCHED BUT NOT YET COMMITTED (check with git status)
+- HoldToUnlock.tsx default durationMs 30000 -> 10000 (tsc clean).
+- API/README.md: token expiry behavior from api.ts.
+
+HOW THE LOCKS WORK (verified)
+Login -> AppLockScreen (hold 10 s) -> LocationGate -> FinalLockScreen (face scan or 3x3 pattern) -> app. Lock state is React state, so every reload shows all locks again.
+Final Lock: pattern = PBKDF2 hash, min 4 dots, 5 wrong = 60 s lockout; face = WebAuthn platform authenticator. Forgot pattern clears pattern + face id.
+
+OPEN ITEMS
+1. Face scan not yet tested on the phone ("Turn on face scan?" after a correct pattern).
+2. Hold time: I want at most 15 s. Code is 10 s everywhere but it felt like about 30 s to me. Check the "X% · Ns left" text and tell me the number.
+3. api.ts: any 401 removes ksv_access_token and reloads, so about every 15 minutes I must log in and pass all locks again. The web client never stores the refresh token. Decision needed: silent refresh, longer access token, or accept.
+4. saveSession() is never called, so the Final Lock userId is always "local" (all accounts share one pattern/face).
+5. The 9 sign-up buttons (Google, Facebook, TikTok, Apple, Microsoft, GitHub, X, LinkedIn, PayPal) are placeholders with no OAuth. Decide: implement, remove, or "coming soon".
+6. Server findings (see audit): authenticate checks only the JWT; password change has no rate limit, no session revoke and no server-side 12-char rule; Settings text says Argon2id but code uses bcrypt; two auth implementations (server.ts vs identity.service.ts); recovery OTP not delivered in production.
+7. Optional: short journal entry in the root README.md.
+
+
+
+# THANK YOU SO MUCH TO ALL THE AI ASSISTANTS WHO HELPED ME 🙏❤️
+
+---
+
+### ✅ ថ្ងៃទី 29 សីហា 2026 (យប់) — Root Cause Fix, API Domain Audit, Git Safety Incident
+
+**បញ្ហាធំបំផុតដែលរកឃើញ — Root Cause នៃ "ចុចទំព័រខុស" / build ខូច:**
+ថត (folder) ត្រួតគ្នាច្រើនស្រទាប់ ដែលកើតឡើងពី AI ផ្សេងៗ (Termux, bolt.new) កែក្នុងពេលដំណាលគ្នាដោយមិន sync៖
+- `khoem-now/khoem-now/` (i18n/components ត្រូវការស្រាប់ ជាប់ក្នុង folder ត្រួតគ្នា)
+- `App.tsx` ត្រួតគ្នា ៣ file (`App.tsx`, `App_ksv.tsx`, `App_1.tsx`)
+- `nav.tsx` ដាក់ខុសទីតាំង (root ជំនួស `src/components/`)
+
+**ការកែសម្រួលរចនាសម្ព័ន្ធ (Cleanup):**
+1. រួម i18n/components/data/views ដែលជាប់ក្នុង folder ត្រួតគ្នា ចូល `src/` ត្រឹមត្រូវ
+2. ជំនួស `src/App.tsx` (កំណែខុស/template) ដោយកំណែពិត (191 lines មាន i18n ពេញលេញ)
+3. លុប `App_ksv.tsx`, `nav.tsx` (root), `src/package.json` ស្ទួន
+4. កែ `main.tsx` ឱ្យ wrap `<App />` ដោយ `<LanguageProvider>` (កាលពីមុនខ្វះ → app crash ពេល load)
+5. កែ `InternationalView.tsx`: `export default` → named export (`export function InternationalView`) ឱ្យស៊ីគ្នានឹង views ១១ ទៀត
+6. Rename `DOCUMENTATION/authorization.md` → `authentication.md` (ខ្លឹមសារពិតជា Authentication តែដាក់ខុសឈ្មោះ) + ផ្លាស់ទី `authorization.md` (root) ចូល `DOCUMENTATION/`
+
+**API/ Domain Audit (ឆែកទាំង 13 file ម្តងមួយៗ):**
+account-recovery, authentication, authorization, automation, command, device, discovery, gateway, identity, protocol, safety — ✅ ស្អាតទាំងអស់, logic/security rules ត្រឹមត្រូវ។
+- `international.ts` — ខ្វះ `ROUTES`/`Handlers`/`SecurityRules`/`AuditEvent` (មានតែ types+functions) → **បានបន្ថែមរួច**
+- `organization.ts` — ខ្វះ `ORGANIZATION_SECURITY_RULES` ទាំងស្រុង → **បានបន្ថែមរួច** (ONLY_OWNER_CAN_DELETE_ORG, MINIMUM_ONE_OWNER_REQUIRED, CANNOT_ASSIGN_ROLE_ABOVE_OWN ។ល។)
+- កត់ចំណាំ: `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` (មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import ជាមួយគ្នា — ប្រយ័ត្នពេលបង្កើត file ថ្មីត្រូវការទាំងពីរ)
+
+**⚠️ Git Safety Incident — មេរៀនសំខាន់សម្រាប់ AI/Developer ក្រោយ:**
+- ពាក្យបញ្ជា `cp -r khoem-now khoem-now-backup-...` ដែលរត់ពី **ខាងក្នុង** `khoem-now/` ខ្លួនឯង បង្កើត backup folder ដែលមាន `node_modules` ពេញ **នៅខាងក្នុង git repo** → `git add -A` ចាប់យកចូល commit ដោយចៃដន្យ (រាប់ពាន់ file!)
+- **មេរៀន**: កុំដែល `cp -r` project folder ទៅជា backup **នៅខាងក្នុងខ្លួនឯង**។ បើត្រូវការ backup សូមធ្វើនៅ **ក្រៅ** project root ទាំងស្រុង (ឧ. `~/backups/`) ឬប្រើ `git stash`/`git branch` ជំនួស
+- **មេរៀនទី ២**: `git status` ត្រូវពិនិត្យជានិច្ចមុន `git add -A` — កុំទុកចិត្តលើ `-A` ដោយងងឹតងងុល
+- **មេរៀនទី ៣**: AI ២-៣ កន្លែងកែក្នុងពេលដំណាលគ្នា (Termux + bolt.new) នាំឱ្យ `git push` ត្រូវ `rejected` ជានិច្ច — ត្រូវ `git pull --no-rebase` ជានិច្ចមុន push
+
+**ឧបករណ៍ថ្មី — `ksv.sh` (shortcut script):**
+បង្កើតទុកនៅ `~/KSV/khoem-now/ksv.sh` ជាមួយ alias `ksv` ក្នុង `~/.bashrc`៖
+- `ksv pull` — ទាញកូដចុងក្រោយ
+- `ksv build` — `npm install && npm run build`
+- `ksv dev` — `npm install && npm run dev`
+- `ksv push` — add + commit (សួរសារ) + push
+- `ksv status` — `git status` + `git log --oneline -5`
+
+**Commits ថ្ងៃនេះ:**
+- `docs: complete API domain audit, add missing security rules and route definitions to organization.ts and international.ts`
+- Merge commit ជាមួយ `khoem-now/API/README.md` (ពី AI ផ្សេង) — គ្មាន conflict
+
+**ស្ថានភាពចុងក្រោយ:** GitHub `KHOEM-AI/KSV` main branch sync ១០០%, build ជោគជ័យ (1589 modules, 0 error), `node_modules` មិនជាប់ក្នុង repo ទៀត។
+
+
 ---
 
 <details>
@@ -983,51 +1062,3 @@ Certificate #44 https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png
 Certificate #45 https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png?t=639224766824092049
 Certificate #46 https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png?t=639225729535120880
 Certificate​ #47 https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png?t=639227517866924285
-
----
-
-# THANK YOU SO MUCH TO ALL THE AI ASSISTANTS WHO HELPED ME 🙏❤️
-
----
-
-### ✅ ថ្ងៃទី 29 សីហា 2026 (យប់) — Root Cause Fix, API Domain Audit, Git Safety Incident
-
-**បញ្ហាធំបំផុតដែលរកឃើញ — Root Cause នៃ "ចុចទំព័រខុស" / build ខូច:**
-ថត (folder) ត្រួតគ្នាច្រើនស្រទាប់ ដែលកើតឡើងពី AI ផ្សេងៗ (Termux, bolt.new) កែក្នុងពេលដំណាលគ្នាដោយមិន sync៖
-- `khoem-now/khoem-now/` (i18n/components ត្រូវការស្រាប់ ជាប់ក្នុង folder ត្រួតគ្នា)
-- `App.tsx` ត្រួតគ្នា ៣ file (`App.tsx`, `App_ksv.tsx`, `App_1.tsx`)
-- `nav.tsx` ដាក់ខុសទីតាំង (root ជំនួស `src/components/`)
-
-**ការកែសម្រួលរចនាសម្ព័ន្ធ (Cleanup):**
-1. រួម i18n/components/data/views ដែលជាប់ក្នុង folder ត្រួតគ្នា ចូល `src/` ត្រឹមត្រូវ
-2. ជំនួស `src/App.tsx` (កំណែខុស/template) ដោយកំណែពិត (191 lines មាន i18n ពេញលេញ)
-3. លុប `App_ksv.tsx`, `nav.tsx` (root), `src/package.json` ស្ទួន
-4. កែ `main.tsx` ឱ្យ wrap `<App />` ដោយ `<LanguageProvider>` (កាលពីមុនខ្វះ → app crash ពេល load)
-5. កែ `InternationalView.tsx`: `export default` → named export (`export function InternationalView`) ឱ្យស៊ីគ្នានឹង views ១១ ទៀត
-6. Rename `DOCUMENTATION/authorization.md` → `authentication.md` (ខ្លឹមសារពិតជា Authentication តែដាក់ខុសឈ្មោះ) + ផ្លាស់ទី `authorization.md` (root) ចូល `DOCUMENTATION/`
-
-**API/ Domain Audit (ឆែកទាំង 13 file ម្តងមួយៗ):**
-account-recovery, authentication, authorization, automation, command, device, discovery, gateway, identity, protocol, safety — ✅ ស្អាតទាំងអស់, logic/security rules ត្រឹមត្រូវ។
-- `international.ts` — ខ្វះ `ROUTES`/`Handlers`/`SecurityRules`/`AuditEvent` (មានតែ types+functions) → **បានបន្ថែមរួច**
-- `organization.ts` — ខ្វះ `ORGANIZATION_SECURITY_RULES` ទាំងស្រុង → **បានបន្ថែមរួច** (ONLY_OWNER_CAN_DELETE_ORG, MINIMUM_ONE_OWNER_REQUIRED, CANNOT_ASSIGN_ROLE_ABOVE_OWN ។ល។)
-- កត់ចំណាំ: `ActionType` ស្ទួនឈ្មោះរវាង `authorization.ts` និង `automation.ts` (មិនទាន់ប៉ះពាល់ ព្រោះមិនទាន់ import ជាមួយគ្នា — ប្រយ័ត្នពេលបង្កើត file ថ្មីត្រូវការទាំងពីរ)
-
-**⚠️ Git Safety Incident — មេរៀនសំខាន់សម្រាប់ AI/Developer ក្រោយ:**
-- ពាក្យបញ្ជា `cp -r khoem-now khoem-now-backup-...` ដែលរត់ពី **ខាងក្នុង** `khoem-now/` ខ្លួនឯង បង្កើត backup folder ដែលមាន `node_modules` ពេញ **នៅខាងក្នុង git repo** → `git add -A` ចាប់យកចូល commit ដោយចៃដន្យ (រាប់ពាន់ file!)
-- **មេរៀន**: កុំដែល `cp -r` project folder ទៅជា backup **នៅខាងក្នុងខ្លួនឯង**។ បើត្រូវការ backup សូមធ្វើនៅ **ក្រៅ** project root ទាំងស្រុង (ឧ. `~/backups/`) ឬប្រើ `git stash`/`git branch` ជំនួស
-- **មេរៀនទី ២**: `git status` ត្រូវពិនិត្យជានិច្ចមុន `git add -A` — កុំទុកចិត្តលើ `-A` ដោយងងឹតងងុល
-- **មេរៀនទី ៣**: AI ២-៣ កន្លែងកែក្នុងពេលដំណាលគ្នា (Termux + bolt.new) នាំឱ្យ `git push` ត្រូវ `rejected` ជានិច្ច — ត្រូវ `git pull --no-rebase` ជានិច្ចមុន push
-
-**ឧបករណ៍ថ្មី — `ksv.sh` (shortcut script):**
-បង្កើតទុកនៅ `~/KSV/khoem-now/ksv.sh` ជាមួយ alias `ksv` ក្នុង `~/.bashrc`៖
-- `ksv pull` — ទាញកូដចុងក្រោយ
-- `ksv build` — `npm install && npm run build`
-- `ksv dev` — `npm install && npm run dev`
-- `ksv push` — add + commit (សួរសារ) + push
-- `ksv status` — `git status` + `git log --oneline -5`
-
-**Commits ថ្ងៃនេះ:**
-- `docs: complete API domain audit, add missing security rules and route definitions to organization.ts and international.ts`
-- Merge commit ជាមួយ `khoem-now/API/README.md` (ពី AI ផ្សេង) — គ្មាន conflict
-
-**ស្ថានភាពចុងក្រោយ:** GitHub `KHOEM-AI/KSV` main branch sync ១០០%, build ជោគជ័យ (1589 modules, 0 error), `node_modules` មិនជាប់ក្នុង repo ទៀត។
