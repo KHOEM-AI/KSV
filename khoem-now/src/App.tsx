@@ -22,6 +22,7 @@ import { SettingsView } from '@/views/SettingsView';
 import { LoginView } from '@/views/LoginView';
 import AppLockScreen from '@/components/AppLockScreen';
 import { RegisterView } from '@/views/RegisterView';
+import ProviderSelectScreen from '@/components/ProviderSelectScreen';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -217,13 +218,28 @@ export default function App() {
   );
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [providerChosen, setProviderChosen] = useState(false);
 
   if (!isAuthenticated) {
     if (authMode === 'register') {
+      if (!providerChosen) {
+        return (
+          <div className="relative">
+            <ProviderSelectScreen onSelect={() => setProviderChosen(true)} />
+            <button
+              type="button"
+              onClick={() => setAuthMode('login')}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-slate-400 hover:text-white underline"
+            >
+              Already have an account? Log in
+            </button>
+          </div>
+        );
+      }
       return (
         <RegisterView
           onRegisterSuccess={() => setIsAuthenticated(true)}
-          onSwitchToLogin={() => setAuthMode('login')}
+          onSwitchToLogin={() => { setProviderChosen(false); setAuthMode('login'); }}
         />
       );
     }
