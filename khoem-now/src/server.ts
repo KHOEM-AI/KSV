@@ -12,7 +12,7 @@ import express from "express";
 import cors from "cors";
 import { connectDatabase } from "./infrastructure/database/connection.ts";
 import { Certificate, Command, Device, Settings, ThreatDetection, SecurityIncident, Organization, Site, Building, Room, SafetyRule, Gateway, GatewayProvisioningToken, AuditLog, Protocol, Notification, Country, AutomationRule, Discovery, Language, SafetyLog, DeviceLog, OrganizationSubscription, Invoice, AIConversationSession, PaymentMethod } from "./infrastructure/database/models.ts";
-import { User, Session, MFAChallenge, PairingSession } from "./infrastructure/database/models.ts";
+import { User, Session, MFAChallenge, PairingSession, AutomationScene } from "./infrastructure/database/models.ts";
 import { authenticate } from "./core/auth/auth.middleware.ts";
 import { requirePermission, requireMinRole } from "./core/auth/rbac.policy.ts";
 import { deviceCommandRateLimiter, authRateLimiter } from "./core/security/rate-limiter.ts";
@@ -3557,6 +3557,246 @@ app.get(
     } catch (err) {
       console.error("[SAFETY] device status failed:", err);
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load device safety status." });
+    }
+  });
+
+  // ============================================================
+  // AUTOMATION SCENES — activation runs EVERY action through the same
+  // pipeline as a manual command: emergency-stop guard → Safety Engine →
+  // gateway dispatch → audit. bypassSafety is never accepted.
+  // ============================================================
+  const SCENE_MAX_ACTIONS = 20;
+  const validateScene = async (
+    orgId: unknown,
+    body: any,
+    partial: boolean
+  ): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> => {
+    const data: Record<string, unknown> = {};
+    if (!partial || body.name !== undefined) {
+      if (typeof body.name !== "string" || body.name.trim().length < 1 || body.name.length > 100) {
+        return { ok: false, message: "name must be 1-100 characters." };
+      }
+      data.name = body.name.trim();
+    }
+    if (body.description !== undefined) {
+      if (typeof body.description !== "string" || body.description.length > 500) {
+        return { ok: false, message: "description must be a string up to 500 characters." };
+      }
+      data.description = body.description;
+    }
+    if (body.roomId !== undefined) {
+      if (!mongoose.isValidObjectId(body.roomId)) return { ok: false, message: "roomId is invalid." };
+      data.roomId = body.roomId;
+    }
+    if (!partial || body.actions !== undefined) {
+      const acts = body.actions;
+      if (!Array.isArray(acts) || acts.length < 1 || acts.length > SCENE_MAX_ACTIONS) {
+        return { ok: false, message: `actions must be an array of 1-${SCENE_MAX_ACTIONS} items.` };
+      }
+      const clean: Record<string, unknown>[] = [];
+      for (const a of acts) {
+        if (
+          !isPlainObject(a) ||
+          "bypassSafety" in a ||
+          !mongoose.isValidObjectId(a.deviceId) ||
+          typeof a.commandType !== "string" || a.commandType.length < 1 || a.commandType.length > 64 ||
+          (a.payload !== undefined && !isPlainObject(a.payload)) ||
+          !smallJson(a)
+        ) {
+          return { ok: false, message: "each action needs deviceId + commandType (+ optional payload object); bypassSafety is not allowed." };
+        }
+        clean.push({ deviceId: a.deviceId, commandType: a.commandType, ...(a.payload ? { payload: a.payload } : {}) });
+      }
+      const ids = [...new Set(clean.map((a) => String(a.deviceId)))];
+      const owned = await Device.find({ _id: { $in: ids }, organizationId: orgId }).select("criticality").lean();
+      if (owned.length !== ids.length) {
+        return { ok: false, message: "every action deviceId must belong to your organization." };
+      }
+      if (owned.some((d: any) => d.criticality === "life_support")) {
+        return { ok: false, message: "life_support devices cannot be part of a scene." };
+      }
+      data.actions = clean;
+    }
+    return { ok: true, data };
+  };
+
+  // POST /api/automation/scenes
+  app.post("/api/automation/scenes", authenticate, requirePermission("automation:manage"), requirePermission("device:command"), async (req, res) => {
+    const user = req.user!;
+    if (!user.organizationId) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "No organizationId on user." });
+      return;
+    }
+    try {
+      const v = await validateScene(user.organizationId, req.body ?? {}, false);
+      if (!v.ok) {
+        res.status(400).json({ error: "BAD_REQUEST", message: v.message });
+        return;
+      }
+      const scene = await AutomationScene.create({ organizationId: user.organizationId, createdBy: user.id, ...v.data });
+      await autoAudit(user, "automation:scene.create", "SUCCESS", String(scene._id));
+      res.status(201).json(scene);
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to create scene." });
+    }
+  });
+
+  // GET /api/automation/scenes
+  app.get("/api/automation/scenes", authenticate, requirePermission("automation:read"), async (req, res) => {
+    try {
+      const scenes = await AutomationScene.find({ organizationId: req.user!.organizationId }).sort({ createdAt: -1 }).limit(200).lean();
+      res.json({ scenes, total: scenes.length });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to list scenes." });
+    }
+  });
+
+  // GET /api/automation/scenes/:id
+  app.get("/api/automation/scenes/:id", authenticate, requirePermission("automation:read"), async (req, res) => {
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid scene id." });
+      return;
+    }
+    try {
+      const scene = await AutomationScene.findOne({ _id: id, organizationId: req.user!.organizationId }).lean();
+      if (!scene) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Scene not found." });
+        return;
+      }
+      res.json(scene);
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load scene." });
+    }
+  });
+
+  // PUT /api/automation/scenes/:id
+  app.put("/api/automation/scenes/:id", authenticate, requirePermission("automation:manage"), requirePermission("device:command"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid scene id." });
+      return;
+    }
+    try {
+      const v = await validateScene(user.organizationId, req.body ?? {}, true);
+      if (!v.ok) {
+        res.status(400).json({ error: "BAD_REQUEST", message: v.message });
+        return;
+      }
+      if (Object.keys(v.data).length === 0) {
+        res.status(400).json({ error: "BAD_REQUEST", message: "Nothing to update." });
+        return;
+      }
+      const scene = await AutomationScene.findOneAndUpdate({ _id: id, organizationId: user.organizationId }, { $set: v.data }, { new: true }).lean();
+      if (!scene) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Scene not found." });
+        return;
+      }
+      await autoAudit(user, "automation:scene.update", "SUCCESS", id);
+      res.json(scene);
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to update scene." });
+    }
+  });
+
+  // DELETE /api/automation/scenes/:id
+  app.delete("/api/automation/scenes/:id", authenticate, requirePermission("automation:manage"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Invalid scene id." });
+      return;
+    }
+    try {
+      const del = await AutomationScene.deleteOne({ _id: id, organizationId: user.organizationId });
+      if (del.deletedCount === 0) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Scene not found." });
+        return;
+      }
+      await autoAudit(user, "automation:scene.delete", "SUCCESS", id);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to delete scene." });
+    }
+  });
+
+  // POST /api/automation/scenes/:id/activate
+  app.post("/api/automation/scenes/:id/activate", authenticate, deviceCommandRateLimiter, requirePermission("device:command"), async (req, res) => {
+    const user = req.user!;
+    const id = String(req.params.id);
+    if (!user.organizationId || !mongoose.isValidObjectId(id)) {
+      res.status(400).json({ error: "BAD_REQUEST", message: "Valid scene id and organization required." });
+      return;
+    }
+    try {
+      const scene: any = await AutomationScene.findOne({ _id: id, organizationId: user.organizationId }).lean();
+      if (!scene) {
+        res.status(404).json({ error: "NOT_FOUND", message: "Scene not found." });
+        return;
+      }
+      const results: Array<Record<string, unknown>> = [];
+      for (const act of scene.actions ?? []) {
+        const deviceId = String(act.deviceId);
+        const commandType = String(act.commandType);
+        const payload = act.payload;
+        const orgId = String(user.organizationId);
+
+        const blocked = async (reason: string, ruleName?: string) => {
+          const cmd = await Command.create({
+            deviceId, userId: user.id, type: commandType, payload,
+            status: "blocked", response: { reason, ruleName }, sentAt: new Date(), completedAt: new Date(),
+          });
+          await auditDeviceCommand(user.id, deviceId, commandType, "BLOCKED", orgId, { reason: `${reason} (scene ${id})` });
+          results.push({ deviceId, commandType, status: "blocked", reason, commandId: cmd._id });
+        };
+
+        const activeStop = await EmergencyStop.findOne({
+          organizationId: user.organizationId,
+          releasedAt: { $exists: false },
+          $or: [{ scope: "organization" }, { deviceId }],
+        }).lean();
+        if (activeStop) {
+          await blocked("Emergency stop active: " + activeStop.reason, "EMERGENCY_STOP");
+          continue;
+        }
+
+        const safety = await evaluateSafetyForDevice(deviceId, orgId, commandType, { payload });
+        if (safety.decision === "BLOCKED") {
+          await blocked(safety.reason ?? "Blocked by safety.", safety.ruleName);
+          continue;
+        }
+
+        const device: any = await Device.findOne({ _id: deviceId, organizationId: user.organizationId }).lean();
+        if (!device) {
+          await blocked("Device not found.");
+          continue;
+        }
+        const command = await Command.create({ deviceId, userId: user.id, type: commandType, payload, status: "pending" });
+        const dispatchResult = await gatewayDispatcher.dispatch({
+          deviceId,
+          organizationId: orgId,
+          commandId: String(command._id),
+          command: { deviceId, deviceCode: device.deviceCode, deviceType: device.type, commandType, payload },
+        });
+        await applyDispatchResult(String(command._id), dispatchResult);
+        if (dispatchResult.status === "success") {
+          await auditDeviceCommand(user.id, deviceId, commandType, "SUCCESS", orgId, { reason: `scene ${id}` });
+        } else if (dispatchResult.status === "failed") {
+          await auditDeviceCommand(user.id, deviceId, commandType, "FAILURE", orgId, {
+            reason: `${dispatchResult.message} (scene ${id})`,
+            code: dispatchResult.code,
+          });
+        }
+        results.push({ deviceId, commandType, status: dispatchResult.status, commandId: command._id });
+      }
+      const issued = results.filter((r) => r.status === "success").length;
+      const blockedCount = results.filter((r) => r.status === "blocked").length;
+      await autoAudit(user, "automation:scene.activate", blockedCount ? "PARTIAL" : "SUCCESS", `${id} issued=${issued} blocked=${blockedCount}`);
+      res.json({ success: blockedCount === 0 && issued === results.length, commandsIssued: issued, blocked: blockedCount, total: results.length, results });
+    } catch (err) {
+      console.error("[SCENES] activate failed:", err);
+      res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to activate scene." });
     }
   });
 

@@ -425,6 +425,21 @@ const pairingSessionSchema = new Schema(
 export const PairingSession =
   models.PairingSession || model("PairingSession", pairingSessionSchema);
 
+const automationSceneSchema = new Schema(
+  {
+    organizationId: { type: ObjectId, ref: "Organization", required: true },
+    name: { type: String, required: true },
+    description: String,
+    roomId: { type: ObjectId, ref: "Room" },
+    // [{ deviceId, commandType, payload? }] — bypassSafety is never accepted
+    actions: { type: [Schema.Types.Mixed], default: [] },
+    createdBy: { type: ObjectId, ref: "User" },
+  },
+  { timestamps: true }
+);
+export const AutomationScene =
+  models.AutomationScene || model("AutomationScene", automationSceneSchema);
+
 export const Device = models.Device || model("Device", deviceSchema);
 export const Discovery = models.Discovery || model("Discovery", discoverySchema);
 export const Command = models.Command || model("Command", commandSchema);
