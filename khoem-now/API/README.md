@@ -190,7 +190,7 @@ Files: `src/components/FinalLockScreen.tsx`, `src/components/PatternLock.tsx`, `
 
 **How it works:** the pattern is stored as a salted PBKDF2-SHA256 hash (150,000 iterations), never as raw dots. Face scan uses the phone's own WebAuthn platform authenticator (`userVerification: required`); KSV never sees or stores a face image. The phone decides whether it asks for face, fingerprint or screen lock; the web page cannot force "face only". Pattern and face need a secure context (HTTPS or localhost).
 
-**Storage:** localStorage `ksv.finalLock.v1.<userId>` (pattern hash, credential id, failure counter, lock time). `<userId>` comes from `getCurrentUser()` in `src/lib/auth.ts` (localStorage `ksv_current_user`), or the text `local` when there is no user. Not verified: whether login writes `ksv_current_user` (`saveSession` is not called in LoginView or RegisterView).
+**Storage:** localStorage `ksv.finalLock.v1.<userId>` (pattern hash, credential id, failure counter, lock time). `<userId>` comes from `getCurrentUser()` in `src/lib/auth.ts` (localStorage `ksv_current_user`), or the text `local` when there is no user. Verified by a search of src/: `saveSession()` is defined in `src/lib/auth.ts` but is never called, so `ksv_current_user` is never written and `getCurrentUser()` returns null. The Final Lock user id is therefore always the text `local`: every account used on the same browser shares one pattern and one face credential.
 
 **Important:** this is a LOCAL gate. Face results are not verified by a server, and clearing site data resets the pattern, the counter and the lock. It protects against someone picking up a phone that is already signed in. It does not replace the account password or MFA.
 
@@ -223,8 +223,8 @@ Do not describe these buttons as working social login until OAuth is really impl
 2. Decide about the 9 provider buttons: implement real OAuth (and pass the provider to register) or remove them / label them "coming soon".
 3. Make `authenticate` check the session (or shorten the access token), because a token stays valid after logout or password change until it expires.
 4. Password change: enforce the 12-character rule on the server, add a rate limit, and revoke other sessions.
-5. Confirm token refresh: LoginView and RegisterView store only the access token (not the refresh token); the behavior after the 15-minute expiry was not verified.
-6. Confirm whether `saveSession` is called anywhere, so the Final Lock user id is not always `local`.
+5. Token refresh: verified by a search of src/ that nothing stores the refresh token (LoginView and RegisterView save only the access token), so the web app cannot use `/api/auth/token/refresh`. What the app does when the 15-minute access token expires was not verified (see `src/lib/api.ts`). Decide: store the refresh token and refresh silently, or accept a new login.
+6. Call `saveSession` (or write `ksv_current_user`) at login and register, so the Final Lock user id is the real account id and accounts on one device do not share a pattern.
 7. Fix or remove the "Argon2id" text in Settings (the code uses bcrypt).
 8. Configure an email/SMS provider for recovery and MFA codes.
 
