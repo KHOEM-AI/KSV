@@ -115,7 +115,7 @@ Verified: ran twice in a row, device count stayed at 20 both times
 | Registration | `POST /api/auth/register`, creates Organization + `OrgAdmin` user | Never creates `Owner` (platform superuser) |
 | Client gates | Hold-to-unlock App Lock, Provider select (UI only, no real OAuth), Location Gate | `POST /api/auth/location` stores `lastKnownLocation` |
 | Pairing | `PairingSession` model; start / get / verify-owner / confirm / cancel; list paired; unpair | Proof stored as SHA-256 only, timing-safe compare, 5 attempts, 10 min TTL |
-| Automation rules | CRUD + enable/disable | Rules start **disabled**. **Execution engine is not built yet** |
+| Automation rules | CRUD + enable/disable | Rules start **disabled**. Execution engine exists (time-based only, **off by default**, see below) |
 | Scenes | CRUD + activate | Every action goes through e-stop guard → Safety Engine → dispatch → audit. `bypassSafety` is rejected |
 | Safety | `POST /api/safety/check` (dry-run), `GET /api/safety/devices`, device `criticality` | Dry-run creates no command and dispatches nothing |
 
@@ -128,6 +128,13 @@ The Safety Engine evaluates it **before** any database rule, so it cannot be dis
 - `life_support` devices cannot be added to scenes.
 - Unknown criticality values are blocked (fail closed).
 
+### Automation execution engine (2026-09-20)
+
+- File: `src/core/automation/automation.engine.ts`. Time triggers only: `{ type: "time_of_day", time: "HH:MM", daysOfWeek?, timezone? }` (legacy `{ type: "time", value: "HH:MM" }` also accepted).
+- **Off by default.** Set `AUTOMATION_ENGINE=on` in `.env` to start it (tick every 30 s).
+- An automated command gets no extra privilege: e-stop guard → criticality / Safety Engine → gateway dispatch → audit (audit `userId` is `null`). `life_support` devices never run. No bypass.
+- Each rule runs at most once per matching minute (atomic claim via `lastRunKey`). Missed minutes are not caught up. An invalid timezone never runs (fail closed).
+
 ### Known limitations (do not ignore)
 
 1. MQTT still connects to the public `test.mosquitto.org` broker. Move to a private broker with credentials + TLS before any real device.
@@ -139,7 +146,7 @@ The Safety Engine evaluates it **before** any database rule, so it cannot be dis
 
 ### Remaining work
 
-- Automation execution engine (scheduler; must use the same e-stop + safety pipeline as manual commands)
+- Automation engine: extend beyond time triggers (sensor, device state, location); not yet tested against a real device
 - Real OAuth (needs Client ID/Secret per provider)
 - Domains still missing on the server: recovery, admin, telemetry, push, files, reports, webhooks, geo, tickets
 - `KhoemAIPanel.tsx` calls `/api/v1/ai-brain/recent-decisions`, which is not implemented server-side
