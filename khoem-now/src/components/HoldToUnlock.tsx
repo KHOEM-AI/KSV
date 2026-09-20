@@ -13,7 +13,7 @@ const GRADIENT =
 
 export default function HoldToUnlock({
   durationMs = 30000,
-  label = "ចុចឱ្យជាប់ ៣០ វិនាទី ដើម្បីដោះសោ",
+  label = "Hold to unlock",
   doneLabel = "បានដោះសោ ✓",
   disabled = false,
   onComplete,
@@ -106,7 +106,7 @@ export default function HoldToUnlock({
       onBlur={cancel}
       style={{
         position: "relative",
-        height: 60,
+        height: 76,
         borderRadius: 16,
         overflow: "hidden",
         background: "#e5e7eb",
@@ -152,7 +152,7 @@ export default function HoldToUnlock({
           justifyContent: "center",
           gap: 10,
           fontWeight: 700,
-          fontSize: 15,
+          fontSize: 18,
           color: done || progress > 0.5 ? "#ffffff" : "#0f172a",
           textShadow:
             done || progress > 0.5 ? "0 1px 3px rgba(0,0,0,0.45)" : "none",
