@@ -89,6 +89,14 @@ const styles = {
   },
 } as const;
 
+const skipKey = (u: string) => `ksv.faceOfferSkipped.v1.${u}`;
+const faceOfferSkipped = (u: string) => {
+  try { return localStorage.getItem(skipKey(u)) === "1"; } catch { return false; }
+};
+const markFaceOfferSkipped = (u: string) => {
+  try { localStorage.setItem(skipKey(u), "1"); } catch { /* ignore */ }
+};
+
 export function FinalLockScreen({ userId, onUnlocked, onForgot }: Props) {
   const [stage, setStage] = useState<Stage>("loading");
   const [faceSupported, setFaceSupported] = useState(false);
@@ -179,7 +187,8 @@ export function FinalLockScreen({ userId, onUnlocked, onForgot }: Props) {
       const res = await verifyPattern(userId, pattern);
       if (res === "ok") {
         setStatus("success");
-        window.setTimeout(onUnlocked, 250);
+        if (faceSupported && !hasFace(userId) && !faceOfferSkipped(userId)) setStage("setup-face");
+        else window.setTimeout(onUnlocked, 250);
       } else if (res === "locked") {
         setLockLeft(Math.ceil(getLockRemainingMs(userId) / 1000));
         flash("error", T.locked(Math.ceil(getLockRemainingMs(userId) / 1000)));
@@ -221,7 +230,7 @@ export function FinalLockScreen({ userId, onUnlocked, onForgot }: Props) {
         <button style={styles.primary} onClick={onEnableFace} disabled={busy}>
           {T.enable}
         </button>
-        <button style={styles.link} onClick={onUnlocked} disabled={busy}>
+        <button style={styles.link} onClick={() => { markFaceOfferSkipped(userId); onUnlocked(); }} disabled={busy}>
           {T.skip}
         </button>
       </div>

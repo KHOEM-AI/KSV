@@ -5,17 +5,27 @@ interface Props {
   label?: string;
   doneLabel?: string;
   disabled?: boolean;
+  variant?: "light" | "dark";
+  hint?: string;
+  height?: number;
+  fontSize?: number;
   onComplete: () => void;
 }
 
 const GRADIENT =
   "linear-gradient(90deg,#ef4444 0%,#38bdf8 50%,#22c55e 100%)";
+const DARK_GRADIENT =
+  "linear-gradient(90deg,#b91c1c 0%,#0284c7 50%,#15803d 100%)";
 
 export default function HoldToUnlock({
   durationMs = 30000,
   label = "Hold to unlock",
   doneLabel = "Unlocked ✓",
   disabled = false,
+  variant = "light",
+  hint,
+  height = 76,
+  fontSize = 18,
   onComplete,
 }: Props) {
   const [progress, setProgress] = useState(0);
@@ -79,6 +89,8 @@ export default function HoldToUnlock({
 
   const pct = Math.round(progress * 100);
   const secondsLeft = Math.ceil((1 - progress) * (durationMs / 1000));
+  const dark = variant === "dark";
+  const track = dark ? "#172033" : "#e5e7eb";
 
   return (
     <div
@@ -106,28 +118,33 @@ export default function HoldToUnlock({
       onBlur={cancel}
       style={{
         position: "relative",
-        height: 76,
-        borderRadius: 16,
+        height,
+        borderRadius: dark ? 20 : 16,
         overflow: "hidden",
-        background: "#e5e7eb",
+        background: track,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         userSelect: "none",
         WebkitUserSelect: "none",
         WebkitTouchCallout: "none",
         touchAction: "none",
-        transform: holding ? "scale(0.985)" : "scale(1)",
-        transition: "transform 120ms ease",
-        boxShadow: holding
-          ? "0 0 0 3px rgba(56,189,248,0.45)"
-          : "0 1px 3px rgba(0,0,0,0.15)",
+        transform: dark ? (holding ? "translateY(5px)" : "translateY(0)") : holding ? "scale(0.985)" : "scale(1)",
+        transition: "transform 120ms ease, box-shadow 120ms ease",
+        border: dark ? "1px solid rgba(148,163,184,0.22)" : undefined,
+        boxShadow: dark
+          ? holding
+            ? "0 1px 0 #05080f, 0 4px 10px rgba(0,0,0,0.5), 0 0 0 3px rgba(56,189,248,0.4)"
+            : "0 6px 0 #05080f, 0 16px 28px rgba(0,0,0,0.55), 0 0 22px rgba(56,189,248,0.12)"
+          : holding
+            ? "0 0 0 3px rgba(56,189,248,0.45)"
+            : "0 1px 3px rgba(0,0,0,0.15)",
       }}
     >
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: done ? "#22c55e" : GRADIENT,
+          background: done ? (dark ? "#15803d" : "#22c55e") : dark ? DARK_GRADIENT : GRADIENT,
           transition: "background 300ms ease",
         }}
       />
@@ -139,10 +156,20 @@ export default function HoldToUnlock({
           bottom: 0,
           right: 0,
           width: done ? "0%" : `${100 - progress * 100}%`,
-          background: "#e5e7eb",
+          background: track,
         }}
       />
 
+      {dark && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 55%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <div
         style={{
           position: "relative",
@@ -150,10 +177,11 @@ export default function HoldToUnlock({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: 10,
+          flexDirection: "column",
+          gap: 4,
           fontWeight: 700,
-          fontSize: 18,
-          color: done || progress > 0.5 ? "#ffffff" : "#0f172a",
+          fontSize,
+          color: done || progress > 0.5 ? "#ffffff" : dark ? "#e2e8f0" : "#0f172a",
           textShadow:
             done || progress > 0.5 ? "0 1px 3px rgba(0,0,0,0.45)" : "none",
         }}
@@ -166,6 +194,11 @@ export default function HoldToUnlock({
           </span>
         ) : (
           <span>🔒 {label}</span>
+        )}
+        {hint && !done && (
+          <span style={{ fontSize: Math.round(fontSize * 0.62), fontWeight: 500, opacity: 0.85 }}>
+            {holding ? "Keep holding…" : hint}
+          </span>
         )}
       </div>
     </div>
