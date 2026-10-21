@@ -52,4 +52,4 @@ app.all("/api/:name", (req, res) => {
   forward(api.target + (qs ? "?" + qs : ""), req, res, extra);
 });
 
-app.listen(process.env.PORT || 4000, "127.0.0.1", () => console.log("KI gateway រត់"));
+app.listen(process.env.PORT || 4000, "127.0.0.1", () => console.log("KSV gateway រត់"));
