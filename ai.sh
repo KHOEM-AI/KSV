@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KI: ai [run|stop|restart]  = KHOEM_AI (:8790) + AI (:8787, UI :5175) + KI gateway (:4000)
+# KSV: ai [run|stop|restart]  = KHOEM_AI (:8790) + AI (:8787, UI :5175) + KSV gateway (:4000)
 LAUNCHER="$HOME/KHOEM_AI/KHOEM_AI/ai.sh"
 GW="$HOME/KSV/gateway"
 export AI_DIR="${AI_DIR:-$HOME/ai-project/AI}"
@@ -19,7 +19,7 @@ case "${1:-run}" in
     done
     ( cd "$GW" && set -a && . ./.env && set +a && PORT=4000 exec node server.js ) &
     GPID=$!
-    echo "  ✔ KI gateway    :4000"
+    echo "  ✔ KSV gateway    :4000"
     trap 'kill $GPID 2>/dev/null; kill $LPID 2>/dev/null; wait 2>/dev/null; exit' INT TERM
     wait $LPID
     kill $GPID 2>/dev/null
