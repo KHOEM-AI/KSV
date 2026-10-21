@@ -1,0 +1,22 @@
+# សម្ងាត់
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+# ធំ ឬបង្កើតឡើងវិញបាន
+node_modules/
+dist/
+build/
+*.log
+server.log
+# បម្រុងទុក
+*.bak
+*.bak-*
+*.bak2
+*.tmp
+_OLD_DUPLICATES/
+# ឯកសារ database ក្នុងម៉ាស៊ីន
+*.sqlite
+*.db

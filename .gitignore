@@ -1,1 +1,4 @@
 *.big-backup
+
+gateway/.env
+gateway/node_modules/
