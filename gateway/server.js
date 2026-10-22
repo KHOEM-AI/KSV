@@ -1,12 +1,53 @@
 import express from "express";
 import { registry, local } from "./registry.js";
+import fs from "node:fs";
+const ALLOW = new Set(fs.existsSync("./allow-read.txt") ? fs.readFileSync("./allow-read.txt","utf8").split("\n").filter(Boolean) : []);
+
 const app = express();
 app.use(express.json({ limit: "20mb" }));
 
 
+
+
+// ===== Public chat -> AI /api/chat (localhost, rate limit) =====
+const chatHits = new Map();
+app.use("/api/chat", (req, res, next) => {
+  const o = req.get("origin") || "";
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o)) res.set("Access-Control-Allow-Origin", o);
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+app.post("/api/chat", (req, res) => {
+  const now = Date.now(), a = (chatHits.get(req.ip) || []).filter(t => now - t < 60000);
+  if (a.length >= 20) return res.status(429).json({ error: "ច្រើនពេក សូមរង់ចាំ" });
+  a.push(now); chatHits.set(req.ip, a);
+  const { messages, honorific, sessionId } = req.body || {};
+  forward(local.ai + "/api/chat", { method: "POST", body: { messages, honorific, sessionId } }, res);
+});
+
+// ===== Public read-only (ឥតត្រូវ token): qr, nominatim, osrm =====
+const PUBLIC = new Set(["qr","nominatim","osrm"]);
+const hits = new Map();
+app.use("/api", (req,res,next)=>{
+  const name = req.path.split("/")[1];
+  if (!PUBLIC.has(name) || req.method !== "GET") return next();
+  const o = req.get("origin") || "";
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o)) res.set("Access-Control-Allow-Origin", o);
+  const now = Date.now(), k = req.ip, a = (hits.get(k)||[]).filter(t=>now-t<60000);
+  if (a.length >= 60) return res.status(429).json({error:"ច្រើនពេក"});
+  a.push(now); hits.set(k,a);
+  const api = registry[name];
+  const qs = new URLSearchParams(req.query).toString();
+  const rest = req.path.split("/").slice(2).join("/");
+  forward(api.target + rest + (qs ? "?" + qs : ""), req, res, api.extraHeaders || {});
+});
+
 // ===== ការពារ៖ token + allowlist =====
 const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN || "";
 const SAFE = [
+  { test: (r) => r.startsWith("ai/") && ALLOW.has(r.slice(2)) },
   /^ai\/api\/(health|models|status|chat)$/,
   /^khoem\/(health|languages|knowledge|translate)$/,
 ];

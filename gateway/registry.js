@@ -1,6 +1,6 @@
 export const registry = {
   qr:        { target: "https://api.qrserver.com/v1/create-qr-code/", keyEnv: null },
-  nominatim: { target: "https://nominatim.openstreetmap.org/search", keyEnv: null },
+  nominatim: { target: "https://nominatim.openstreetmap.org/search", keyEnv: null, extraHeaders: { "User-Agent": "KHOEM-AI-gateway/1.0 (personal project)" } },
   osrm:      { target: "https://router.project-osrm.org/route/v1/driving/", keyEnv: null },
 };
 // API ផ្ទាល់ខ្លួនរបស់បង៖ បញ្ជូនបន្តទាំង path ដែលនៅក្រោម
