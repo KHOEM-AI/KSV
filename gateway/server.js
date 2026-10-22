@@ -71,7 +71,7 @@ async function forward(url, req, res, extra = {}) {
     const headers = { "Content-Type": "application/json", ...extra };
     const hasBody = !["GET", "HEAD"].includes(req.method);
     const r = await fetch(url, { method: req.method, headers, body: hasBody ? JSON.stringify(req.body) : undefined });
-    res.status(r.status).set("Content-Type", r.headers.get("content-type") || "application/json").send(await r.text());
+    res.status(r.status).set("Content-Type", r.headers.get("content-type") || "application/json").send(Buffer.from(await r.arrayBuffer()));
   } catch (e) { res.status(502).json({ error: String(e) }); }
 }
 
