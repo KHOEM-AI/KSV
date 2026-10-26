@@ -282,6 +282,27 @@ const evaluateHvacEmergencyShutdown: RuleEvaluator = (ctx, rule) => {
   return { decision: "ALLOWED" };
 };
 
+// Confirmation rules for appliance and energy devices (proposed 2026-10-26).
+// Each evaluator checks deviceType itself, because it runs for every command.
+const CONFIRM_REQUIRED: Record<string, string[]> = {
+  appliance: ["ON", "START", "SET_TEMPERATURE", "SET_POWER"],
+  energy: ["ON", "START", "CLOSE", "ENABLE", "CHARGE", "SET_POWER"],
+};
+const makeConfirmationEvaluator = (deviceType: string, label: string): RuleEvaluator => (ctx, rule) => {
+  if (ctx.deviceType !== deviceType) return { decision: "ALLOWED" };
+  const cmd = String(ctx.commandType).toUpperCase();
+  if (!CONFIRM_REQUIRED[deviceType].includes(cmd)) return { decision: "ALLOWED" };
+  if (ctx.payload?.confirmed === true) return { decision: "ALLOWED" };
+  return {
+    decision: "BLOCKED",
+    reason: `${label} "${cmd}" needs explicit confirmation (payload.confirmed = true).`,
+    ruleId: rule.id,
+    ruleName: rule.name,
+  };
+};
+const evaluateApplianceConfirmation = makeConfirmationEvaluator("appliance", "Heating appliance command");
+const evaluateEnergyConfirmation = makeConfirmationEvaluator("energy", "Energy device command");
+
 // Maps a SafetyRule.name (as seen in the dashboard's Safety Rules list)
 // to the evaluator that handles it. Keep this table as the single place
 // that connects data-driven rules to code.
@@ -298,6 +319,8 @@ const RULE_EVALUATORS: Record<string, RuleEvaluator> = {
   "Duress Code": evaluateDuressCode,
   "HVAC Emergency Shutdown": evaluateHvacEmergencyShutdown,
   "Ignition Lock After Hours": evaluateIgnitionLockAfterHours,
+  "Appliance Remote-On Needs Confirmation": evaluateApplianceConfirmation,
+  "Energy Device Start Needs Confirmation": evaluateEnergyConfirmation,
 };
 
 // ============================================================
