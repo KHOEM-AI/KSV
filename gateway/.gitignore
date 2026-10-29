@@ -20,3 +20,5 @@ _OLD_DUPLICATES/
 # ឯកសារ database ក្នុងម៉ាស៊ីន
 *.sqlite
 *.db
+# ទិន្នន័យឧបករណ៍ និង audit log ក្នុងម៉ាស៊ីន
+data/

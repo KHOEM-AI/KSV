@@ -1,6 +1,7 @@
 import express from "express";
 import { registry, local } from "./registry.js";
 import fs from "node:fs";
+import ksvDevices from "./devices/router.js";
 const ALLOW = new Set(fs.existsSync("./allow-read.txt") ? fs.readFileSync("./allow-read.txt","utf8").split("\n").filter(Boolean) : []);
 
 const app = express();
@@ -30,6 +31,25 @@ app.post("/api/chat", (req, res) => {
 // ===== Public read-only (ឥតត្រូវ token): qr, nominatim, osrm =====
 const PUBLIC = new Set(["qr","nominatim","osrm"]);
 const hits = new Map();
+// API ខាងក្រៅ (របស់អ្នកដទៃ) បិទជាលំនាំដើម — បើកដោយ ALLOW_EXTERNAL=1 ក្នុង .env
+const ALLOW_EXTERNAL = process.env.ALLOW_EXTERNAL === "1";
+const externalBlocked = (res) => res.status(403).json({ error: "API ខាងក្រៅត្រូវបានបិទ (កំណត់ ALLOW_EXTERNAL=1 ដើម្បីបើក)" });
+
+// QR ផ្ទាល់ខ្លួន (ជំនួស api.qrserver.com) — បង្កើតក្នុងម៉ាស៊ីនខ្លួនឯង
+app.get("/api/qr", async (req, res) => {
+  const o = req.get("origin") || "";
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o)) res.set("Access-Control-Allow-Origin", o);
+  const now = Date.now(), a = (hits.get(req.ip) || []).filter(t => now - t < 60000);
+  if (a.length >= 60) return res.status(429).json({ error: "ច្រើនពេក" });
+  a.push(now); hits.set(req.ip, a);
+  const text = String(req.query.data ?? req.query.text ?? "");
+  if (!text || text.length > 1000) return res.status(400).json({ error: "data ត្រូវមាន 1..1000 តួ" });
+  try {
+    const { default: QR } = await import("qrcode");
+    res.type("image/svg+xml").send(await QR.toString(text, { type: "svg", margin: 1 }));
+  } catch { res.status(501).json({ error: "ត្រូវដំឡើង qrcode៖ npm i (ក្នុង gateway/)" }); }
+});
+
 app.use("/api", (req,res,next)=>{
   const name = req.path.split("/")[1];
   if (!PUBLIC.has(name) || req.method !== "GET") return next();
@@ -39,6 +59,8 @@ app.use("/api", (req,res,next)=>{
   if (a.length >= 60) return res.status(429).json({error:"ច្រើនពេក"});
   a.push(now); hits.set(k,a);
   const api = registry[name];
+  if (!api) return next();
+  if (api.external && !ALLOW_EXTERNAL) return externalBlocked(res);
   const qs = new URLSearchParams(req.query).toString();
   const rest = req.path.split("/").slice(2).join("/");
   forward(api.target + rest + (qs ? "?" + qs : ""), req, res, api.extraHeaders || {});
@@ -64,6 +86,9 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
+// ឧបករណ៍ទូទៅ៖ /api/ksv/* (ត្រូវការ x-gateway-token ដូចខាងលើ)
+app.use("/api/ksv", ksvDevices);
+
 app.get("/api", (_req, res) => res.json({ external: Object.keys(registry), local: Object.keys(local) }));
 
 async function forward(url, req, res, extra = {}) {
@@ -87,6 +112,7 @@ app.all("/api/local/:name/*path", (req, res) => {
 app.all("/api/:name", (req, res) => {
   const api = registry[req.params.name];
   if (!api) return res.status(404).json({ error: "API មិនមាន" });
+  if (api.external && !ALLOW_EXTERNAL) return externalBlocked(res);
   const qs = new URLSearchParams(req.query).toString();
   const extra = { ...(api.extraHeaders || {}) };
   if (api.keyEnv && process.env[api.keyEnv]) extra["x-api-key"] = process.env[api.keyEnv];
