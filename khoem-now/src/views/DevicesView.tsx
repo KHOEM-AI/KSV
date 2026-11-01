@@ -72,6 +72,16 @@ export function DevicesView() {
 
   return (
     <div className="space-y-6">
+      {/* KHOEM-AI General Devices Control */}
+      <Panel className="overflow-hidden p-3 animate-fade-in">
+        <img
+          src="/general-devices-control.jpg"
+          alt="KHOEM-AI General Devices Control"
+          className="mx-auto block h-auto max-h-64 w-full object-contain"
+          loading="eager"
+        />
+      </Panel>
+
       {/* Capability registry summary — still mock, no backend endpoint yet */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         {capabilityRegistry.map((c) => (
