@@ -3,3 +3,5 @@
 gateway/.env
 gateway/node_modules/
 gateway/data/
+*.bak*
+*.backup
