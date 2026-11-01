@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:adapters": "node --test src/core/protocol/adapters/adapters.test.ts",
+    "test:catalog": "node --test src/core/devices/device.catalog.test.ts",
     "dev": "vite",
     "server": "node --env-file=.env --experimental-strip-types src/server.ts",
     "build": "vite build",

@@ -21,6 +21,8 @@ import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { startMqttClient } from "./infrastructure/mqtt/client.ts";
 import { registerDefaultProtocolAdapters } from "./core/protocol/adapters/index.ts";
+import { catalogMode, checkCatalogCommand } from "./core/devices/device.validator.ts";
+import { describeCatalog } from "./core/devices/device.catalog.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
 import { startAutomationEngine } from "./core/automation/automation.engine.ts";
 import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
@@ -404,6 +406,22 @@ async function main() {
             message: "Device not found.",
           });
           return;
+        }
+
+        // KSV-CATALOG: check the command shape against the device catalog.
+        // KSV_DEVICE_CATALOG = off (default) | warn (log only) | strict (reject with 400)
+        {
+          const mode = catalogMode();
+          if (mode !== "off") {
+            const check = checkCatalogCommand(device.type, commandType, payload);
+            if (!check.ok) {
+              console.warn(`[CATALOG] ${device.deviceCode} (${device.type}) ${commandType}: ${check.code} - ${check.message}`);
+              if (mode === "strict") {
+                res.status(400).json({ error: "CATALOG_INVALID", code: check.code, message: check.message, allowed: check.allowed });
+                return;
+              }
+            }
+          }
         }
 
         const command = await Command.create({
@@ -1273,6 +1291,20 @@ async function main() {
     }
   );
 
+
+  // GET /api/device-catalog — which commands each kind of device understands (read-only)
+  app.get("/api/device-catalog", authenticate, requirePermission("device:read"), (_req, res) => {
+    res.json({ mode: catalogMode(), types: describeCatalog() });
+  });
+
+  app.get("/api/device-catalog/:type", authenticate, requirePermission("device:read"), (req, res) => {
+    const one = describeCatalog(String(req.params.type));
+    if (!one) {
+      res.status(404).json({ error: "UNKNOWN_TYPE", message: "Unknown device type." });
+      return;
+    }
+    res.json(one);
+  });
 
   // GET /api/devices — list devices for the user's organization
   app.get("/api/devices", authenticate, requirePermission("device:read"), async (req, res) => {
