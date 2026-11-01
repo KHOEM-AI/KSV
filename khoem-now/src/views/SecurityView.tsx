@@ -1,4 +1,5 @@
 import { ShieldCheck, KeyRound, Fingerprint, AlertTriangle } from 'lucide-react';
+import { AccountSignInCard } from '@/components/AccountSignInCard';
 import { Panel, SectionHeader, Badge, ProgressBar, Donut } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useEffect, useState } from 'react';
@@ -75,6 +76,7 @@ export function SecurityView() {
 
   return (
     <div className="space-y-6">
+      <AccountSignInCard />
       {/* Security posture */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Panel className="p-5">

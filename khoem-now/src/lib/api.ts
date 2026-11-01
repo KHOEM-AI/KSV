@@ -36,7 +36,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     // seeing "Invalid or expired token" errors on every screen forever.
     if (res.status === 401) {
       localStorage.removeItem("ksv_access_token");
-      window.location.reload();
+      // reload disabled: login screen removed
     }
     // Surface the backend's error shape (SAFETY_BLOCKED, RATE_LIMITED, etc.)
     // so the UI can show a real, specific message instead of "something

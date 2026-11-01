@@ -64,7 +64,6 @@ export const navGroups: NavGroup[] = [
     labelKey: 'navgroup.securitySafety',
     items: [
       { id: 'security', labelKey: 'nav.security', icon: <ShieldCheck size={18} /> },
-      { id: 'safety', labelKey: 'nav.safety', icon: <ShieldAlert size={18} /> },
       { id: 'audit', labelKey: 'nav.audit', icon: <ScrollText size={18} /> },
     ],
   },

@@ -211,7 +211,7 @@ export function AIWelcomeBanner({ open, onClose, onOpen }: AIWelcomeBannerProps)
 
   const containerClass = open
     ? "fixed inset-0 z-50 flex h-full w-full flex-col overflow-hidden bg-slate-950"
-    : "fixed bottom-0 right-0 top-[112px] z-30 flex w-[360px] max-w-[360px] cursor-pointer flex-col overflow-hidden border-l border-slate-800 bg-slate-950 sm:top-16";
+    : "hidden";
 
   return (
     <aside

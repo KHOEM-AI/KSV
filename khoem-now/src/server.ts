@@ -1280,8 +1280,16 @@ async function main() {
       return;
     }
     try {
-      const devices = await Device.find({ organizationId: user.organizationId }).lean();
-      res.json({ devices, total: devices.length });
+      const filter = { organizationId: user.organizationId };
+      const total = await Device.countDocuments(filter);
+      const limitRaw = parseInt(String(req.query.limit ?? ""), 10);
+      const pageRaw = parseInt(String(req.query.page ?? ""), 10);
+      const paged = Number.isFinite(limitRaw) && limitRaw > 0;
+      const limit = paged ? Math.min(limitRaw, 1000) : total;
+      const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+      const base = Device.find(filter).sort({ _id: 1 });
+      const devices = paged ? await base.skip((page - 1) * limit).limit(limit).lean() : await base.lean();
+      res.json({ devices, total, page, limit, hasMore: paged ? page * limit < total : false });
     } catch {
       res.status(500).json({ error: "INTERNAL_ERROR", message: "Failed to load devices." });
     }

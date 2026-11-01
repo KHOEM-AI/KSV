@@ -1,7 +1,7 @@
-import ProjectSwitcher from './components/ProjectSwitcher';
+import { loadActiveView, saveActiveView } from '@/lib/pageState';
 import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
-import { Menu, X, Search, Bell, ChevronDown, Shield, Sparkles } from 'lucide-react';
+import { Menu, X, Search, Bell, ChevronDown } from 'lucide-react';
 import { AIWelcomeBanner } from '@/components/AIWelcomeBanner';
 import { navGroups, viewMeta, type ViewId } from '@/components/nav';
 import { stats } from '@/data/domain';
@@ -19,11 +19,6 @@ import { OrganizationView } from '@/views/OrganizationView';
 import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
-import { LoginView } from '@/views/LoginView';
-import AppLockScreen from '@/components/AppLockScreen';
-import LocationGate from '@/components/LocationGate';
-import { RegisterView } from '@/views/RegisterView';
-import ProviderSelectScreen from '@/components/ProviderSelectScreen';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -41,7 +36,8 @@ const views: Record<ViewId, () => JSX.Element> = {
 };
 
 function AuthenticatedApp() {
-  const [active, setActive] = useState<ViewId>('dashboard');
+  const [active, setActiveState] = useState<ViewId>(() => loadActiveView(Object.keys(views)) as ViewId);
+  const setActive = (id: ViewId) => { setActiveState(id); saveActiveView(id); };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   // t() is the ONLY source of on-screen text below. Switching language
@@ -53,7 +49,7 @@ function AuthenticatedApp() {
   const meta = viewMeta[active];
 
   return (
-     <div className="min-h-screen bg-ink-950">
+     <div className="relative min-h-[100dvh] w-full">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -72,10 +68,10 @@ function AuthenticatedApp() {
         <div className="flex items-center justify-between border-b border-ink-700/70 px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 shadow-glow-sm">
-              <Shield size={20} className="text-white" />
+              <img src="/khoem-ai-logo.png" alt="KHOEM-AI" className="h-8 w-auto object-contain" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight">KHOEM SOKSIVUTHA</h1>
+              <h1 className="text-sm font-bold text-white tracking-tight">KHOEM-AI</h1>
               <p className="text-[10px] text-ink-400 uppercase tracking-wider">{t('app.subtitle')}</p>
             </div>
           </div>
@@ -84,7 +80,6 @@ function AuthenticatedApp() {
           </button>
         </div>
 
-        <div className="px-5 pb-3"><ProjectSwitcher onOpenAIChat={() => setIsAIChatOpen(true)} /></div>
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
           {navGroups.map((group) => (
@@ -145,8 +140,6 @@ function AuthenticatedApp() {
               <div>
                 {/* meta.title / meta.subtitle come from viewMeta in
                     @/components/nav — same note as the nav menu above. */}
-                <h2 className="text-base font-semibold text-white">KHOEM SOKSIVUTHA</h2>
-                <p className="hidden text-xs text-ink-400 sm:block">{t(meta.subtitleKey)}</p>
               </div>
             </div>
 
@@ -180,7 +173,7 @@ function AuthenticatedApp() {
                 className="flex items-center gap-2 rounded-xl border border-brand-500/40 bg-gradient-to-r from-brand-500/20 to-accent-500/20 py-1.5 pl-1.5 pr-3 transition-colors hover:border-brand-400"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-white">
-                  <Sparkles size={15} />
+                  <img src="/khoem-ai-logo.png" alt="" className="h-5 w-auto" />
                 </div>
                 <span className="hidden text-xs font-semibold text-white sm:inline">KHOEM-AI</span>
               </button>
@@ -202,7 +195,7 @@ function AuthenticatedApp() {
         </header>
 
         {/* View content */}
-        <main className="bg-grid min-h-[calc(100vh-61px)] p-4 sm:p-6">
+        <main className="bg-grid min-h-[calc(100dvh-61px)] p-4 sm:p-6">
           <div key={active} className="animate-fade-in">
             <ActiveView />
           </div>
@@ -214,52 +207,5 @@ function AuthenticatedApp() {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => !!localStorage.getItem('ksv_access_token')
-  );
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [locationOk, setLocationOk] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [providerChosen, setProviderChosen] = useState(false);
-
-  if (!isAuthenticated) {
-    if (authMode === 'register') {
-      if (!providerChosen) {
-        return (
-          <div className="relative">
-            <ProviderSelectScreen onSelect={() => setProviderChosen(true)} />
-            <button
-              type="button"
-              onClick={() => setAuthMode('login')}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-slate-400 hover:text-white underline"
-            >
-              Already have an account? Log in
-            </button>
-          </div>
-        );
-      }
-      return (
-        <RegisterView
-          onRegisterSuccess={() => setIsAuthenticated(true)}
-          onSwitchToLogin={() => { setProviderChosen(false); setAuthMode('login'); }}
-        />
-      );
-    }
-    return (
-      <LoginView
-        onLoginSuccess={() => setIsAuthenticated(true)}
-        onSwitchToRegister={() => setAuthMode('register')}
-      />
-    );
-  }
-
-  if (!isUnlocked) {
-    return <AppLockScreen onUnlock={() => setIsUnlocked(true)} />;
-  }
-
-  if (!locationOk) {
-    return <LocationGate onGranted={() => setLocationOk(true)} />;
-  }
-
   return <AuthenticatedApp />;
 }
