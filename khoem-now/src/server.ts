@@ -20,6 +20,7 @@ import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { startMqttClient } from "./infrastructure/mqtt/client.ts";
+import { registerDefaultProtocolAdapters } from "./core/protocol/adapters/index.ts";
 import { applyDispatchResult } from "./core/gateway/command.lifecycle.ts";
 import { startAutomationEngine } from "./core/automation/automation.engine.ts";
 import { evaluateSelfDefense } from "./core/ai/khoem-ai-brain.ts";
@@ -182,6 +183,7 @@ async function main() {
   await connectDatabase();
 
   const app = express();
+  console.log(`[PROTOCOL] Adapters registered: ${registerDefaultProtocolAdapters().join(", ")}`);
   const gatewayDispatcher = new DefaultGatewayDispatcher();
   app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
   app.use(express.json());

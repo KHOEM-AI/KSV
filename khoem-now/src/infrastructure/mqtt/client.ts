@@ -156,3 +156,29 @@ export function stopMqttClient(): void {
 export function mqttIsConnected(): boolean {
   return isConnected;
 }
+
+/**
+ * Publishes a command to <prefix>/<deviceCode>/command (QoS 1).
+ * Rejects if MQTT is disabled / not connected, so the dispatcher reports a
+ * transport error instead of pretending the command was sent.
+ */
+export function publishMqttCommand(
+  deviceCode: string,
+  body: Record<string, unknown>
+): Promise<{ topic: string }> {
+  return new Promise((resolve, reject) => {
+    if (!client || !isConnected) {
+      reject(new Error("MQTT broker is not connected"));
+      return;
+    }
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(deviceCode)) {
+      reject(new Error("Invalid deviceCode for MQTT topic"));
+      return;
+    }
+    const topic = `${topicPrefix()}/${deviceCode}/command`;
+    client.publish(topic, JSON.stringify(body), { qos: 1 }, (err) => {
+      if (err) reject(err);
+      else resolve({ topic });
+    });
+  });
+}
