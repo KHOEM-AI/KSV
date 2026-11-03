@@ -313,7 +313,7 @@ export const DEVICE_CATALOG: Record<string, DeviceTypeDef> = {
 };
 
 // khoem-now device.type values that are the same kind of device as a catalog entry
-const TYPE_ALIASES: Record<string, string> = {
+export const TYPE_ALIASES: Record<string, string> = {
   hvac: "ac", aircon: "ac", air_conditioner: "ac",
   vehicle: "car",
   motorbike: "motorcycle", scooter: "motorcycle",

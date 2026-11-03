@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "guide:devices": "node scripts/generate-device-guide.ts",
     "test:adapters": "node --test src/core/protocol/adapters/adapters.test.ts",
     "test:catalog": "node --test src/core/devices/device.catalog.test.ts",
     "dev": "vite",
