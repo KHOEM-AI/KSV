@@ -1,6 +1,7 @@
 import { loadActiveView, saveActiveView } from '@/lib/pageState';
 import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
+import { KhoemLogo } from '@/components/KhoemLogo';
 import { Menu, X, Search, Bell, ChevronDown } from 'lucide-react';
 import { AIWelcomeBanner } from '@/components/AIWelcomeBanner';
 import { navGroups, viewMeta, type ViewId } from '@/components/nav';
@@ -68,7 +69,7 @@ function AuthenticatedApp() {
         <div className="flex items-center justify-between border-b border-ink-700/70 px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 shadow-glow-sm">
-              <img src="/khoem-ai-logo.png" alt="KHOEM-AI" className="h-8 w-auto object-contain" />
+              <KhoemLogo size={36} />
             </div>
             <div>
               <h1 className="text-sm font-bold text-white tracking-tight">KHOEM-AI</h1>
@@ -173,7 +174,7 @@ function AuthenticatedApp() {
                 className="flex items-center gap-2 rounded-xl border border-brand-500/40 bg-gradient-to-r from-brand-500/20 to-accent-500/20 py-1.5 pl-1.5 pr-3 transition-colors hover:border-brand-400"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-white">
-                  <img src="/khoem-ai-logo.png" alt="" className="h-5 w-auto" />
+                  <KhoemLogo size={22} />
                 </div>
                 <span className="hidden text-xs font-semibold text-white sm:inline">KHOEM-AI</span>
               </button>

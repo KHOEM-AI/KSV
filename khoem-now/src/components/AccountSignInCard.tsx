@@ -26,14 +26,16 @@ export function AccountSignInCard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const finish = (accessToken: string) => {
-    localStorage.setItem('ksv_access_token', accessToken);
+  const finish = (tk: { accessToken: string; refreshToken?: string }) => {
+    localStorage.setItem('ksv_access_token', tk.accessToken);
+    if (tk.refreshToken) localStorage.setItem('ksv_refresh_token', tk.refreshToken);
     localStorage.setItem(EMAIL_KEY, email);
     window.location.reload();
   };
 
   const signOut = () => {
     localStorage.removeItem('ksv_access_token');
+    localStorage.removeItem('ksv_refresh_token');
     window.location.reload();
   };
 
@@ -47,7 +49,7 @@ export function AccountSignInCard() {
         setChallengeId(res.mfaChallenge.challengeId);
         return;
       }
-      if (res.token) { finish(res.token.accessToken); return; }
+      if (res.token) { finish(res.token); return; }
       setError(res.message || 'Login failed');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -63,7 +65,7 @@ export function AccountSignInCard() {
     setLoading(true);
     try {
       const res = await verifyMFA({ challengeId, code });
-      if (res.success && res.token) { finish(res.token.accessToken); return; }
+      if (res.success && res.token) { finish(res.token); return; }
       setError(res.message || 'Invalid code');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Verification failed');

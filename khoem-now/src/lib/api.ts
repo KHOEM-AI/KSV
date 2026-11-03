@@ -15,7 +15,34 @@ function getAccessToken(): string | null {
   return localStorage.getItem("ksv_access_token");
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+let _refreshInflight: Promise<boolean> | null = null;
+/** Silent session renewal with the stored (rotating) refresh token. One call at a time. */
+function refreshSession(): Promise<boolean> {
+  if (_refreshInflight) return _refreshInflight;
+  const rt = localStorage.getItem("ksv_refresh_token");
+  if (!rt) return Promise.resolve(false);
+  _refreshInflight = fetch(`${API_BASE}/auth/token/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: rt }),
+  })
+    .then((r) => r.json().catch(() => null))
+    .then((b) => {
+      const t = b?.token;
+      if (t?.accessToken && t?.refreshToken) {
+        localStorage.setItem("ksv_access_token", t.accessToken);
+        localStorage.setItem("ksv_refresh_token", t.refreshToken);
+        return true;
+      }
+      localStorage.removeItem("ksv_refresh_token");
+      return false;
+    })
+    .catch(() => false)
+    .finally(() => { _refreshInflight = null; });
+  return _refreshInflight;
+}
+
+async function apiFetch<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
   const token = getAccessToken();
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -36,7 +63,9 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     // seeing "Invalid or expired token" errors on every screen forever.
     if (res.status === 401) {
       localStorage.removeItem("ksv_access_token");
-      // reload disabled: login screen removed
+      if (!_retried && !path.startsWith("/auth/") && (await refreshSession())) {
+        return apiFetch<T>(path, options, true);
+      }
     }
     // Surface the backend's error shape (SAFETY_BLOCKED, RATE_LIMITED, etc.)
     // so the UI can show a real, specific message instead of "something

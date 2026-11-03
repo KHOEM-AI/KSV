@@ -6,25 +6,30 @@ import {
 import { Panel, SectionHeader, StatCard, Sparkline, Donut, ProgressBar, Badge, StatusDot } from '@/components/ui';
 import { getDashboardFull, type DashboardFullResponse } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { DeviceCategoryGrid } from '@/components/DeviceCategoryGrid';
 
 export function DashboardView() {
   const { t } = useLanguage();
   const [data, setData] = useState<DashboardFullResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getDashboardFull()
       .then(setData)
-      .catch((err) => console.error('Failed to load dashboard:', err))
+      .catch((err) => {
+        console.error('Failed to load dashboard:', err);
+        setError(`${err?.status ?? ''} ${err?.code ?? ''} ${err?.message ?? err}`.trim());
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
-    return <div className="py-16 text-center text-ink-400">Loading dashboard…</div>;
+    return <div className="space-y-6"><DeviceCategoryGrid /><div className="py-6 text-center text-ink-400">Loading…</div></div>;
   }
 
   if (!data) {
-    return <div className="py-16 text-center text-red-400">Dashboard unavailable.</div>;
+    return <div className="space-y-6"><DeviceCategoryGrid /><div className="py-6 text-center text-ink-400">Live data not connected.{error && <div className="mt-2 text-xs">{error}</div>}</div></div>;
   }
 
   const { stats, traffic, alertTrend, openAlerts, avgLatencyMs, uptimeDays, topSites, recentDevices, recentSafetyRules, protocols, gateways } = data;
@@ -40,6 +45,7 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
+      <DeviceCategoryGrid />
       {/* Stat row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="group relative overflow-hidden rounded-2xl">
