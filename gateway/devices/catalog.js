@@ -181,6 +181,18 @@ export const DEVICE_TYPES = {
       GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
     },
   },
+  // ───────── កង្ហារ ─────────
+  fan: {
+    km: "កង្ហារ",
+    safetyClass: "appliance",
+    commands: {
+      ...ON_OFF,
+      SET_SPEED: { km: "ល្បឿន", params: value(int(1, 3, "level")) },
+      SET_OSCILLATION: { km: "បក់ទៅមក", params: value(oneOf("on", "off")) },
+      SET_TIMER: { km: "កំណត់ម៉ោងបិទ", params: value(int(1, 720, "min")) },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
 };
 
 // សង្ខេបសម្រាប់បង្ហាញក្នុង API (មិនបញ្ចូល function)
