@@ -18,8 +18,8 @@ function applyToState(state, command, params) {
     case "PLAY": s.playing = true; Object.assign(s, params); break;
     case "PAUSE": s.playing = false; s.paused = true; break;
     case "RESUME": s.paused = false; break;
-    case "STOP": s.playing = false; s.running = false; break;
-    case "START": s.running = true; Object.assign(s, params); break;
+    case "STOP": s.playing = false; s.running = false; s.paused = false; break;
+    case "START": s.running = true; s.paused = false; Object.assign(s, params); break;
     case "LOCK": s.locked = true; break;
     case "UNLOCK": s.locked = false; break;
     case "START_ENGINE": s.engineOn = true; Object.assign(s, params); break;

@@ -193,6 +193,55 @@ export const DEVICE_TYPES = {
       GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
     },
   },
+  // ───────── ទូរទស្សន៍ ─────────
+  tv: {
+    km: "ទូរទស្សន៍",
+    safetyClass: "media",
+    commands: {
+      ...ON_OFF,
+      SET_VOLUME: {
+        km: "កម្រិតសំឡេង",
+        params: value(int(0, 100, "%")),
+        confirmIf: (p) => (p.value > VOLUME_CONFIRM_ABOVE ? `សំឡេងលើស ${VOLUME_CONFIRM_ABOVE}% ត្រូវបញ្ជាក់` : null),
+      },
+      MUTE: { km: "បិទសំឡេង" },
+      UNMUTE: { km: "បើកសំឡេង" },
+      SET_CHANNEL: { km: "ឆានែល", params: value(int(1, 999)) },
+      SET_INPUT: { km: "ប្រភពរូបភាព", params: value(oneOf("antenna", "hdmi1", "hdmi2", "hdmi3", "av", "usb")) },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── ឧបករណ៍ទូទៅ (កន្លែងដោតភ្លើង / relay) ─────────
+  generic: {
+    km: "ឧបករណ៍ទូទៅ",
+    safetyClass: "appliance",
+    commands: {
+      ...ON_OFF,
+      TOGGLE: { km: "ប្តូរបើក/បិទ" },
+      SET_LEVEL: { km: "កម្រិត", params: value(int(0, 100, "%")) },
+      SET_TIMER: { km: "កំណត់ម៉ោងបិទ", params: value(int(1, 1440, "min")) },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── ម៉ាស៊ីនបោកគក់ ─────────
+  washer: {
+    km: "ម៉ាស៊ីនបោកគក់",
+    safetyClass: "appliance",
+    commands: {
+      START: {
+        km: "ចាប់ផ្តើមបោក",
+        confirm: true,
+        params: {
+          program: oneOf("cotton", "synthetic", "delicate", "quick", "eco"),
+          delayHours: opt(int(0, 24, "h")),
+        },
+      },
+      PAUSE: { km: "ផ្អាក" },
+      RESUME: { km: "បន្ត" },
+      STOP: { km: "ឈប់" },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
 };
 
 // សង្ខេបសម្រាប់បង្ហាញក្នុង API (មិនបញ្ចូល function)

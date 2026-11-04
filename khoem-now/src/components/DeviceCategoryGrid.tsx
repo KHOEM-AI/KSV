@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { AirConditionerPanel } from '@/components/AirConditionerPanel';
 import { FanPanel } from '@/components/FanPanel';
+import { LightPanel } from '@/components/LightPanel';
+import { PlugPanel } from '@/components/PlugPanel';
+import { TvPanel } from '@/components/TvPanel';
+import { FridgePanel } from '@/components/FridgePanel';
+import { WasherPanel } from '@/components/WasherPanel';
+import { OnOffPanel } from '@/components/OnOffPanel';
 
 const SRC = '/general-devices-control.jpg?v=2';
 const W = 1079, H = 880, PAD = 2;
@@ -20,12 +26,31 @@ const GROUPS: { title: string; side: Span[]; row: number; items: string[] }[] = 
   { title: '8. Smart City & Infrastructure', side: R, row: 3, items: ['Street Light', 'Parking Barrier', 'Smart Traffic Light', 'Environmental Sensor', 'Digital Signage', 'Smart Bin'] },
 ];
 
+const PANELS: Record<string, string> = {
+  'Air Conditioner': 'ac',
+  'Smart Fan': 'fan',
+  'Smart Light': 'light',
+  'Smart Plug': 'plug',
+  'Smart TV': 'tv',
+  'Refrigerator': 'fridge',
+  'Washing Machine': 'washer',
+  'Projector': 'projector',
+  'Printer': 'printer',
+};
+
 export function DeviceCategoryGrid() {
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div>
       {open === 'ac' && <AirConditionerPanel onClose={() => setOpen(null)} />}
       {open === 'fan' && <FanPanel onClose={() => setOpen(null)} />}
+      {open === 'light' && <LightPanel onClose={() => setOpen(null)} />}
+      {open === 'plug' && <PlugPanel onClose={() => setOpen(null)} />}
+      {open === 'tv' && <TvPanel onClose={() => setOpen(null)} />}
+      {open === 'fridge' && <FridgePanel onClose={() => setOpen(null)} />}
+      {open === 'washer' && <WasherPanel onClose={() => setOpen(null)} />}
+      {open === 'projector' && <OnOffPanel id="projector-1" name="ម៉ាស៊ីនបញ្ចាំងរូប" label="Projector" onClose={() => setOpen(null)} />}
+      {open === 'printer' && <OnOffPanel id="printer-1" name="ម៉ាស៊ីនបោះពុម្ព" label="Printer" onClose={() => setOpen(null)} />}
       <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
@@ -51,10 +76,10 @@ export function DeviceCategoryGrid() {
                     }}
                   />
                 );
-                const panelKey = name === 'Air Conditioner' ? 'ac' : name === 'Smart Fan' ? 'fan' : null;
+                const panelKey = PANELS[name] ?? null;
                 if (panelKey) {
                   return (
-                    <button key={name} type="button" onClick={() => setOpen(panelKey)} title="ម៉ាស៊ីនត្រជាក់ ON/OFF" style={{ padding: 0, border: '2px solid #22c55e', borderRadius: 12, background: 'none', cursor: 'pointer', display: 'block', width: '100%' }}>
+                    <button key={name} type="button" onClick={() => setOpen(panelKey)} title={name} style={{ padding: 0, border: '2px solid #22c55e', borderRadius: 12, background: 'none', cursor: 'pointer', display: 'block', width: '100%' }}>
                       {pic}
                     </button>
                   );

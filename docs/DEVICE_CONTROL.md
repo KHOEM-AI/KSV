@@ -9,6 +9,13 @@
 |---|---|---|---|
 | Air Conditioner | `ac-1` | `ac` | ON, OFF, SET_TEMPERATURE (16–30 °C), SET_MODE (cool heat dry fan auto) |
 | Smart Fan | `fan-1` | `fan` | ON, OFF, SET_SPEED (1–3), SET_OSCILLATION (on/off) |
+| Smart Light | `light-1` | `light` | ON, OFF, SET_BRIGHTNESS (25 50 75 100), SET_COLOR_TEMP (2700 4000 6500) |
+| Smart Plug | `plug-1` | `generic` | ON, OFF |
+| Smart TV | `tv-1` | `tv` | ON, OFF, SET_VOLUME (0–85 ក្នុងផ្ទាំង), MUTE/UNMUTE, SET_CHANNEL, SET_INPUT (antenna hdmi1 hdmi2) |
+| Refrigerator | `fridge-1` | `fridge` | ON, OFF* (ត្រូវបញ្ជាក់), SET_TEMPERATURE (1–8), SET_FREEZER_TEMPERATURE (-24 ដល់ -14), SET_MODE |
+| Washing Machine | `washer-1` | `washer` | START* (ត្រូវបញ្ជាក់), PAUSE, RESUME, STOP |
+| Projector | `projector-1` | `generic` | ON, OFF |
+| Printer | `printer-1` | `generic` | ON, OFF |
 
 ក្រឡាផ្សេងទៀតបង្ហាញតែរូប និងឈ្មោះ មិនទាន់ភ្ជាប់ការបញ្ជាទេ។
 `fan` ក៏មាន SET_TIMER (1–720 នាទី) ក្នុង gateway ប៉ុន្តែមិនទាន់មានប៊ូតុងក្នុងផ្ទាំង។
@@ -63,7 +70,7 @@ endpoint ត្រូវជា LAN/localhost ប៉ុណ្ណោះ។ ជម�
   កុំភ្ជាប់ខ្សែភ្លើងផ្ទះដោយខ្លួនឯង បើមិនមានបទពិសោធន៍។
 - proxy ប្រើសោ gateway ជំនួសអ្នកប្រើ។ កុំបើកច្រក 5173 ទៅបណ្តាញសាធារណៈ។
 - ឯកសារ `gateway/.env` (មាន `GATEWAY_TOKEN`) មិនត្រូវ commit ទៅ GitHub។
-- ពាក្យបញ្ជាដែលត្រូវការ `confirmed:true` (ឧ. `fridge OFF`, `cooker START`) មិនទាន់មានក្នុងផ្ទាំង។
+- ពាក្យបញ្ជាដែលត្រូវការ `confirmed:true` (ឧ. `cooker START`) មិនទាន់មានក្នុងផ្ទាំង។ `fridge OFF` និង `washer START` មានក្នុងផ្ទាំង ហើយសួរបញ្ជាក់មុន។
 - គ្រប់ពាក្យបញ្ជាកត់ក្នុង `gateway/data/command-log.jsonl`។
 
 ## ដោះស្រាយបញ្ហា

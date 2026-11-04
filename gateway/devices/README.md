@@ -12,6 +12,9 @@
 | `subwoofer` | ធុងបាស | ON OFF SET_VOLUME SET_BASS_LEVEL SET_CROSSOVER SET_PHASE MUTE |
 | `ac` | ម៉ាស៊ីនត្រជាក់ | ON OFF SET_TEMPERATURE SET_MODE SET_FAN_SPEED SET_SWING SET_TIMER |
 | `fan` | កង្ហារ | ON OFF SET_SPEED SET_OSCILLATION SET_TIMER |
+| `tv` | ទូរទស្សន៍ | ON OFF SET_VOLUME MUTE UNMUTE SET_CHANNEL SET_INPUT |
+| `generic` | ឧបករណ៍ទូទៅ (កន្លែងដោតភ្លើង ម៉ាស៊ីនបញ្ចាំងរូប ម៉ាស៊ីនបោះពុម្ព) | ON OFF TOGGLE SET_LEVEL SET_TIMER |
+| `washer` | ម៉ាស៊ីនបោកគក់ | START* PAUSE RESUME STOP |
 | `fridge` | ទូទឹកកក | SET_TEMPERATURE SET_FREEZER_TEMPERATURE SET_MODE OFF* |
 | `cooker` | ឆ្នាំង | START* STOP OFF SET_TEMPERATURE* SET_POWER* SET_TIMER |
 | `dishwasher` | ម៉ាស៊ីនលាងចាន | START* PAUSE RESUME STOP |
@@ -22,7 +25,7 @@
 ## ច្បាប់សុវត្ថិភាព
 
 - ឧបករណ៍កម្ដៅ (`cooker`, `dishwasher`) ត្រូវបញ្ជាក់ជានិច្ច ហើយ `cooker START` ត្រូវមាន `durationMinutes` (បិទស្វ័យប្រវត្តិ)។
-- `fridge OFF` ត្រូវបញ្ជាក់ (អាហារអាចខូច)។ សំឡេង `speaker` >85% / `subwoofer` >80% ត្រូវបញ្ជាក់។
+- `fridge OFF` ត្រូវបញ្ជាក់ (អាហារអាចខូច)។ សំឡេង `speaker` / `tv` >85% និង `subwoofer` >80% ត្រូវបញ្ជាក់។
 - `car` UNLOCK / START_ENGINE / STOP_ENGINE ត្រូវដឹងថាឡានឈប់ (`speedKmh = 0`) — មិនដឹង ឬកំពុងរត់ = ហាម។
   ឧបករណ៍/ស្ពានត្រូវរាយការណ៍ស្ថានភាពតាម `POST /devices/:id/state`។
 - param ត្រូវនៅក្នុង range ហើយ param ដែលមិនស្គាល់ត្រូវបដិសេធ។ គ្រប់ពាក្យបញ្ជាកត់ក្នុង `data/command-log.jsonl`។
