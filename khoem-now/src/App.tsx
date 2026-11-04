@@ -20,6 +20,7 @@ import { OrganizationView } from '@/views/OrganizationView';
 import { InternationalView } from '@/views/InternationalView';
 import { CertificatesView } from '@/views/CertificatesView';
 import { SettingsView } from '@/views/SettingsView';
+import { GuideView } from '@/views/GuideView';
 
 const views: Record<ViewId, () => JSX.Element> = {
   dashboard: DashboardView,
@@ -34,6 +35,7 @@ const views: Record<ViewId, () => JSX.Element> = {
   international: InternationalView,
   certificates: CertificatesView,
   settings: SettingsView,
+  guide: GuideView,
 };
 
 function AuthenticatedApp() {

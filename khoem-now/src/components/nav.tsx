@@ -12,6 +12,7 @@ import {
   ScrollText,
   GraduationCap,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 
 // ======================================================================
@@ -37,7 +38,8 @@ export type ViewId =
   | 'international'
   | 'audit'
   | 'certificates'
-  | 'settings';
+  | 'settings'
+  | 'guide';
 
 export interface NavGroup {
   labelKey: string;
@@ -49,6 +51,7 @@ export const navGroups: NavGroup[] = [
     labelKey: 'navgroup.overview',
     items: [
       { id: 'dashboard', labelKey: 'nav.dashboard', icon: <LayoutDashboard size={18} /> },
+      { id: 'guide', labelKey: 'nav.guide', icon: <BookOpen size={18} /> },
     ],
   },
   {
@@ -95,4 +98,5 @@ export const viewMeta: Record<ViewId, { titleKey: string; subtitleKey: string }>
   audit: { titleKey: 'nav.audit', subtitleKey: 'view.audit.subtitle' },
   certificates: { titleKey: 'nav.certificates', subtitleKey: 'view.certificates.subtitle' },
   settings: { titleKey: 'nav.settings', subtitleKey: 'view.settings.subtitle' },
+  guide: { titleKey: 'nav.guide', subtitleKey: 'view.guide.subtitle' },
 };
