@@ -3,6 +3,8 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 const SECTIONS: { title: string; items: string[] }[] = [
   { title: 'guide.start.title', items: ['guide.start.1', 'guide.start.2', 'guide.start.3'] },
+  { title: 'guide.connect.title', items: ['guide.connect.1', 'guide.connect.2', 'guide.connect.3'] },
+  { title: 'guide.remote.title', items: ['guide.remote.1', 'guide.remote.2', 'guide.remote.3'] },
   { title: 'guide.ac.title', items: ['guide.ac.1', 'guide.ac.2', 'guide.ac.3'] },
   { title: 'guide.fan.title', items: ['guide.fan.1', 'guide.fan.2', 'guide.fan.3'] },
   { title: 'guide.light.title', items: ['guide.light.1', 'guide.light.2', 'guide.light.3'] },
@@ -12,10 +14,6 @@ const SECTIONS: { title: string; items: string[] }[] = [
   { title: 'guide.washer.title', items: ['guide.washer.1', 'guide.washer.2', 'guide.washer.3'] },
   { title: 'guide.projector.title', items: ['guide.projector.1'] },
   { title: 'guide.printer.title', items: ['guide.printer.1'] },
-  { title: 'guide.sim.title', items: ['guide.sim.1', 'guide.sim.2'] },
-  { title: 'guide.real.title', items: ['guide.real.1', 'guide.real.2', 'guide.real.3'] },
-  { title: 'guide.safety.title', items: ['guide.safety.1', 'guide.safety.2', 'guide.safety.3', 'guide.safety.4'] },
-  { title: 'guide.trouble.title', items: ['guide.trouble.1', 'guide.trouble.2', 'guide.trouble.3'] },
 ];
 
 export function GuideView() {
