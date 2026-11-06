@@ -7,6 +7,7 @@ import { TvPanel } from '@/components/TvPanel';
 import { FridgePanel } from '@/components/FridgePanel';
 import { WasherPanel } from '@/components/WasherPanel';
 import { OnOffPanel } from '@/components/OnOffPanel';
+import { SecuredPanel, SECURED_TILES } from '@/components/SecuredPanel';
 
 const SRC = '/general-devices-control.jpg?v=2';
 const W = 1079, H = 880, PAD = 2;
@@ -51,6 +52,7 @@ const PANELS: Record<string, string> = {
 
 export function DeviceCategoryGrid() {
   const [open, setOpen] = useState<string | null>(null);
+  const [secured, setSecured] = useState<string | null>(null);
   return (
     <div>
       {open === 'ac' && <AirConditionerPanel onClose={() => setOpen(null)} />}
@@ -73,6 +75,7 @@ export function DeviceCategoryGrid() {
       {open === 'evcharger' && <OnOffPanel id="evcharger-1" name="ឧបករណ៍សាកឡានអគ្គិសនី" label="EV Charger" onClose={() => setOpen(null)} />}
       {open === 'sensor' && <OnOffPanel id="sensor-1" name="ម៉ូឌុលសេនស័រ" label="Sensor Module" onClose={() => setOpen(null)} />}
       {open === 'envsensor' && <OnOffPanel id="envsensor-1" name="សេនស័របរិស្ថាន" label="Environmental Sensor" onClose={() => setOpen(null)} />}
+      {secured && SECURED_TILES[secured] && <SecuredPanel tile={SECURED_TILES[secured]} onClose={() => setSecured(null)} />}
       <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
@@ -98,6 +101,14 @@ export function DeviceCategoryGrid() {
                     }}
                   />
                 );
+                const sec = SECURED_TILES[name];
+                if (sec) {
+                  return (
+                    <button key={name} type="button" onClick={() => setSecured(name)} title={name} style={{ padding: 0, border: '2px solid #f59e0b', borderRadius: 12, background: 'none', cursor: 'pointer', display: 'block', width: '100%' }}>
+                      {pic}
+                    </button>
+                  );
+                }
                 const panelKey = PANELS[name] ?? null;
                 if (panelKey) {
                   return (

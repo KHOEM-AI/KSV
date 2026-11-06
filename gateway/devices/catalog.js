@@ -242,6 +242,56 @@ export const DEVICE_TYPES = {
       GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
     },
   },
+  // ───────── សោ / ត្រួតពិនិត្យការចូល (ដោះសោត្រូវបញ្ជាក់) ─────────
+  lock: {
+    km: "សោ",
+    safetyClass: "appliance",
+    commands: {
+      LOCK: { km: "ចាក់សោ" },
+      UNLOCK: { km: "ដោះសោ", confirm: true },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── បារ៉ែចូលចតរថយន្ត (លើកបារ៉ែត្រូវបញ្ជាក់) ─────────
+  barrier: {
+    km: "បារ៉ែចូលចតរថយន្ត",
+    safetyClass: "appliance",
+    commands: {
+      LOCK: { km: "ទម្លាក់បារ៉ែ" },
+      UNLOCK: { km: "លើកបារ៉ែ", confirm: true },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── ប្រព័ន្ធរោទិ៍ (បិទប្រព័ន្ធត្រូវបញ្ជាក់) ─────────
+  alarm: {
+    km: "ប្រព័ន្ធរោទិ៍",
+    safetyClass: "appliance",
+    commands: {
+      ON: { km: "បើកប្រព័ន្ធរោទិ៍" },
+      OFF: { km: "បិទប្រព័ន្ធរោទិ៍", confirm: true },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── ឧបករណ៍បណ្តាញ (បិទត្រូវបញ្ជាក់) ─────────
+  network: {
+    km: "ឧបករណ៍បណ្តាញ",
+    safetyClass: "appliance",
+    commands: {
+      ON: { km: "បើក" },
+      OFF: { km: "បិទ", confirm: true },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
+  // ───────── ម៉ាស៊ីនឧស្សាហកម្ម (ចាប់ផ្តើមត្រូវបញ្ជាក់, STOP ភ្លាមៗ) ─────────
+  machine: {
+    km: "ម៉ាស៊ីនឧស្សាហកម្ម",
+    safetyClass: "appliance",
+    commands: {
+      START: { km: "ចាប់ផ្តើម", confirm: true },
+      STOP: { km: "បញ្ឈប់" },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
 };
 
 // សង្ខេបសម្រាប់បង្ហាញក្នុង API (មិនបញ្ចូល function)
