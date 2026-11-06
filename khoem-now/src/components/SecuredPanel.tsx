@@ -77,6 +77,8 @@ export const SECURED_TILES: Record<string, SecuredTile> = {
   'Conveyor System': { group: 'machine', id: 'conveyor-1', name: 'ខ្សែក្រវ៉ាត់ដឹកជញ្ជូន', label: 'Conveyor System' },
   'PLC Controller': { group: 'machine', id: 'plc-1', name: 'ឧបករណ៍បញ្ជា PLC', label: 'PLC Controller' },
   '3D Printer': { group: 'machine', id: 'printer3d-1', name: 'ម៉ាស៊ីនបោះពុម្ព 3D', label: '3D Printer' },
+  'Drone': { group: 'machine', id: 'drone-1', name: 'ដ្រូន', label: 'Drone' },
+  'Farm Tractor': { group: 'machine', id: 'tractor-1', name: 'ត្រាក់ទ័រកសិកម្ម', label: 'Farm Tractor' },
 };
 
 export function SecuredPanel({ tile, onClose }: { tile: SecuredTile; onClose: () => void }) {

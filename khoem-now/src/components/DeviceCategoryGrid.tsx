@@ -36,6 +36,9 @@ const PANELS: Record<string, string> = {
   'EV Charger': 'evcharger',
   'Sensor Module': 'sensor',
   'Environmental Sensor': 'envsensor',
+  'Solar Panel': 'solar',
+  'Battery Storage': 'battery',
+  'Wind Turbine': 'wind',
   'Air Conditioner': 'ac',
   'Smart Fan': 'fan',
   'Smart Light': 'light',
@@ -75,6 +78,9 @@ export function DeviceCategoryGrid() {
       {open === 'evcharger' && <OnOffPanel id="evcharger-1" name="ឧបករណ៍សាកឡានអគ្គិសនី" label="EV Charger" onClose={() => setOpen(null)} />}
       {open === 'sensor' && <OnOffPanel id="sensor-1" name="ម៉ូឌុលសេនស័រ" label="Sensor Module" onClose={() => setOpen(null)} />}
       {open === 'envsensor' && <OnOffPanel id="envsensor-1" name="សេនស័របរិស្ថាន" label="Environmental Sensor" onClose={() => setOpen(null)} />}
+      {open === 'solar' && <OnOffPanel id="solar-1" name="បន្ទះសូឡា" label="Solar Panel" onClose={() => setOpen(null)} />}
+      {open === 'battery' && <OnOffPanel id="battery-1" name="ឧបករណ៍ផ្ទុកថ្ម" label="Battery Storage" onClose={() => setOpen(null)} />}
+      {open === 'wind' && <OnOffPanel id="wind-1" name="ទួរប៊ីនខ្យល់" label="Wind Turbine" onClose={() => setOpen(null)} />}
       {secured && SECURED_TILES[secured] && <SecuredPanel tile={SECURED_TILES[secured]} onClose={() => setSecured(null)} />}
       <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
