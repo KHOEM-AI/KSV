@@ -29,7 +29,7 @@ export function DashboardView() {
   }
 
   if (!data) {
-    return <div className="space-y-6"><DeviceCategoryGrid /><div className="py-6 text-center text-ink-400">Live data not connected.{error && <div className="mt-2 text-xs">{error}</div>}</div></div>;
+    return <div className="space-y-6"><DeviceCategoryGrid /><div className="py-6 text-center text-ink-400">{error.startsWith('401') ? 'ទិន្នន័យបន្តផ្ទាល់ត្រូវការចូលគណនីសិន ប៉ុន្តែការបញ្ជាឧបករណ៍ខាងលើនៅតែប្រើបាន' : 'Live data not connected.'}{error && <div className="mt-2 text-xs">{error}</div>}</div></div>;
   }
 
   const { stats, traffic, alertTrend, openAlerts, avgLatencyMs, uptimeDays, topSites, recentDevices, recentSafetyRules, protocols, gateways } = data;

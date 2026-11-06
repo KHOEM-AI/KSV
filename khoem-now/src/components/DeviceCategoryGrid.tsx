@@ -36,6 +36,9 @@ const PANELS: Record<string, string> = {
   'Washing Machine': 'washer',
   'Projector': 'projector',
   'Printer': 'printer',
+  'Smart TV Box': 'tvbox',
+  'Scanner': 'scanner',
+  'Smart Speaker': 'speaker',
 };
 
 export function DeviceCategoryGrid() {
@@ -51,6 +54,9 @@ export function DeviceCategoryGrid() {
       {open === 'washer' && <WasherPanel onClose={() => setOpen(null)} />}
       {open === 'projector' && <OnOffPanel id="projector-1" name="ម៉ាស៊ីនបញ្ចាំងរូប" label="Projector" onClose={() => setOpen(null)} />}
       {open === 'printer' && <OnOffPanel id="printer-1" name="ម៉ាស៊ីនបោះពុម្ព" label="Printer" onClose={() => setOpen(null)} />}
+            {open === 'tvbox' && <OnOffPanel id="tvbox-1" name="ប្រអប់ទូរទស្សន៍" label="Smart TV Box" onClose={() => setOpen(null)} />}
+      {open === 'scanner' && <OnOffPanel id="scanner-1" name="ម៉ាស៊ីនស្កេន" label="Scanner" onClose={() => setOpen(null)} />}
+      {open === 'speaker' && <OnOffPanel id="speaker-1" name="ឧបករណ៍ភ្លេង" label="Smart Speaker" onClose={() => setOpen(null)} />}
       <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
@@ -84,7 +90,7 @@ export function DeviceCategoryGrid() {
                     </button>
                   );
                 }
-                return <div key={name}>{pic}</div>;
+                return <div key={name} title={`${name} · មើលតែប៉ុណ្ណោះ (មិនទាន់ភ្ជាប់ការបញ្ជា)`} style={{ opacity: 0.5 }}>{pic}</div>;
               })}
             </div>
           </section>
