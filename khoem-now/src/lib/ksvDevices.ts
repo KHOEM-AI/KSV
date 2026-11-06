@@ -53,3 +53,32 @@ export async function sendCommand(
   });
   if (r.status !== 200) throw fail(r.status, r.body);
 }
+
+export interface KsvTypeInfo { type: string; km: string }
+export interface NewDevice { id: string; name: string; type: string; adapter: string; endpoint?: string; deviceCode?: string }
+
+export async function listTypes(): Promise<KsvTypeInfo[]> {
+  const r = await call<{ types: KsvTypeInfo[] }>('/types');
+  if (r.status !== 200 || !r.body) throw fail(r.status, r.body);
+  return r.body.types;
+}
+
+export async function listDevices(): Promise<KsvDevice[]> {
+  const r = await call<{ devices: KsvDevice[] }>('/devices');
+  if (r.status !== 200 || !r.body) throw fail(r.status, r.body);
+  return r.body.devices;
+}
+
+export async function registerDevice(d: NewDevice): Promise<KsvDevice> {
+  const r = await call<KsvDevice>('/devices', { method: 'POST', body: JSON.stringify(d) });
+  if (r.status !== 201 || !r.body) {
+    const errs = (r.body as { errors?: string[] } | null)?.errors;
+    throw errs && errs.length ? new Error(`${r.status} ${errs.join('; ')}`) : fail(r.status, r.body);
+  }
+  return r.body;
+}
+
+export async function setDeviceDisabled(id: string, disabled: boolean): Promise<void> {
+  const r = await call<unknown>(`/devices/${id}/${disabled ? 'disable' : 'enable'}`, { method: 'POST', body: '{}' });
+  if (r.status !== 200) throw fail(r.status, r.body);
+}

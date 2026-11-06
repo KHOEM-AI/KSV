@@ -9,6 +9,7 @@ import { WasherPanel } from '@/components/WasherPanel';
 import { OnOffPanel } from '@/components/OnOffPanel';
 import { SecuredPanel, SECURED_TILES } from '@/components/SecuredPanel';
 import { ReadOnlyPanel, READONLY_TILES } from '@/components/ReadOnlyPanel';
+import { AddDevicePanel } from '@/components/AddDevicePanel';
 
 const SRC = '/general-devices-control.jpg?v=2';
 const W = 1079, H = 880, PAD = 2;
@@ -57,6 +58,7 @@ const PANELS: Record<string, string> = {
 export function DeviceCategoryGrid() {
   const [open, setOpen] = useState<string | null>(null);
   const [secured, setSecured] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
   const [readonly, setReadonly] = useState<string | null>(null);
   return (
     <div>
@@ -84,8 +86,12 @@ export function DeviceCategoryGrid() {
       {open === 'battery' && <OnOffPanel id="battery-1" name="ឧបករណ៍ផ្ទុកថ្ម" label="Battery Storage" onClose={() => setOpen(null)} />}
       {open === 'wind' && <OnOffPanel id="wind-1" name="ទួរប៊ីនខ្យល់" label="Wind Turbine" onClose={() => setOpen(null)} />}
       {secured && SECURED_TILES[secured] && <SecuredPanel tile={SECURED_TILES[secured]} onClose={() => setSecured(null)} />}
+      {addOpen && <AddDevicePanel onClose={() => setAddOpen(false)} />}
       {readonly && READONLY_TILES[readonly] && <ReadOnlyPanel tile={READONLY_TILES[readonly]} onClose={() => setReadonly(null)} />}
-      <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, margin: 0 }}>General Devices Control</h3>
+        <button type="button" onClick={() => setAddOpen(true)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(45,212,191,0.5)', background: '#0b1220', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>+ បន្ថែមឧបករណ៍</button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
           <section key={g.title} style={{ borderRadius: 14, border: '1px solid var(--tile-border)', background: 'var(--tile-bg)', padding: 12 }}>
