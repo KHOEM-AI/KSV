@@ -12,7 +12,7 @@ interface Group {
 export interface SecuredTile { group: string; id: string; name: string; label: string }
 
 const TONES: Record<Tone, string> = { green: '#16a34a', red: '#dc2626', amber: '#d97706', slate: '#334155' };
-const UNKNOWN = 'មិនទាន់មានស្ថានភាព';
+export const UNKNOWN = 'មិនទាន់មានស្ថានភាព';
 
 const GROUPS: Record<string, Group> = {
   lock: {

@@ -292,6 +292,14 @@ export const DEVICE_TYPES = {
       GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
     },
   },
+  // ───────── ឧបករណ៍ចាប់សញ្ញា (មើលតែប៉ុណ្ណោះ) ─────────
+  sensor: {
+    km: "ឧបករណ៍ចាប់សញ្ញា",
+    safetyClass: "appliance",
+    commands: {
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
 };
 
 // សង្ខេបសម្រាប់បង្ហាញក្នុង API (មិនបញ្ចូល function)

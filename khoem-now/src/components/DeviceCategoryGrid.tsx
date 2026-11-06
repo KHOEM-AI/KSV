@@ -8,6 +8,7 @@ import { FridgePanel } from '@/components/FridgePanel';
 import { WasherPanel } from '@/components/WasherPanel';
 import { OnOffPanel } from '@/components/OnOffPanel';
 import { SecuredPanel, SECURED_TILES } from '@/components/SecuredPanel';
+import { ReadOnlyPanel, READONLY_TILES } from '@/components/ReadOnlyPanel';
 
 const SRC = '/general-devices-control.jpg?v=2';
 const W = 1079, H = 880, PAD = 2;
@@ -56,6 +57,7 @@ const PANELS: Record<string, string> = {
 export function DeviceCategoryGrid() {
   const [open, setOpen] = useState<string | null>(null);
   const [secured, setSecured] = useState<string | null>(null);
+  const [readonly, setReadonly] = useState<string | null>(null);
   return (
     <div>
       {open === 'ac' && <AirConditionerPanel onClose={() => setOpen(null)} />}
@@ -82,6 +84,7 @@ export function DeviceCategoryGrid() {
       {open === 'battery' && <OnOffPanel id="battery-1" name="ឧបករណ៍ផ្ទុកថ្ម" label="Battery Storage" onClose={() => setOpen(null)} />}
       {open === 'wind' && <OnOffPanel id="wind-1" name="ទួរប៊ីនខ្យល់" label="Wind Turbine" onClose={() => setOpen(null)} />}
       {secured && SECURED_TILES[secured] && <SecuredPanel tile={SECURED_TILES[secured]} onClose={() => setSecured(null)} />}
+      {readonly && READONLY_TILES[readonly] && <ReadOnlyPanel tile={READONLY_TILES[readonly]} onClose={() => setReadonly(null)} />}
       <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
@@ -107,6 +110,13 @@ export function DeviceCategoryGrid() {
                     }}
                   />
                 );
+                if (READONLY_TILES[name]) {
+                  return (
+                    <button key={name} type="button" onClick={() => setReadonly(name)} title={name} style={{ padding: 0, border: '2px solid #38bdf8', borderRadius: 12, background: 'none', cursor: 'pointer', display: 'block', width: '100%' }}>
+                      {pic}
+                    </button>
+                  );
+                }
                 const sec = SECURED_TILES[name];
                 if (sec) {
                   return (
