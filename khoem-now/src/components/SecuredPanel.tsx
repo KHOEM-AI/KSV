@@ -42,6 +42,15 @@ const GROUPS: Record<string, Group> = {
       { command: 'OFF', label: 'បិទប្រព័ន្ធរោទិ៍ OFF', tone: 'amber', confirm: 'តើអ្នកប្រាកដថាចង់បិទប្រព័ន្ធរោទិ៍មែនទេ?' },
     ],
   },
+  car: {
+    type: 'car',
+    note: 'ការដោះសោត្រូវបញ្ជាក់ ហើយអនុញ្ញាតតែពេលឡានឈប់ (ត្រូវដឹងល្បឿន)។',
+    status: (st) => (st.locked === undefined ? { text: UNKNOWN, ok: null } : st.locked === true ? { text: 'បានចាក់សោ', ok: true } : { text: 'បានដោះសោ', ok: false }),
+    buttons: [
+      { command: 'LOCK', label: 'ចាក់សោ LOCK', tone: 'green' },
+      { command: 'UNLOCK', label: 'ដោះសោ UNLOCK', tone: 'amber', confirm: 'តើអ្នកប្រាកដថាចង់ដោះសោឡានមែនទេ?' },
+    ],
+  },
   network: {
     type: 'network',
     note: 'ការបិទអាចកាត់ផ្តាច់អ្នកប្រើផ្សេង និងបាត់ទិន្នន័យ។ ត្រូវបញ្ជាក់ជាមុន។',
@@ -77,6 +86,7 @@ export const SECURED_TILES: Record<string, SecuredTile> = {
   'Conveyor System': { group: 'machine', id: 'conveyor-1', name: 'ខ្សែក្រវ៉ាត់ដឹកជញ្ជូន', label: 'Conveyor System' },
   'PLC Controller': { group: 'machine', id: 'plc-1', name: 'ឧបករណ៍បញ្ជា PLC', label: 'PLC Controller' },
   '3D Printer': { group: 'machine', id: 'printer3d-1', name: 'ម៉ាស៊ីនបោះពុម្ព 3D', label: '3D Printer' },
+  'Electric Vehicle': { group: 'car', id: 'ev-1', name: 'រថយន្តអគ្គិសនី', label: 'Electric Vehicle' },
   'Drone': { group: 'machine', id: 'drone-1', name: 'ដ្រូន', label: 'Drone' },
   'Farm Tractor': { group: 'machine', id: 'tractor-1', name: 'ត្រាក់ទ័រកសិកម្ម', label: 'Farm Tractor' },
 };
