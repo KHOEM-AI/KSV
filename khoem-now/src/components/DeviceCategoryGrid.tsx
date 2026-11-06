@@ -57,11 +57,11 @@ export function DeviceCategoryGrid() {
             {open === 'tvbox' && <OnOffPanel id="tvbox-1" name="ប្រអប់ទូរទស្សន៍" label="Smart TV Box" onClose={() => setOpen(null)} />}
       {open === 'scanner' && <OnOffPanel id="scanner-1" name="ម៉ាស៊ីនស្កេន" label="Scanner" onClose={() => setOpen(null)} />}
       {open === 'speaker' && <OnOffPanel id="speaker-1" name="ឧបករណ៍ភ្លេង" label="Smart Speaker" onClose={() => setOpen(null)} />}
-      <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
+      <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
-          <section key={g.title} style={{ borderRadius: 14, border: '1px solid rgba(45,212,191,0.35)', background: '#0b1220', padding: 12 }}>
-            <div style={{ color: '#5eead4', fontWeight: 700, fontSize: 14, marginBottom: 10 }}>{g.title}</div>
+          <section key={g.title} style={{ borderRadius: 14, border: '1px solid var(--tile-border)', background: 'var(--tile-bg)', padding: 12 }}>
+            <div style={{ color: 'var(--tile-title)', fontWeight: 700, fontSize: 14, marginBottom: 10 }}>{g.title}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))', gap: 8 }}>
               {g.items.map((name, i) => {
                 const [xa, xb] = g.side[i];

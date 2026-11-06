@@ -1,3 +1,4 @@
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { loadActiveView, saveActiveView } from '@/lib/pageState';
 import CountryClock from '@/components/CountryClock';
 import { useState } from 'react';
@@ -158,6 +159,7 @@ function AuthenticatedApp() {
 
               {/* Language — 3D flip selector; changing it retranslates
                   every t() call on this page immediately */}
+              <ThemeToggle />
               <LanguageSelector />
               <CountryClock />
 
