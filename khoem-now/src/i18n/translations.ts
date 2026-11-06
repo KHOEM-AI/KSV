@@ -510,6 +510,15 @@ const en: Dict = {
   'guide.projector.1': "ON / OFF: turns the projector on or off.",
   'guide.printer.title': "Printer",
   'guide.printer.1': "ON / OFF: turns the printer on or off.",
+  'guide.camera.title': "CCTV and IP Camera",
+  'guide.camera.1': "Tap the CCTV Camera or IP Camera tile and use ON / OFF to switch the camera on or off.",
+  'guide.camera.2': "Only point cameras at places you own or have permission to monitor, and tell people who may be filmed.",
+  'guide.outdoor.title': "Street Light, Water Pump, EV Charger, Digital Signage",
+  'guide.outdoor.1': "Tap the tile and use ON / OFF. In simulation mode only the state inside the gateway changes.",
+  'guide.outdoor.2': "Before connecting a real water pump, add dry-run protection and a safe stop. Pumps, street lights and EV chargers use mains power, so ask a qualified person to install them.",
+  'guide.sensor.title': "Sensor Module and Environmental Sensor",
+  'guide.sensor.1': "ON / OFF switches the sensor on or off.",
+  'guide.sensor.2': "Readings from real sensors are not shown yet.",
 };
 
 const km: Dict = {
@@ -949,6 +958,15 @@ const km: Dict = {
   'guide.projector.1': "ប៊ូតុង បើក ON / បិទ OFF៖ បើក ឬបិទម៉ាស៊ីនបញ្ចាំងរូប។",
   'guide.printer.title': "ម៉ាស៊ីនបោះពុម្ព",
   'guide.printer.1': "ប៊ូតុង បើក ON / បិទ OFF៖ បើក ឬបិទម៉ាស៊ីនបោះពុម្ព។",
+  'guide.camera.title': "កាមេរ៉ា CCTV និង IP",
+  'guide.camera.1': "ចុចក្រឡា CCTV Camera ឬ IP Camera ហើយប្រើ បើក ON / បិទ OFF ដើម្បីបើកឬបិទកាមេរ៉ា។",
+  'guide.camera.2': "ដាក់កាមេរ៉ាតែនៅកន្លែងដែលជារបស់អ្នក ឬមានការអនុញ្ញាត ហើយជូនដំណឹងដល់អ្នកដែលអាចត្រូវបានថត។",
+  'guide.outdoor.title': "ភ្លើងផ្លូវ ម៉ាស៊ីនបូមទឹក ឧបករណ៍សាក EV ផ្ទាំងផ្សាយឌីជីថល",
+  'guide.outdoor.1': "ចុចក្រឡា ហើយប្រើ បើក ON / បិទ OFF។ ក្នុងរបៀប simulation មានតែស្ថានភាពក្នុង gateway ប៉ុណ្ណោះដែលប្តូរ។",
+  'guide.outdoor.2': "មុនភ្ជាប់ម៉ាស៊ីនបូមទឹកពិត ត្រូវមានការការពារម៉ាស៊ីនដំណើរការទំនេរ និងការបញ្ឈប់សុវត្ថិភាព។ ម៉ាស៊ីនបូមទឹក ភ្លើងផ្លូវ និងឧបករណ៍សាក EV ប្រើចរន្តភ្លើងផ្ទះ សូមឱ្យអ្នកជំនាញដំឡើង។",
+  'guide.sensor.title': "ម៉ូឌុលសេនស័រ និងសេនស័របរិស្ថាន",
+  'guide.sensor.1': "ប៊ូតុង បើក ON / បិទ OFF បើកឬបិទសេនស័រ។",
+  'guide.sensor.2': "តម្លៃអានពីសេនស័រពិតមិនទាន់បង្ហាញទេ។",
 };
 
 

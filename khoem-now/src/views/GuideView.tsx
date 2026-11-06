@@ -14,6 +14,9 @@ const SECTIONS: { title: string; items: string[] }[] = [
   { title: 'guide.washer.title', items: ['guide.washer.1', 'guide.washer.2', 'guide.washer.3'] },
   { title: 'guide.projector.title', items: ['guide.projector.1'] },
   { title: 'guide.printer.title', items: ['guide.printer.1'] },
+  { title: 'guide.camera.title', items: ['guide.camera.1', 'guide.camera.2'] },
+  { title: 'guide.outdoor.title', items: ['guide.outdoor.1', 'guide.outdoor.2'] },
+  { title: 'guide.sensor.title', items: ['guide.sensor.1', 'guide.sensor.2'] },
 ];
 
 export function GuideView() {
