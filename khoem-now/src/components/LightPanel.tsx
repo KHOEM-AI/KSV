@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ensureDevice, getDevice, sendCommand, type KsvDevice } from '@/lib/ksvDevices';
 
-const ID = 'light-1';
+const ID = 'phone-torch-1';
 const LEVELS = [25, 50, 75, 100];
 const TEMPS: { value: number; km: string }[] = [
   { value: 2700, km: 'ក្តៅ' },

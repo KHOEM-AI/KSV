@@ -27,6 +27,14 @@ const GROUPS: { title: string; side: Span[]; row: number; items: string[] }[] = 
 ];
 
 const PANELS: Record<string, string> = {
+  'CCTV Camera': 'cctv',
+  'IP Camera': 'ipcam',
+  'Digital Signage': 'signage',
+  'Street Light': 'streetlight',
+  'Water Pump': 'pump',
+  'EV Charger': 'evcharger',
+  'Sensor Module': 'sensor',
+  'Environmental Sensor': 'envsensor',
   'Air Conditioner': 'ac',
   'Smart Fan': 'fan',
   'Smart Light': 'light',
@@ -57,6 +65,14 @@ export function DeviceCategoryGrid() {
             {open === 'tvbox' && <OnOffPanel id="tvbox-1" name="ប្រអប់ទូរទស្សន៍" label="Smart TV Box" onClose={() => setOpen(null)} />}
       {open === 'scanner' && <OnOffPanel id="scanner-1" name="ម៉ាស៊ីនស្កេន" label="Scanner" onClose={() => setOpen(null)} />}
       {open === 'speaker' && <OnOffPanel id="speaker-1" name="ឧបករណ៍ភ្លេង" label="Smart Speaker" onClose={() => setOpen(null)} />}
+      {open === 'cctv' && <OnOffPanel id="cctv-1" name="កាមេរ៉ាសុវត្ថិភាព CCTV" label="CCTV Camera" onClose={() => setOpen(null)} />}
+      {open === 'ipcam' && <OnOffPanel id="ipcam-1" name="កាមេរ៉ា IP" label="IP Camera" onClose={() => setOpen(null)} />}
+      {open === 'signage' && <OnOffPanel id="signage-1" name="ផ្ទាំងផ្សាយឌីជីថល" label="Digital Signage" onClose={() => setOpen(null)} />}
+      {open === 'streetlight' && <OnOffPanel id="streetlight-1" name="ភ្លើងផ្លូវ" label="Street Light" onClose={() => setOpen(null)} />}
+      {open === 'pump' && <OnOffPanel id="pump-1" name="ម៉ាស៊ីនបូមទឹក" label="Water Pump" onClose={() => setOpen(null)} />}
+      {open === 'evcharger' && <OnOffPanel id="evcharger-1" name="ឧបករណ៍សាកឡានអគ្គិសនី" label="EV Charger" onClose={() => setOpen(null)} />}
+      {open === 'sensor' && <OnOffPanel id="sensor-1" name="ម៉ូឌុលសេនស័រ" label="Sensor Module" onClose={() => setOpen(null)} />}
+      {open === 'envsensor' && <OnOffPanel id="envsensor-1" name="សេនស័របរិស្ថាន" label="Environmental Sensor" onClose={() => setOpen(null)} />}
       <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>General Devices Control</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
