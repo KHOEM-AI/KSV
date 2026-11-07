@@ -39,6 +39,18 @@ start_eit() {
   echo $! > "$EIPID"
   echo "  ✔ EI-T API       :3100"
 }
+# --- phone torch bridge (begin) ---
+TORCHPID="$HOME/.phone-torch.pid"
+stop_torch() { [ -f "$TORCHPID" ] && kill "$(cat "$TORCHPID")" 2>/dev/null; rm -f "$TORCHPID"; }
+start_torch() {
+  stop_torch
+  [ -f "$GW/tools/phone-torch.mjs" ] || { echo "  x phone torch: tools/phone-torch.mjs not found"; return; }
+  command -v termux-torch >/dev/null || { echo "  x phone torch: termux-torch not found"; return; }
+  ( cd "$GW" && PORT=9300 exec node tools/phone-torch.mjs >"$HOME/phone-torch.log" 2>&1 ) &
+  echo $! > "$TORCHPID"
+  echo "  ✔ phone torch    :9300"
+}
+# --- phone torch bridge (end) ---
 # --- KSV UI/API (begin) --------------------------------------------------
 # KSV web app (khoem-now): API :3000 (needs .env) + UI :5173. Logs: ~/ksv-api.log ~/ksv-ui.log
 KSV_DIR="${KSV_DIR:-$HOME/KSV/khoem-now}"
@@ -85,13 +97,14 @@ start_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" start; }
 # stop_cai also stops the KSV UI/API, so every existing stop path covers them
 stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; }
 case "${1:-run}" in
-  stop)    stop_gw; stop_iqai; stop_ki; stop_eit; stop_cai; bash "$LAUNCHER" stop ;;
-  restart) stop_gw; stop_iqai; stop_ki; stop_eit; stop_cai; bash "$LAUNCHER" stop; exec bash "$0" run ;;
+  stop)    stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_cai; bash "$LAUNCHER" stop ;;
+  restart) stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_cai; bash "$LAUNCHER" stop; exec bash "$0" run ;;
   run)
     stop_gw
     start_iqai
     start_ki
     start_eit
+    start_torch
     start_cai
     start_ksv
     bash "$LAUNCHER" run &
@@ -103,12 +116,13 @@ case "${1:-run}" in
     ( cd "$GW" && set -a && . ./.env && set +a && PORT=4000 exec node "$GW/server.js" ) &
     GPID=$!
     echo "  ✔ KSV gateway    :4000"
-    trap 'stop_iqai; stop_ki; stop_eit; stop_cai; kill $GPID 2>/dev/null; kill $LPID 2>/dev/null; wait 2>/dev/null; exit' INT TERM
+    trap 'stop_iqai; stop_ki; stop_eit; stop_torch; stop_cai; kill $GPID 2>/dev/null; kill $LPID 2>/dev/null; wait 2>/dev/null; exit' INT TERM
     wait $LPID
     kill $GPID 2>/dev/null
     stop_iqai
     stop_ki
     stop_eit
+    stop_torch
     stop_cai
     ;;
   *) echo "usage: ai [run|stop|restart]"; exit 1 ;;
