@@ -2,6 +2,7 @@ import express from "express";
 import { registry, local } from "./registry.js";
 import fs from "node:fs";
 import ksvDevices from "./devices/router.js";
+import { ksvAuth } from "./devices/auth.js";
 const ALLOW = new Set(fs.existsSync("./allow-read.txt") ? fs.readFileSync("./allow-read.txt","utf8").split("\n").filter(Boolean) : []);
 
 const app = express();
@@ -87,7 +88,7 @@ app.use("/api", (req, res, next) => {
 });
 
 // ឧបករណ៍ទូទៅ៖ /api/ksv/* (ត្រូវការ x-gateway-token ដូចខាងលើ)
-app.use("/api/ksv", ksvDevices);
+app.use("/api/ksv", ksvAuth, ksvDevices);
 
 app.get("/api", (_req, res) => res.json({ external: Object.keys(registry), local: Object.keys(local) }));
 

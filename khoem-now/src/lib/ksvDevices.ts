@@ -1,3 +1,4 @@
+import { getAccessToken } from '@/lib/auth';
 const BASE = '/ksv-api';
 
 export interface KsvDevice {
@@ -12,7 +13,7 @@ export interface KsvDevice {
 interface ApiBody { message?: string; error?: string }
 
 async function call<T>(path: string, init?: RequestInit): Promise<{ status: number; body: T | null }> {
-  const res = await fetch(BASE + path, { ...init, headers: { 'Content-Type': 'application/json' } });
+  const res = await fetch(BASE + path, { ...init, headers: { 'Content-Type': 'application/json', ...(getAccessToken() ? { Authorization: 'Bearer ' + getAccessToken() } : {}) } });
   let body: T | null = null;
   try { body = (await res.json()) as T; } catch { body = null; }
   return { status: res.status, body };
