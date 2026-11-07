@@ -28,7 +28,7 @@ export function ThemeToggle() {
       title={light ? 'ទម្រង់ថ្ងៃ · Day' : 'ទម្រង់យប់ · Night'}
       style={{ background: 'none', border: 0, padding: 4, cursor: 'pointer', lineHeight: 0, borderRadius: 999 }}
     >
-      <svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true" style={{ display: 'block' }}>
+      <svg viewBox="0 0 72 36" aria-hidden="true" style={{ display: 'block', width: 'clamp(46px, 12vw, 64px)', height: 'auto' }}>
         <defs>
           <linearGradient id="ksvNight" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="#0b1536" /><stop offset="1" stopColor="#1e2a5a" />

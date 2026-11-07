@@ -159,7 +159,7 @@ function AuthenticatedApp() {
 
               {/* Language — 3D flip selector; changing it retranslates
                   every t() call on this page immediately */}
-              <ThemeToggle />
+              <span className="shrink-0"><ThemeToggle /></span>
               <LanguageSelector />
               <CountryClock />
 
