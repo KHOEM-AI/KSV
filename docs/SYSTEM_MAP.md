@@ -41,6 +41,8 @@ khoem-now = ទិន្នន័យពណ៌ និងអំពូល (UI អ�
 | POST | `/api/colors` | រក្សា palette ពណ៌ (`id`, `name`, `cols`) |
 | GET | `/api/scans` | បញ្ជីលទ្ធផលស្កេន CAI ដែលបានរក្សា |
 | POST | `/api/scans` | រក្សាលទ្ធផលស្កេន (`id`, `counts`, `time`, `name`, `gps`) |
+| GET | `/api/registry` | បញ្ជីឯកសារក្នុង `data/` (អានតែប៉ុណ្ណោះ) |
+| GET | `/api/registry/<ឈ្មោះ>` | ឯកសារមួយក្នុងបញ្ជី ឧ. `apis`, `endpoints`, `ai-apps` (គ្មាន `.json`; ឯកសារក្រៅបញ្ជី និង `local/` មិនត្រូវបានបម្រើ) |
 | POST | `/api/scan` | ស្កេនដោយ AI vision — មិនទាន់កំណត់ (ឆ្លើយ 501) |
 
 កូដ API នៅ `KI/src/server.mjs` (Node ធម្មតា គ្មាន dependency)។ ទិន្នន័យទុកក្នុង `~/.ki-colors.json` និង `~/.ki-scans.json` (មិនឡើង GitHub)។
@@ -70,6 +72,7 @@ curl -s localhost:8790/health
 curl -s localhost:8787/api/health
 curl -s localhost:5001/api/healthz
 curl -s localhost:5001/api/colors
+curl -s localhost:5001/api/registry
 ```
 
 ពាក្យ `ai` ដំណើរការ `~/KSV/ai.sh`។
