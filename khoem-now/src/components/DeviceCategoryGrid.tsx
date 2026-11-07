@@ -92,6 +92,14 @@ export function DeviceCategoryGrid() {
         <h3 style={{ color: 'var(--heading)', fontSize: 18, fontWeight: 700, margin: 0 }}>General Devices Control</h3>
         <button type="button" onClick={() => setAddOpen(true)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(45,212,191,0.5)', background: '#0b1220', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>+ បន្ថែមឧបករណ៍</button>
       </div>
+      <div className="ksv-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginBottom: 12, fontSize: 12, color: 'rgb(var(--ink-300))' }}>
+        {[['#22c55e', 'ចុចបញ្ជាបាន · Control'], ['#f59e0b', 'ត្រូវបញ្ជាក់មុនបញ្ជា · Confirm first'], ['#38bdf8', 'មើលតែប៉ុណ្ណោះ · View only']].map(([c, label]) => (
+          <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <i style={{ width: 12, height: 12, borderRadius: 4, border: '2px solid ' + c, display: 'inline-block' }} />
+            {label}
+          </span>
+        ))}
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         {GROUPS.map((g) => (
           <section key={g.title} style={{ borderRadius: 14, border: '1px solid var(--tile-border)', background: 'var(--tile-bg)', padding: 12 }}>

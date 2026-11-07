@@ -30,9 +30,9 @@ export default function CountryClock() {
   }, [selected]);
 
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-850/60 px-3 py-1.5 text-sm text-ink-100">
+    <div className="flex min-w-0 max-w-[11rem] items-center gap-2 rounded-xl border border-ink-700 bg-ink-850/60 px-3 py-1.5 text-sm text-ink-100 sm:max-w-none">
       <select
-        className="bg-transparent text-xs text-ink-100 focus:outline-none"
+        className="min-w-0 flex-1 truncate bg-transparent text-xs text-ink-100 focus:outline-none"
         value={countries.indexOf(selected)}
         onChange={(e) => setSelected(countries[parseInt(e.target.value, 10)])}
       >
@@ -42,7 +42,7 @@ export default function CountryClock() {
           </option>
         ))}
       </select>
-      <span className="font-mono text-xs text-brand-400">{time}</span>
+      <span className="shrink-0 font-mono text-xs text-brand-400">{time}</span>
     </div>
   );
 }
