@@ -40,6 +40,20 @@ const sim = {
 };
 
 // ── http៖ ឧបករណ៍ក្នុង LAN ទទួល POST <endpoint>/command ──
+// state ដែលឧបករណ៍ http ឆ្លើយមក៖ ទទួលតែ key សាមញ្ញ ហើយមិនទទួល speedKmh (ប្រើសម្រាប់ guard សុវត្ថិភាព)
+function safeReportedState(r) {
+  const st = r && typeof r === "object" ? r.state : null;
+  if (!st || typeof st !== "object" || Array.isArray(st)) return null;
+  const keys = Object.keys(st);
+  if (!keys.length || keys.length > 30) return null;
+  const out = {};
+  for (const k of keys) {
+    if (k === "speedKmh" || !/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(k)) continue;
+    if (["string", "number", "boolean"].includes(typeof st[k])) out[k] = st[k];
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 const http = {
   async send(device, { command, params }) {
     const url = new URL("/command", device.endpoint);
@@ -51,6 +65,10 @@ const http = {
     });
     let response;
     try { response = await res.json(); } catch { response = undefined; }
+    if (res.ok) {
+      const st = safeReportedState(response);
+      if (st) setState(device.id, st);
+    }
     return { acknowledged: res.ok, response, receivedAt: new Date() };
   },
 };

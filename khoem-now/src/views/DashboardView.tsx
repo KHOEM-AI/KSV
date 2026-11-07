@@ -7,8 +7,23 @@ import { Panel, SectionHeader, StatCard, Sparkline, Donut, ProgressBar, Badge, S
 import { getDashboardFull, type DashboardFullResponse } from '@/lib/api';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { DeviceCategoryGrid } from '@/components/DeviceCategoryGrid';
+import { AccountSignInCard } from '@/components/AccountSignInCard';
+import { isLoggedIn } from '@/lib/auth';
 
 export function DashboardView() {
+  return isLoggedIn() ? <DashboardInner /> : <DashboardGate />;
+}
+
+function DashboardGate() {
+  return (
+    <div className="space-y-6">
+      <AccountSignInCard />
+      <div className="py-4 text-center text-ink-400">សូមចូលគណនីសិន ទើបប្រើឧបករណ៍បាន</div>
+    </div>
+  );
+}
+
+function DashboardInner() {
   const { t } = useLanguage();
   const [data, setData] = useState<DashboardFullResponse | null>(null);
   const [loading, setLoading] = useState(true);
