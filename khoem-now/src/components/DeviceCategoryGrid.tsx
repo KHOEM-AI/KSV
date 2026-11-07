@@ -7,6 +7,7 @@ import { TvPanel } from '@/components/TvPanel';
 import { FridgePanel } from '@/components/FridgePanel';
 import { WasherPanel } from '@/components/WasherPanel';
 import { OnOffPanel } from '@/components/OnOffPanel';
+import { ExtraDeviceGrid } from '@/components/ExtraDeviceGrid';
 import { SecuredPanel, SECURED_TILES } from '@/components/SecuredPanel';
 import { ReadOnlyPanel, READONLY_TILES } from '@/components/ReadOnlyPanel';
 import { AddDevicePanel } from '@/components/AddDevicePanel';
@@ -153,6 +154,7 @@ export function DeviceCategoryGrid() {
           </section>
         ))}
       </div>
+      <ExtraDeviceGrid />
     </div>
   );
 }
