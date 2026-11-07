@@ -66,3 +66,12 @@ curl -s -H "$H" -H 'content-type: application/json' $B/devices/pot-1/command \
 ```bash
 cd gateway && npm install && npm test
 ```
+
+## ឧបករណ៍ហានិភ័យខ្ពស់ (KSV_ALLOW_REAL)
+
+`lock`, `barrier`, `machine`, `car`, `cooker`, `dishwasher` ចុះឈ្មោះបានតែជា adapter `sim`។
+ដើម្បីភ្ជាប់ឧបករណ៍ពិត (`http` ឬ `mqtt`) ត្រូវអនុញ្ញាតដោយចេតនាក្នុង `gateway/.env`៖
+
+    KSV_ALLOW_REAL=car,lock
+
+ចាប់ផ្តើម gateway ឡើងវិញក្រោយកែ។ ទទេ ឬមិនកំណត់ = ហាមទាំងអស់។

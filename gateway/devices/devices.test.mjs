@@ -129,3 +129,43 @@ test("devices.json ត្រូវបានរក្សាទុក ហើយអ
   assert.ok(store.getDevice("pot-1"));
   assert.equal(store.getDevice("pot-1").type, "cooker");
 });
+
+// ── ឧបករណ៍ហានិភ័យខ្ពស់៖ ត្រូវការ KSV_ALLOW_REAL ទើបប្រើ http/mqtt បាន ──
+const HR = { adapter: "http", endpoint: "http://127.0.0.1:9100" };
+const withEnv = (v, fn) => {
+  const prev = process.env.KSV_ALLOW_REAL;
+  if (v === undefined) delete process.env.KSV_ALLOW_REAL; else process.env.KSV_ALLOW_REAL = v;
+  try { return fn(); } finally {
+    if (prev === undefined) delete process.env.KSV_ALLOW_REAL; else process.env.KSV_ALLOW_REAL = prev;
+  }
+};
+const mk = (id, type, extra) => store.registerDevice({ id, name: id, type, ...extra });
+
+test("ហានិភ័យខ្ពស់៖ sim ត្រូវបានអនុញ្ញាតជានិច្ច", () => {
+  withEnv(undefined, () => assert.equal(mk("risk-sim-car", "car", { adapter: "sim" }).ok, true));
+});
+
+test("ហានិភ័យខ្ពស់៖ http និង mqtt ត្រូវបដិសេធពេលគ្មាន KSV_ALLOW_REAL", () => {
+  withEnv(undefined, () => {
+    for (const type of ["lock", "barrier", "machine", "car", "cooker", "dishwasher"]) {
+      const r = mk("risk-http-" + type, type, HR);
+      assert.equal(r.ok, false, type);
+      assert.ok(r.errors.some((e) => e.includes("KSV_ALLOW_REAL")), type);
+    }
+    const m = mk("risk-mqtt-lock", "lock", { adapter: "mqtt" });
+    assert.equal(m.ok, false);
+    assert.ok(m.errors.some((e) => e.includes("KSV_ALLOW_REAL")));
+  });
+});
+
+test("ហានិភ័យខ្ពស់៖ អនុញ្ញាតតែ type ដែលរាយក្នុង KSV_ALLOW_REAL", () => {
+  withEnv(" Car , cooker ", () => {
+    assert.equal(mk("risk-ok-car", "car", HR).ok, true);
+    assert.equal(mk("risk-ok-cooker", "cooker", HR).ok, true);
+    assert.equal(mk("risk-no-lock", "lock", HR).ok, false);
+  });
+});
+
+test("ឧបករណ៍ធម្មតា (light) មិនត្រូវបានប៉ះពាល់", () => {
+  withEnv(undefined, () => assert.equal(mk("risk-light-http", "light", HR).ok, true));
+});

@@ -44,6 +44,16 @@ export function isPrivateHost(hostname) {
   return a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
 }
 
+// ឧបករណ៍ហានិភ័យខ្ពស់៖ ប្រើបានតែ adapter sim លុះត្រាតែអនុញ្ញាតក្នុង KSV_ALLOW_REAL (ឧ. KSV_ALLOW_REAL=car,lock)
+export const HIGH_RISK_TYPES = ["lock", "barrier", "machine", "car", "cooker", "dishwasher"];
+
+export function realBlockedReason(type, adapter) {
+  if (adapter === "sim" || !HIGH_RISK_TYPES.includes(type)) return null;
+  const allowed = (process.env.KSV_ALLOW_REAL || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  if (allowed.includes(type)) return null;
+  return 'type "' + type + '" ជាឧបករណ៍ហានិភ័យខ្ពស់ អាចប្រើបានតែ adapter sim លុះត្រាតែកំណត់ KSV_ALLOW_REAL=' + type + ' ក្នុង gateway/.env';
+}
+
 export function registerDevice(input) {
   const errors = [];
   const { id, name, type, adapter = "sim", endpoint, deviceCode, room } = input || {};
@@ -52,6 +62,7 @@ export function registerDevice(input) {
   if (!name || typeof name !== "string") errors.push("ត្រូវការ name");
   if (!DEVICE_TYPES[type]) errors.push(`type ត្រូវជាមួយក្នុង៖ ${Object.keys(DEVICE_TYPES).join(", ")}`);
   if (!ADAPTER_NAMES.includes(adapter)) errors.push(`adapter ត្រូវជាមួយក្នុង៖ ${ADAPTER_NAMES.join(", ")}`);
+  { const why = realBlockedReason(type, adapter); if (why) errors.push(why); }
 
   if (adapter === "http") {
     try {
