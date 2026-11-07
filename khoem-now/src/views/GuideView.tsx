@@ -3,6 +3,8 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 const SECTIONS: { title: string; items: string[] }[] = [
   { title: 'guide.start.title', items: ['guide.start.1', 'guide.start.2', 'guide.start.3'] },
+  { title: 'guide.tiles.title', items: ['guide.tiles.1', 'guide.tiles.2', 'guide.tiles.3'] },
+  { title: 'guide.confirm.title', items: ['guide.confirm.1', 'guide.confirm.2', 'guide.confirm.3'] },
   { title: 'guide.connect.title', items: ['guide.connect.1', 'guide.connect.2', 'guide.connect.3'] },
   { title: 'guide.remote.title', items: ['guide.remote.1', 'guide.remote.2', 'guide.remote.3'] },
   { title: 'guide.ac.title', items: ['guide.ac.1', 'guide.ac.2', 'guide.ac.3'] },
@@ -17,6 +19,9 @@ const SECTIONS: { title: string; items: string[] }[] = [
   { title: 'guide.camera.title', items: ['guide.camera.1', 'guide.camera.2'] },
   { title: 'guide.outdoor.title', items: ['guide.outdoor.1', 'guide.outdoor.2'] },
   { title: 'guide.sensor.title', items: ['guide.sensor.1', 'guide.sensor.2'] },
+  { title: 'guide.readonly.title', items: ['guide.readonly.1', 'guide.readonly.2'] },
+  { title: 'guide.ev.title', items: ['guide.ev.1', 'guide.ev.2'] },
+  { title: 'guide.allowreal.title', items: ['guide.allowreal.1', 'guide.allowreal.2'] },
 ];
 
 export function GuideView() {
