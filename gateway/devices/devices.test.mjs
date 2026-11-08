@@ -169,3 +169,33 @@ test("ហានិភ័យខ្ពស់៖ អនុញ្ញាតតែ typ
 test("ឧបករណ៍ធម្មតា (light) មិនត្រូវបានប៉ះពាល់", () => {
   withEnv(undefined, () => assert.equal(mk("risk-light-http", "light", HR).ok, true));
 });
+
+// ── ពេលបញ្ជា៖ ឧបករណ៍ហានិភ័យដែលមិនមែន sim ត្រូវបដិសេធ បើគ្មាន KSV_ALLOW_REAL ──
+const runNoAllow = async (fn) => {
+  const prev = process.env.KSV_ALLOW_REAL;
+  delete process.env.KSV_ALLOW_REAL;
+  try { return await fn(); } finally {
+    if (prev !== undefined) process.env.KSV_ALLOW_REAL = prev;
+  }
+};
+
+test("ពេលបញ្ជា៖ ឡាន http ត្រូវបដិសេធ ពេលគ្មាន KSV_ALLOW_REAL (ទោះចុះឈ្មោះរួចហើយ)", async () => {
+  withEnv("car", () => assert.equal(mk("cmd-risk-car", "car", HR).ok, true));
+  const r = await runNoAllow(() => svc.command("cmd-risk-car", { command: "HORN" }));
+  assert.ok(JSON.stringify(r).includes("REAL_NOT_ALLOWED"));
+});
+
+test("ពេលបញ្ជា៖ ឡាន sim នៅតែបញ្ជាបាន", async () => {
+  withEnv(undefined, () => assert.equal(mk("cmd-sim-car", "car", { adapter: "sim" }).ok, true));
+  const r = await runNoAllow(() => svc.command("cmd-sim-car", { command: "HORN" }));
+  assert.ok(!JSON.stringify(r).includes("REAL_NOT_ALLOWED"));
+});
+
+test("ពេលបញ្ជា៖ ពេលមាន KSV_ALLOW_REAL មិនត្រូវបានរារាំងដោយក្បួននេះ", async () => {
+  withEnv("car", () => assert.equal(mk("cmd-allow-car", "car", HR).ok, true));
+  process.env.KSV_ALLOW_REAL = "car";
+  try {
+    const r = await svc.command("cmd-allow-car", { command: "HORN" });
+    assert.ok(!JSON.stringify(r).includes("REAL_NOT_ALLOWED"));
+  } finally { delete process.env.KSV_ALLOW_REAL; }
+});

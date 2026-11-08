@@ -3,7 +3,7 @@
 import { describeType, listTypes } from "./catalog.js";
 import { validateCommand } from "./commands.js";
 import { adapters } from "./adapters.js";
-import { audit, getDevice, getState, listDevices, registerDevice, setDisabled, setState } from "./store.js";
+import { realBlockedReason, audit, getDevice, getState, listDevices, registerDevice, setDisabled, setState } from "./store.js";
 
 const HTTP_BY_CODE = {
   UNKNOWN_TYPE: 400,
@@ -69,6 +69,13 @@ export async function command(id, body) {
   if (d.disabled) {
     log("DEVICE_DISABLED");
     return reply(423, { error: "DEVICE_DISABLED", message: "ឧបករណ៍ត្រូវបានបិទដំណើរការ" });
+  }
+
+  // ឧបករណ៍ហានិភ័យខ្ពស់ដែលមិនមែន sim ត្រូវមាន KSV_ALLOW_REAL ទើបបញ្ជាបាន
+  const blocked = realBlockedReason(d.type, d.adapter);
+  if (blocked) {
+    log("REAL_NOT_ALLOWED");
+    return reply(403, { error: "REAL_NOT_ALLOWED", message: blocked });
   }
 
   const v = validateCommand(d.type, cmd, params, { confirmed, state: getState(id) });
