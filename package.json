@@ -1,0 +1,15 @@
+{
+  "name": "ksv",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "@KHOEM-AI",
+  "scripts": {
+    "typecheck": "npm --prefix khoem-now run typecheck",
+    "build": "npm --prefix khoem-now run build",
+    "test": "npm --prefix gateway test && npm --prefix khoem-now run test:adapters && npm --prefix khoem-now run test:catalog && npm --prefix khoem-now run test:panel",
+    "validate:locales": "node scripts/validate-locales.mjs",
+    "check:duplicates": "node scripts/check-duplicates.mjs",
+    "report:translations": "node scripts/report-translations.mjs",
+    "verify": "npm run typecheck && npm run validate:locales && npm run check:duplicates && npm test"
+  }
+}
