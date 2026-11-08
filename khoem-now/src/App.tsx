@@ -90,7 +90,7 @@ function AuthenticatedApp() {
             <div key={group.labelKey} className="mb-5">
               {/* group.label / item.label come from @/components/nav.
                   To translate the menu text itself, that file's labels
-                  need the same t('nav.xxx') treatment — see note below. */}
+                  need the same t(...) treatment — see note below. */}
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-ink-500">{t(group.labelKey)}</p>
               <div className="space-y-0.5">
                 {group.items.map((item) => (

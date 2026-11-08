@@ -1,4 +1,4 @@
-import { getAccessToken } from '@/lib/auth';
+import { getAccessToken, clearSession } from '@/lib/auth';
 const BASE = '/ksv-api';
 
 export interface KsvDevice {
@@ -16,6 +16,10 @@ async function call<T>(path: string, init?: RequestInit): Promise<{ status: numb
   const res = await fetch(BASE + path, { ...init, headers: { 'Content-Type': 'application/json', ...(getAccessToken() ? { Authorization: 'Bearer ' + getAccessToken() } : {}) } });
   let body: T | null = null;
   try { body = (await res.json()) as T; } catch { body = null; }
+  if (res.status === 401 && getAccessToken() && (body as { error?: string } | null)?.error === 'UNAUTHENTICATED') {
+    clearSession();
+    window.location.reload();
+  }
   return { status: res.status, body };
 }
 

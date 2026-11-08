@@ -75,3 +75,14 @@ export function hasMinRole(minRole: string): boolean {
   if (!user) return false;
   return (ROLE_RANK[user.role] ?? -1) >= (ROLE_RANK[minRole] ?? 0);
 }
+
+// សម្រាប់បង្ហាញក្នុង UI ប៉ុណ្ណោះ — gateway ជាអ្នកផ្ទៀងផ្ទាត់សិទ្ធិពិត
+export function userFromToken(token: string, email: string): CurrentUser {
+  try {
+    const b = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const p = JSON.parse(atob(b)) as { sub?: string; role?: string };
+    return { id: p.sub ?? "", email, role: p.role ?? "Guest" };
+  } catch {
+    return { id: "", email, role: "Guest" };
+  }
+}

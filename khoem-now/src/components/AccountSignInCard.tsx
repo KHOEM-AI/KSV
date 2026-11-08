@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Panel } from '@/components/ui';
 import { loginWithPassword, verifyMFA } from '@/lib/api';
+import { saveSession, clearSession, userFromToken } from '@/lib/auth';
 
 const EMAIL_KEY = 'ksv_account_email';
 
@@ -27,15 +28,13 @@ export function AccountSignInCard() {
   const [loading, setLoading] = useState(false);
 
   const finish = (tk: { accessToken: string; refreshToken?: string }) => {
-    localStorage.setItem('ksv_access_token', tk.accessToken);
-    if (tk.refreshToken) localStorage.setItem('ksv_refresh_token', tk.refreshToken);
+    saveSession(tk.accessToken, tk.refreshToken ?? '', userFromToken(tk.accessToken, email));
     localStorage.setItem(EMAIL_KEY, email);
     window.location.reload();
   };
 
   const signOut = () => {
-    localStorage.removeItem('ksv_access_token');
-    localStorage.removeItem('ksv_refresh_token');
+    clearSession();
     window.location.reload();
   };
 
