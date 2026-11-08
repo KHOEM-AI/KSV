@@ -1,27 +1,24 @@
-// KSV — ESP32 plug/light សាមញ្ញ (ទទួល POST /command)
+// KSV — ESP32 plug/light សាមញ្ញ
+// gateway ហៅមក POST /command ({"command":"ON|OFF|TOGGLE|GET_STATUS"})
+// ឧបករណ៍ឆ្លើយ {"ok":true,"state":{"power":true|false}} ហើយ gateway កត់ state ពីចម្លើយ
+// មិនមាន token ឬការហៅចេញទៅ gateway ទេ។
 #include <WiFi.h>
 #include <WebServer.h>
-#include <HTTPClient.h>
+#include "secrets.h"   // WIFI_SSID, WIFI_PASS (មើល secrets.h.example)
 
-const char* WIFI_SSID = "ឈ្មោះ-WIFI";
-const char* WIFI_PASS = "ពាក្យសម្ងាត់";
-const char* DEVICE_ID = "plug-http-1";
-const char* GATEWAY   = "http://192.168.1.10:4000/api/ksv"; // កែតាមជំហាន ៣
-const char* TOKEN     = "";                                  // ទុកទទេ បើគ្មាន token
-const int   RELAY_PIN = 2;                                   // GPIO ដែលភ្ជាប់ relay/LED
+const int RELAY_PIN = 2;          // GPIO ដែលភ្ជាប់ LED/relay
+const bool ACTIVE_LOW = false;    // relay module ខ្លះបើកពេល LOW
 
 WebServer server(80);
 bool power = false;
 
-void apply() { digitalWrite(RELAY_PIN, power ? HIGH : LOW); }
+void apply() {
+  bool level = ACTIVE_LOW ? !power : power;
+  digitalWrite(RELAY_PIN, level ? HIGH : LOW);
+}
 
-void report() {
-  HTTPClient h;
-  h.begin(String(GATEWAY) + "/devices/" + DEVICE_ID + "/state");
-  h.addHeader("Content-Type", "application/json");
-  if (strlen(TOKEN)) h.addHeader("Authorization", String("Bearer ") + TOKEN);
-  h.POST(String("{\"power\":") + (power ? "true" : "false") + "}");
-  h.end();
+String stateJson() {
+  return String("{\"ok\":true,\"state\":{\"power\":") + (power ? "true" : "false") + "}}";
 }
 
 void onCommand() {
@@ -30,12 +27,11 @@ void onCommand() {
   else if (b.indexOf("\"OFF\"") >= 0) power = false;
   else if (b.indexOf("\"TOGGLE\"") >= 0) power = !power;
   else if (b.indexOf("\"GET_STATUS\"") < 0) {
-    server.send(400, "application/json", "{\"ok\":false}");
+    server.send(400, "application/json", "{\"ok\":false,\"error\":\"unknown command\"}");
     return;
   }
   apply();
-  server.send(200, "application/json", String("{\"ok\":true,\"power\":") + (power ? "true" : "false") + "}");
-  report();
+  server.send(200, "application/json", stateJson());
 }
 
 void setup() {
@@ -47,4 +43,10 @@ void setup() {
   server.begin();
 }
 
-void loop() { server.handleClient(); }
+void loop() {
+  server.handleClient();
+  if (WiFi.status() != WL_CONNECTED) {   // ភ្ជាប់ WiFi វិញបើដាច់
+    WiFi.reconnect();
+    delay(1000);
+  }
+}
