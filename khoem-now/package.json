@@ -14,11 +14,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test": "npm run test:adapters && npm run test:catalog && npm run test:panel",
+    "test": "npm run test:adapters && npm run test:catalog && npm run test:panel && npm run test:gateway",
     "validate:locales": "node scripts/i18n-audit.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "report:translations": "node scripts/i18n-audit.mjs || true",
-    "verify": "npm run typecheck && npm run validate:locales && npm run check:duplicates && npm test && npm run build"
+    "verify": "npm run typecheck && npm run validate:locales && npm run check:duplicates && npm test && npm run build",
+    "test:gateway": "npm --prefix ../gateway test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",
