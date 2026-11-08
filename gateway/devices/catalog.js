@@ -300,6 +300,17 @@ export const DEVICE_TYPES = {
       GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
     },
   },
+  // ───────── ទូរស័ព្ទ (ញ័រ, និយាយ, ជូនដំណឹង, អានថ្ម) ─────────
+  phone: {
+    km: "ទូរស័ព្ទ",
+    safetyClass: "appliance",
+    commands: {
+      VIBRATE: { km: "ញ័រ", params: { durationMs: opt(int(100, 2000, "ms")) } },
+      SPEAK: { km: "និយាយ", params: value(oneOf("hello", "test", "alert")) },
+      NOTIFY: { km: "ជូនដំណឹង", params: value(oneOf("test", "alert")) },
+      GET_STATUS: { km: "ស្ថានភាព", readOnly: true },
+    },
+  },
 };
 
 // សង្ខេបសម្រាប់បង្ហាញក្នុង API (មិនបញ្ចូល function)
