@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Languages, Check } from 'lucide-react';
-import { LANGUAGES } from '@/i18n/translations';
+import { LANGUAGES, TRANSLATIONS } from '@/i18n/translations';
 import { useLanguage } from '@/i18n/LanguageContext';
+
+// ksv-lang-cov: share of en keys this language really has
+const EN_KEYS = Object.keys(TRANSLATIONS.en).length;
+const coverage = (code: keyof typeof TRANSLATIONS) =>
+  Math.round((Object.keys(TRANSLATIONS[code] ?? {}).length / EN_KEYS) * 100);
 
 // ======================================================================
 // KSV — Language Selector (Domain #1, part 2: Language)
@@ -98,6 +103,9 @@ export default function LanguageSelector() {
                     <span className="text-base leading-none">{l.flag}</span>
                     <span className="truncate">{l.nativeName}</span>
                     <span className="text-xs text-slate-500 truncate">{l.englishName}</span>
+                    {coverage(l.code) < 100 && (
+                      <span title="ការបកប្រែមិនទាន់ពេញ · partial translation" className="shrink-0 rounded border border-warning-500/50 px-1 text-[10px] text-warning-400">{coverage(l.code)}%</span>
+                    )}
                   </span>
                   {l.code === language && <Check size={14} className="text-sky-400 shrink-0" />}
                 </button>
