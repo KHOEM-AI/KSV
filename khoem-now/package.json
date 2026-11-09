@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:seed": "node --test scripts/seed-extra-devices.logic.test.ts",
+    "fake:device": "node scripts/fake-device.mjs",
+    "seed:devices": "node --env-file=.env --experimental-strip-types scripts/seed-extra-devices.ts",
     "guide:devices": "node scripts/generate-device-guide.ts",
     "test:adapters": "node --test src/core/protocol/adapters/adapters.test.ts",
     "test:catalog": "node --test src/core/devices/device.catalog.test.ts",

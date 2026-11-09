@@ -290,7 +290,15 @@ async function main() {
         res.status(400).json({ error: "INVALID_DEVICE_ID" });
         return;
       }
-      const deviceId = rawDeviceId;
+      // KSV: the dashboard panels use a device code (e.g. "ceiling-light-1"); accept it as well as the database id.
+      let deviceId = rawDeviceId;
+      if (!/^[0-9a-fA-F]{24}$/.test(rawDeviceId)) {
+        const byCode = await Device.findOne(
+          { deviceCode: rawDeviceId, organizationId: req.user!.organizationId },
+          { _id: 1 }
+        ).lean();
+        if (byCode) deviceId = String(byCode._id);
+      }
       const { commandType, payload, signals } = req.body ?? {};
       const user = req.user!; // authenticate() guarantees this is set
 
