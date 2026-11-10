@@ -1,25 +1,27 @@
-import { useState, type CSSProperties } from 'react';
-import * as api from '@/lib/api';
-import { DEVICE_CATALOG, resolveCatalogType, type ParamSpec } from '@/core/devices/device.catalog';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { getAccessToken } from '@/lib/auth';
+import { ensureDevice, getDevice, sendCommand, type KsvDevice } from '@/lib/ksvDevices';
 import {
-  applyPractice,
   buildPayload,
   defaultValue,
   describeState,
-  errorInfo,
-  needsConfirm,
+  errorText,
+  FALLBACK_TYPE,
+  isConfirmRequired,
+  isOptional,
+  parseType,
+  type ParamInfo,
   type PanelValues,
+  type TypeInfo,
 } from '@/components/catalogPanel.logic';
 
 /**
- * One control panel for ANY device of the catalog: the buttons, sliders and lists are built from
- * src/core/devices/device.catalog.ts, so every new device type gets a panel without new UI code.
- * If the device or the session is not connected yet, the panel works in practice mode (nothing real
- * is switched), like the other panels.
+ * One control panel for ANY device type of the KSV gateway. The buttons, sliders and lists come from
+ * GET /ksv-api/types/:type, so the gateway is the only place that defines the commands, and every new
+ * type gets a panel without new UI code. It uses the same ensureDevice / sendCommand as the other panels.
  */
 
 type Msg = { kind: 'ok' | 'err' | 'warn'; text: string } | null;
-type Dispatch = (input: { deviceId: string; type: string; payload?: Record<string, unknown> }) => Promise<unknown>;
 
 interface Props {
   deviceId: string;
@@ -51,61 +53,65 @@ const note = (kind: 'ok' | 'err' | 'warn'): CSSProperties => ({
 });
 
 export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
-  const typeKey = resolveCatalogType(type) ?? 'generic';
-  const def = DEVICE_CATALOG[typeKey];
+  const [info, setInfo] = useState<TypeInfo | null>(null);
+  const [dev, setDev] = useState<KsvDevice | null>(null);
   const [values, setValues] = useState<PanelValues>({});
-  const [state, setState] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
-  const [practice, setPractice] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-  const [pending, setPending] = useState<{ command: string; payload: Record<string, unknown> } | null>(null);
+  const [pending, setPending] = useState<{ command: string; params: Record<string, unknown> } | null>(null);
 
-  const dispatch = (api as unknown as { dispatchCommand?: Dispatch }).dispatchCommand;
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = getAccessToken();
+        const res = await fetch(`/ksv-api/types/${encodeURIComponent(type)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        const parsed = res.ok ? parseType(await res.json()) : null;
+        if (alive) setInfo(parsed ?? FALLBACK_TYPE);
+      } catch {
+        if (alive) setInfo(FALLBACK_TYPE);
+      }
+      try {
+        const d = await ensureDevice(deviceId, label, type);
+        if (alive) setDev(d);
+      } catch (e) {
+        if (alive) setMsg({ kind: 'err', text: `${errorText(e)} — sign in on the Security page first · សូមចូលគណនីនៅទំព័រ Security ជាមុន` });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [deviceId, label, type]);
 
-  async function send(command: string, payload: Record<string, unknown>, confirmed = false) {
-    if (needsConfirm(typeKey, command) && !confirmed) {
-      setPending({ command, payload });
-      return;
-    }
+  async function send(command: string, params: Record<string, unknown>, confirmed = false) {
     setPending(null);
     setBusy(true);
     setMsg(null);
     try {
-      // No token = not signed in: stay in practice mode instead of calling the server.
-      if (!dispatch || !localStorage.getItem('ksv_access_token')) throw Object.assign(new Error('offline'), { status: 401 });
-      await dispatch({ deviceId, type: command, payload: confirmed ? { ...payload, confirmed: true } : payload });
-      setPractice(false);
-      setState((s) => applyPractice(s, command, payload));
+      await sendCommand(deviceId, command, params, confirmed);
+      setDev(await getDevice(deviceId));
       setMsg({ kind: 'ok', text: 'Sent · បានផ្ញើពាក្យបញ្ជា ✔' });
     } catch (e) {
-      const info = errorInfo(e);
-      if (info.confirm && !confirmed) {
-        setPending({ command, payload });
-      } else if (info.offline) {
-        setPractice(true);
-        setState((s) => applyPractice(s, command, payload));
-        setMsg({ kind: 'warn', text: 'Practice · ឧបករណ៍មិនទាន់ភ្ជាប់ — ប៊ូតុងគ្រាន់តែសាកល្បង គ្មានអ្វីពិតត្រូវបានបើក/បិទទេ។' });
-      } else {
-        setMsg({ kind: 'err', text: `${info.code}: ${info.message}` });
-      }
+      if (isConfirmRequired(e) && !confirmed) setPending({ command, params });
+      else setMsg({ kind: 'err', text: errorText(e) });
     } finally {
       setBusy(false);
     }
   }
 
-  const setVal = (cmd: string, key: string, v: string | number) => setValues((p) => ({ ...p, [`${cmd}.${key}`]: v }));
+  const setVal = (cmd: string, key: string, v: string | number | boolean) => setValues((p) => ({ ...p, [`${cmd}.${key}`]: v }));
 
-  const entries = Object.entries(def.commands);
-  const simple = entries.filter(([, c]) => !c.params && !c.readOnly);
-  const withParams = entries.filter(([, c]) => c.params && !c.readOnly);
-  const readOnly = entries.filter(([, c]) => c.readOnly);
-  const chips = describeState(state);
+  const commands = info?.commands ?? [];
+  const simple = commands.filter((c) => !c.params && !c.readOnly);
+  const withParams = commands.filter((c) => c.params && Object.keys(c.params).length > 0 && !c.readOnly);
+  const readOnly = commands.filter((c) => c.readOnly);
+  const chips = describeState(dev?.state);
 
-  const control = (cmd: string, key: string, spec: ParamSpec, current: string | number) => {
-    if (spec.type === 'int') {
+  const control = (cmd: string, key: string, spec: ParamInfo, current: string | number | boolean) => {
+    if (spec.type === 'int' || spec.type === 'number') {
       return (
         <>
-          <input type="range" min={spec.min} max={spec.max} value={Number(current)} onChange={(e) => setVal(cmd, key, Number(e.target.value))} style={{ width: '100%' }} />
+          <input type="range" min={spec.min ?? 0} max={spec.max ?? 100} value={Number(current)} onChange={(e) => setVal(cmd, key, Number(e.target.value))} style={{ width: '100%' }} />
           <span>
             {String(current)} {spec.unit ?? ''}
           </span>
@@ -115,7 +121,7 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
     if (spec.type === 'enum') {
       return (
         <select value={String(current)} onChange={(e) => setVal(cmd, key, e.target.value)} style={{ padding: 8, borderRadius: 8, background: '#0f172a', color: '#e6edf5', border: '1px solid #334155' }}>
-          {spec.values.map((o) => (
+          {(spec.values ?? []).map((o) => (
             <option key={String(o)} value={String(o)}>
               {String(o)}
             </option>
@@ -123,7 +129,13 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
         </select>
       );
     }
-    return <input type="color" value={String(current)} onChange={(e) => setVal(cmd, key, e.target.value)} style={{ width: 64, height: 36, border: 'none', background: 'transparent' }} />;
+    if (spec.type === 'hex' || spec.type === 'color') {
+      return <input type="color" value={String(current)} onChange={(e) => setVal(cmd, key, e.target.value)} style={{ width: 64, height: 36, border: 'none', background: 'transparent' }} />;
+    }
+    if (spec.type === 'bool' || spec.type === 'boolean') {
+      return <input type="checkbox" checked={Boolean(current)} onChange={(e) => setVal(cmd, key, e.target.value === 'true')} />;
+    }
+    return <input type="text" value={String(current)} onChange={(e) => setVal(cmd, key, e.target.value)} style={{ padding: 8, borderRadius: 8, background: '#0f172a', color: '#e6edf5', border: '1px solid #334155' }} />;
   };
 
   return (
@@ -132,10 +144,10 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
         <div style={S.head}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 700 }}>
-              {def.km} · {label}
+              {info?.km ?? type} · {label}
             </div>
             <div style={S.code}>
-              {typeKey} · {deviceId}
+              {type} · {deviceId}
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" style={S.ghost}>
@@ -143,7 +155,8 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
           </button>
         </div>
 
-        {practice && <div style={note('warn')}>Practice · ឧបករណ៍មិនទាន់ភ្ជាប់ — ប៊ូតុងគ្រាន់តែសាកល្បង។</div>}
+        {dev?.adapter === 'sim' && <div style={note('warn')}>Simulated · ឧបករណ៍ក្លែងក្លាយ (adapter sim) — គ្មានអ្វីពិតត្រូវបានបើក/បិទទេ។</div>}
+        {!info && <div style={note('warn')}>Loading…</div>}
 
         {chips.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -157,36 +170,36 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
 
         {simple.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-            {simple.map(([cmd, c]) => (
-              <button key={cmd} type="button" disabled={busy} onClick={() => send(cmd, {})} style={S.btn} title={cmd}>
-                {c.km}
+            {simple.map((c) => (
+              <button key={c.command} type="button" disabled={busy || !dev} onClick={() => send(c.command, {})} style={S.btn} title={c.command}>
+                {c.km ?? c.command}
               </button>
             ))}
           </div>
         )}
 
-        {withParams.map(([cmd, c]) => {
+        {withParams.map((c) => {
           const params = c.params ?? {};
           const mine: PanelValues = {};
           for (const k of Object.keys(params)) {
-            const v = values[`${cmd}.${k}`];
+            const v = values[`${c.command}.${k}`];
             if (v !== undefined) mine[k] = v;
           }
           return (
-            <div key={cmd} style={S.box}>
+            <div key={c.command} style={S.box}>
               <div>
-                <b>{c.km}</b> <span style={S.code}>{cmd}</span>
+                <b>{c.km ?? c.command}</b> <span style={S.code}>{c.command}</span>
               </div>
               {Object.entries(params).map(([k, spec]) => (
                 <label key={k} style={S.lbl}>
                   <span>
                     {k}
-                    {spec.optional ? ' (optional · ជម្រើស)' : ''}
+                    {isOptional(spec) ? ' (optional · ជម្រើស)' : ''}
                   </span>
-                  {control(cmd, k, spec, mine[k] ?? defaultValue(spec))}
+                  {control(c.command, k, spec, mine[k] ?? defaultValue(spec))}
                 </label>
               ))}
-              <button type="button" disabled={busy} onClick={() => send(cmd, buildPayload(params, mine))} style={{ ...S.btn, marginTop: 10 }}>
+              <button type="button" disabled={busy || !dev} onClick={() => send(c.command, buildPayload(params, mine))} style={{ ...S.btn, marginTop: 10 }}>
                 Send · ផ្ញើ
               </button>
             </div>
@@ -195,9 +208,9 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
 
         {readOnly.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-            {readOnly.map(([cmd, c]) => (
-              <button key={cmd} type="button" disabled={busy} onClick={() => send(cmd, {})} style={S.ghost} title={cmd}>
-                {c.km}
+            {readOnly.map((c) => (
+              <button key={c.command} type="button" disabled={busy || !dev} onClick={() => send(c.command, {})} style={S.ghost} title={c.command}>
+                {c.km ?? c.command}
               </button>
             ))}
           </div>
@@ -209,7 +222,7 @@ export function CatalogPanel({ deviceId, label, type, onClose }: Props) {
               Confirm · បញ្ជាក់ម្ដងទៀត៖ <b>{pending.command}</b> ?
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button type="button" disabled={busy} onClick={() => send(pending.command, pending.payload, true)} style={S.btn}>
+              <button type="button" disabled={busy} onClick={() => send(pending.command, pending.params, true)} style={S.btn}>
                 Confirm · បញ្ជាក់
               </button>
               <button type="button" onClick={() => setPending(null)} style={S.ghost}>

@@ -1,5 +1,6 @@
 // Generated from general-devices-control-extra.tiles.json — positions of the tiles on the extra picture.
-// Every device is mapped to a type of the device catalog (src/core/devices/device.catalog.ts).
+// Every device is mapped to a type of the KSV gateway catalog (gateway/devices/catalog.js). The panel reads the
+// commands of that type from the gateway, so it never has to know them.
 
 export const EXTRA_IMAGE = { src: '/general-devices-control-extra.png?v=1', width: 1079, height: 525 };
 
@@ -34,21 +35,21 @@ export const EXTRA_DEVICES: ExtraDevice[] = [
   { id: 'emergency-light-1', name: 'Emergency Light', section: '10. Lighting (All Kinds)', type: 'light', x: 360, y: 235, w: 76, h: 100 },
   { id: 'stage-light-1', name: 'Stage Light', section: '10. Lighting (All Kinds)', type: 'light', x: 444, y: 235, w: 76, h: 100 },
   { id: 'car-1', name: 'Car', section: '11. Vehicles & Heavy Machines', type: 'car', x: 558, y: 235, w: 76, h: 100 },
-  { id: 'motorcycle-1', name: 'Motorcycle', section: '11. Vehicles & Heavy Machines', type: 'motorcycle', x: 642, y: 235, w: 76, h: 100 },
-  { id: 'e-scooter-1', name: 'E-Scooter', section: '11. Vehicles & Heavy Machines', type: 'motorcycle', x: 726, y: 235, w: 76, h: 100 },
+  { id: 'motorcycle-1', name: 'Motorcycle', section: '11. Vehicles & Heavy Machines', type: 'car', x: 642, y: 235, w: 76, h: 100 },
+  { id: 'e-scooter-1', name: 'E-Scooter', section: '11. Vehicles & Heavy Machines', type: 'car', x: 726, y: 235, w: 76, h: 100 },
   { id: 'truck-1', name: 'Truck', section: '11. Vehicles & Heavy Machines', type: 'car', x: 810, y: 235, w: 76, h: 100 },
-  { id: 'forklift-1', name: 'Forklift', section: '11. Vehicles & Heavy Machines', type: 'motor', x: 894, y: 235, w: 76, h: 100 },
-  { id: 'excavator-1', name: 'Excavator', section: '11. Vehicles & Heavy Machines', type: 'motor', x: 978, y: 235, w: 76, h: 100 },
+  { id: 'forklift-1', name: 'Forklift', section: '11. Vehicles & Heavy Machines', type: 'machine', x: 894, y: 235, w: 76, h: 100 },
+  { id: 'excavator-1', name: 'Excavator', section: '11. Vehicles & Heavy Machines', type: 'machine', x: 978, y: 235, w: 76, h: 100 },
   { id: 'dishwasher-1', name: 'Dishwasher', section: '12. Kitchen, Audio & Home', type: 'dishwasher', x: 24, y: 399, w: 76, h: 100 },
   { id: 'induction-cooker-1', name: 'Induction Cooker', section: '12. Kitchen, Audio & Home', type: 'cooker', x: 108, y: 399, w: 76, h: 100 },
-  { id: 'water-heater-1', name: 'Water Heater', section: '12. Kitchen, Audio & Home', type: 'heater', x: 192, y: 399, w: 76, h: 100 },
+  { id: 'water-heater-1', name: 'Water Heater', section: '12. Kitchen, Audio & Home', type: 'cooker', x: 192, y: 399, w: 76, h: 100 },
   { id: 'subwoofer-1', name: 'Subwoofer', section: '12. Kitchen, Audio & Home', type: 'subwoofer', x: 276, y: 399, w: 76, h: 100 },
   { id: 'soundbar-1', name: 'Soundbar', section: '12. Kitchen, Audio & Home', type: 'speaker', x: 360, y: 399, w: 76, h: 100 },
   { id: 'air-purifier-1', name: 'Air Purifier', section: '12. Kitchen, Audio & Home', type: 'fan', x: 444, y: 399, w: 76, h: 100 },
-  { id: 'garage-door-1', name: 'Garage Door', section: '13. Doors, Gates & Outdoor', type: 'gate', x: 558, y: 399, w: 76, h: 100 },
-  { id: 'sliding-gate-1', name: 'Sliding Gate', section: '13. Doors, Gates & Outdoor', type: 'gate', x: 642, y: 399, w: 76, h: 100 },
-  { id: 'curtain-1', name: 'Curtain', section: '13. Doors, Gates & Outdoor', type: 'gate', x: 726, y: 399, w: 76, h: 100 },
-  { id: 'smart-doorbell-1', name: 'Smart Doorbell', section: '13. Doors, Gates & Outdoor', type: 'camera', x: 810, y: 399, w: 76, h: 100 },
-  { id: 'irrigation-1', name: 'Irrigation', section: '13. Doors, Gates & Outdoor', type: 'pump', x: 894, y: 399, w: 76, h: 100 },
+  { id: 'garage-door-1', name: 'Garage Door', section: '13. Doors, Gates & Outdoor', type: 'barrier', x: 558, y: 399, w: 76, h: 100 },
+  { id: 'sliding-gate-1', name: 'Sliding Gate', section: '13. Doors, Gates & Outdoor', type: 'barrier', x: 642, y: 399, w: 76, h: 100 },
+  { id: 'curtain-1', name: 'Curtain', section: '13. Doors, Gates & Outdoor', type: 'barrier', x: 726, y: 399, w: 76, h: 100 },
+  { id: 'smart-doorbell-1', name: 'Smart Doorbell', section: '13. Doors, Gates & Outdoor', type: 'generic', x: 810, y: 399, w: 76, h: 100 },
+  { id: 'irrigation-1', name: 'Irrigation', section: '13. Doors, Gates & Outdoor', type: 'generic', x: 894, y: 399, w: 76, h: 100 },
   { id: 'water-tank-1', name: 'Water Tank', section: '13. Doors, Gates & Outdoor', type: 'sensor', x: 978, y: 399, w: 76, h: 100 },
 ];
