@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # KSV: ai [run|stop|restart]  = KHOEM_AI (:8790) + AI (:8787, UI :5175) + KSV gateway (:4000)
+#   + KI API (:5001) + MI-K 3D (:5176)
 LAUNCHER="$HOME/KHOEM_AI/KHOEM_AI/ai.sh"
 GW="$HOME/KSV/gateway"
 export AI_DIR="${AI_DIR:-$HOME/ai-project/AI}"
@@ -7,15 +8,26 @@ export AI_DIR="${AI_DIR:-$HOME/ai-project/AI}"
 stop_gw() { pkill -f "$GW/server.js" 2>/dev/null; }
 
 IQPID="$HOME/.iqai.pid"
-stop_iqai() { [ -f "$IQPID" ] && kill "$(cat "$IQPID")" 2>/dev/null; rm -f "$IQPID"; }
+stop_iqai() {
+  [ -f "$IQPID" ] && kill "$(cat "$IQPID")" 2>/dev/null
+  rm -f "$IQPID"
+  # also any IQ-AI started another way (it would keep the port and the new one would die silently)
+  pkill -f "node --env-file=.env src/server/server.mjs" 2>/dev/null
+  return 0
+}
 start_iqai() {
   stop_iqai
   TF="$HOME/.iqai-token"
   if [ ! -s "$TF" ]; then head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$TF"; chmod 600 "$TF"; fi
   export IQAI_TOKEN="$(cat "$TF")"
-  ( cd "$HOME/IQ-AI" && PORT=8799 exec node src/server/server.mjs >"$HOME/iqai.log" 2>&1 ) &
+  ( cd "$HOME/IQ-AI" && PORT=8799 exec node --env-file=.env src/server/server.mjs >"$HOME/iqai.log" 2>&1 ) &
   echo $! > "$IQPID"
-  echo "  ✔ IQ-AI media    :8799"
+  local up=0
+  for _ in $(seq 1 20); do
+    curl -s -o /dev/null -m 2 http://127.0.0.1:8799/ && { up=1; break; }
+    sleep 1
+  done
+  if [ "$up" = 1 ]; then echo "  ✔ IQ-AI media    :8799"; else echo "  ✘ IQ-AI media not ready (log: ~/iqai.log)"; fi
 }
 
 KIPID="$HOME/.ki-api.pid"
@@ -104,11 +116,77 @@ start_ksv() {
   [ "$ui" = 0 ] && echo "  ✘ KSV UI not ready (log: ~/ksv-ui.log)"
 }
 # --- KSV UI/API (end) ----------------------------------------------------
+# --- MI-K VISION 3D (begin) ----------------------------------------------
+# MI-K 3D studio (~/MI-K-VISION-3D): UI :5176 (never 5173 - that port is the KSV UI). Log: ~/mik-3d.log
+MIK_DIR="${MIK_DIR:-$HOME/MI-K-VISION-3D}"
+MIK_PORT="${MIK_PORT:-5176}"
+MIKPID="$HOME/.mik-3d.pid"
+stop_mik() {
+  [ -f "$MIKPID" ] && kill "$(cat "$MIKPID")" 2>/dev/null
+  rm -f "$MIKPID"
+  pkill -f "vite.js.*--port $MIK_PORT" 2>/dev/null
+}
+start_mik() {
+  [ -d "$MIK_DIR/node_modules" ] || { echo "  x MI-K 3D: run 'npm install' in $MIK_DIR first"; return; }
+  if curl -s -o /dev/null -m 2 "http://127.0.0.1:$MIK_PORT/"; then
+    echo "  ✔ MI-K 3D        :$MIK_PORT (already running)"; return
+  fi
+  ( cd "$MIK_DIR" && exec node node_modules/vite/bin/vite.js --host "${MIK_HOST:-127.0.0.1}" --port "$MIK_PORT" --strictPort >"$HOME/mik-3d.log" 2>&1 ) &
+  echo $! > "$MIKPID"
+  for _ in $(seq 1 25); do
+    curl -s -o /dev/null -m 2 "http://127.0.0.1:$MIK_PORT/" && { echo "  ✔ MI-K 3D        :$MIK_PORT"; return; }
+    sleep 1
+  done
+  echo "  ✘ MI-K 3D not ready (log: ~/mik-3d.log)"
+}
+# --- MI-K VISION 3D (end) ------------------------------------------------
 CAI_SH="$HOME/CAI/ai.sh"
 start_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" start; }
 # stop_cai also stops the KSV UI/API, so every existing stop path covers them
-stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; }
+stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; stop_mik; }
+# --- ai status (begin) ---------------------------------------------------
+# One line per service: answers? (any HTTP code = the process is up; 401/403 only mean "needs a token"),
+# then which branch / commit is running and whether there is uncommitted work.
+svc() {
+  local code
+  code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$2${3:-/}" 2>/dev/null)
+  if [ "$code" = "000" ] || [ -z "$code" ]; then
+    printf '  ✘ %-14s :%-5s not running\n' "$1" "$2"
+  else
+    printf '  ✔ %-14s :%-5s HTTP %s\n' "$1" "$2" "$code"
+  fi
+}
+ai_status() {
+  echo "services:"
+  svc "IQ-AI media" 8799
+  svc "KI API" 5001
+  svc "EI-T API" 3100 /health
+  svc "phone torch" 9300
+  svc "phone bridge" 9301
+  svc "CAI scan" 5180 /cai-scan.html
+  svc "CAI share" 5181
+  svc "KSV API" 3000
+  svc "KSV UI" 5173
+  svc "MI-K 3D" 5176
+  svc "KHOEM_AI API" 8790
+  svc "CIDC API" 8800
+  svc "CIDC UI" 5190
+  svc "AI backend" 8787 /api/status
+  svc "KSV gateway" 4000
+  svc "AI UI" 5175
+  echo "code (branch @ commit, uncommitted files):"
+  local d
+  for d in "$HOME/IQ-AI" "$HOME/ai-project/AI" "$HOME/KSV" "$HOME/MI-K-VISION-3D"; do
+    if git -C "$d" rev-parse --git-dir >/dev/null 2>&1; then
+      printf '  %-22s %s @ %s, %s uncommitted\n' "~/${d#"$HOME"/}" \
+        "$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null)" "$(git -C "$d" log -1 --format=%h 2>/dev/null)" \
+        "$(git -C "$d" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+    fi
+  done
+}
+# --- ai status (end) -----------------------------------------------------
 case "${1:-run}" in
+  status)  ai_status ;;
   stop)    stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop ;;
   restart) stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop; exec bash "$0" run ;;
   run)
@@ -120,6 +198,7 @@ case "${1:-run}" in
     start_phone
     start_cai
     start_ksv
+    start_mik
     bash "$LAUNCHER" run &
     LPID=$!
     for _ in $(seq 1 90); do
@@ -129,6 +208,7 @@ case "${1:-run}" in
     ( cd "$GW" && set -a && . ./.env && set +a && PORT=4000 exec node "$GW/server.js" ) &
     GPID=$!
     echo "  ✔ KSV gateway    :4000"
+    echo "  → AI http://localhost:5175   MI-K 3D http://localhost:5176"
     trap 'stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; kill $GPID 2>/dev/null; kill $LPID 2>/dev/null; wait 2>/dev/null; exit' INT TERM
     wait $LPID
     kill $GPID 2>/dev/null
@@ -139,5 +219,5 @@ case "${1:-run}" in
     stop_phone
     stop_cai
     ;;
-  *) echo "usage: ai [run|stop|restart]"; exit 1 ;;
+  *) echo "usage: ai [run|stop|restart|status]"; exit 1 ;;
 esac
