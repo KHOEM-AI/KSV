@@ -18,7 +18,8 @@ chk "KI scans, no token"           401 http://127.0.0.1:5001/api/scans
 echo "Proxies (token added server-side):"
 chk "AI  /ki colors"               200 http://127.0.0.1:5175/ki/api/colors
 chk "AI  /ki registry/apis"        200 http://127.0.0.1:5175/ki/api/registry/apis
-chk "AI  /ki scans (blocked)"      403 http://127.0.0.1:5175/ki/api/scans
+chk "AI  /ki scans"                 200 http://127.0.0.1:5175/ki/api/scans
+chk "AI  /ki registry/x (blocked)"  403 http://127.0.0.1:5175/ki/api/registry/../scans/x
 chk "MI-K /ki scans"               200 http://127.0.0.1:5176/ki/api/scans
 chk "MI-K /ki registry/apis (blk)" 403 http://127.0.0.1:5176/ki/api/registry/apis
 chk "CAI /ki scans"                200 http://127.0.0.1:5180/ki/api/scans
