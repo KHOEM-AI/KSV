@@ -187,6 +187,7 @@ ai_status() {
 # --- ai status (end) -----------------------------------------------------
 case "${1:-run}" in
   status)  ai_status ;;
+  check)   bash "$HOME/KSV/ai-check.sh" ;;
   stop)    stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop ;;
   restart) stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop; exec bash "$0" run ;;
   run)
@@ -219,5 +220,5 @@ case "${1:-run}" in
     stop_phone
     stop_cai
     ;;
-  *) echo "usage: ai [run|stop|restart|status]"; exit 1 ;;
+  *) echo "usage: ai [run|stop|restart|status|check]"; exit 1 ;;
 esac
