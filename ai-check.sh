@@ -29,6 +29,7 @@ chk "AI backend status"            200 http://127.0.0.1:8787/api/status
 chk "EI-T health"                  200 http://127.0.0.1:3100/health
 chk "KSV API health"               200 http://127.0.0.1:3000/api/health
 chk "KSV gateway (needs token)"    401 http://127.0.0.1:4000/api/chat
+chk "CIDC health"                  200 http://127.0.0.1:8800/api/cidc/health
 echo
 echo "ok=$ok  bad=$bad"
 [ "$bad" = 0 ]
