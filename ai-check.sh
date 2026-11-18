@@ -3,7 +3,12 @@
 ok=0; bad=0
 chk() { # name expected url [curl args...]
   local n="$1" want="$2" url="$3"; shift 3
-  local got; got=$(curl -s -m 4 -o /dev/null -w '%{http_code}' "$@" "$url" 2>/dev/null)
+  local got i
+  for i in $(seq 1 "${AI_CHECK_WAIT:-1}"); do
+    got=$(curl -s -m 4 -o /dev/null -w '%{http_code}' "$@" "$url" 2>/dev/null)
+    [ "$got" = "$want" ] && break
+    sleep 2
+  done
   if [ "$got" = "$want" ]; then printf '  ✔ %-34s %s\n' "$n" "$got"; ok=$((ok+1))
   else printf '  ✘ %-34s got %s, want %s\n' "$n" "$got" "$want"; bad=$((bad+1)); fi
 }
