@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# KSV: ai [run|stop|restart]  = KHOEM_AI (:8790) + AI (:8787, UI :5175) + KSV gateway (:4000)
-#   + KI API (:5001) + MI-K 3D (:5176)
+# KHOEM-AI launcher (one file).  ai [run|stop|restart|status|check|brand [--approve]|audit]
+#   run/stop/restart = KHOEM_AI (:8790) + AI (:8787, UI :5175) + KSV gateway (:4000) + KI API (:5001) + MI-K 3D (:5176) + others
+#   status = one line per service      check = API test (set AI_CHECK_WAIT=30 to retry ~60s)
+#   brand  = KHOEM-AI name/logo guard  audit = read-only list of what is installed/running/pushed
 LAUNCHER="$HOME/KHOEM_AI/KHOEM_AI/ai.sh"
 GW="$HOME/KSV/gateway"
 export AI_DIR="${AI_DIR:-$HOME/ai-project/AI}"
@@ -11,7 +13,6 @@ IQPID="$HOME/.iqai.pid"
 stop_iqai() {
   [ -f "$IQPID" ] && kill "$(cat "$IQPID")" 2>/dev/null
   rm -f "$IQPID"
-  # also any IQ-AI started another way (it would keep the port and the new one would die silently)
   pkill -f "node --env-file=.env src/server/server.mjs" 2>/dev/null
   return 0
 }
@@ -51,7 +52,6 @@ start_eit() {
   echo $! > "$EIPID"
   echo "  ✔ EI-T API       :3100"
 }
-# --- phone torch bridge (begin) ---
 TORCHPID="$HOME/.phone-torch.pid"
 stop_torch() { [ -f "$TORCHPID" ] && kill "$(cat "$TORCHPID")" 2>/dev/null; rm -f "$TORCHPID"; }
 start_torch() {
@@ -62,8 +62,6 @@ start_torch() {
   echo $! > "$TORCHPID"
   echo "  ✔ phone torch    :9300"
 }
-# --- phone torch bridge (end) ---
-# --- phone bridge (begin) ---
 PHONEPID="$HOME/.phone-bridge.pid"
 stop_phone() { [ -f "$PHONEPID" ] && kill "$(cat "$PHONEPID")" 2>/dev/null; rm -f "$PHONEPID"; }
 start_phone() {
@@ -74,8 +72,6 @@ start_phone() {
   echo $! > "$PHONEPID"
   echo "  ✔ phone bridge   :9301"
 }
-# --- phone bridge (end) ---
-# --- KSV UI/API (begin) --------------------------------------------------
 # KSV web app (khoem-now): API :3000 (needs .env) + UI :5173. Logs: ~/ksv-api.log ~/ksv-ui.log
 KSV_DIR="${KSV_DIR:-$HOME/KSV/khoem-now}"
 KSVAPI_PID="$HOME/.ksv-api.pid"
@@ -115,9 +111,7 @@ start_ksv() {
   [ "$ui" = 1 ] && echo "  ✔ KSV UI         :5173"
   [ "$ui" = 0 ] && echo "  ✘ KSV UI not ready (log: ~/ksv-ui.log)"
 }
-# --- KSV UI/API (end) ----------------------------------------------------
-# --- MI-K VISION 3D (begin) ----------------------------------------------
-# MI-K 3D studio (~/MI-K-VISION-3D): UI :5176 (never 5173 - that port is the KSV UI). Log: ~/mik-3d.log
+# MI-K 3D studio (~/MI-K-VISION-3D): UI :5176 (never 5173). Log: ~/mik-3d.log
 MIK_DIR="${MIK_DIR:-$HOME/MI-K-VISION-3D}"
 MIK_PORT="${MIK_PORT:-5176}"
 MIKPID="$HOME/.mik-3d.pid"
@@ -139,14 +133,12 @@ start_mik() {
   done
   echo "  ✘ MI-K 3D not ready (log: ~/mik-3d.log)"
 }
-# --- MI-K VISION 3D (end) ------------------------------------------------
 CAI_SH="$HOME/CAI/ai.sh"
 start_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" start; }
-# stop_cai also stops the KSV UI/API, so every existing stop path covers them
+# stop_cai also stops the KSV UI/API and MI-K, so every stop path covers them
 stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; stop_mik; }
-# --- ai status (begin) ---------------------------------------------------
-# One line per service: answers? (any HTTP code = the process is up; 401/403 only mean "needs a token"),
-# then which branch / commit is running and whether there is uncommitted work.
+
+# ===== ai status =====
 svc() {
   local code
   code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$2${3:-/}" 2>/dev/null)
@@ -184,10 +176,137 @@ ai_status() {
     fi
   done
 }
-# --- ai status (end) -----------------------------------------------------
+
+# ===== ai check (read-only API test) =====
+CK_OK=0; CK_BAD=0; CK_WARN=0
+cchk() { # name expected url [curl args...]   (optional=1 in CK_OPT -> warning only)
+  local n="$1" want="$2" url="$3"; shift 3
+  local got i
+  for i in $(seq 1 "${AI_CHECK_WAIT:-1}"); do
+    got=$(curl -s -m 4 -o /dev/null -w '%{http_code}' "$@" "$url" 2>/dev/null)
+    [ "$got" = "$want" ] && break
+    sleep 2
+  done
+  if [ "$got" = "$want" ]; then printf '  ✔ %-34s %s\n' "$n" "$got"; CK_OK=$((CK_OK+1))
+  elif [ "${CK_OPT:-0}" = 1 ]; then printf '  ⚠ %-34s got %s, want %s (optional)\n' "$n" "$got" "$want"; CK_WARN=$((CK_WARN+1))
+  else printf '  ✘ %-34s got %s, want %s\n' "$n" "$got" "$want"; CK_BAD=$((CK_BAD+1)); fi
+}
+ai_check() {
+  CK_OK=0; CK_BAD=0; CK_WARN=0
+  echo "KI (token required):"
+  cchk "KI healthz (open)"            200 http://127.0.0.1:5001/api/healthz
+  cchk "KI scans, no token"           401 http://127.0.0.1:5001/api/scans
+  echo "Proxies (token added server-side):"
+  cchk "AI  /ki colors"               200 http://127.0.0.1:5175/ki/api/colors
+  cchk "AI  /ki registry/apis"        200 http://127.0.0.1:5175/ki/api/registry/apis
+  cchk "AI  /ki scans"                200 http://127.0.0.1:5175/ki/api/scans
+  cchk "MI-K /ki scans"               200 http://127.0.0.1:5176/ki/api/scans
+  cchk "MI-K /ki registry/apis (blk)" 403 http://127.0.0.1:5176/ki/api/registry/apis
+  cchk "CAI /ki scans"                200 http://127.0.0.1:5180/ki/api/scans
+  cchk "CAI /ki colors (blocked)"     403 http://127.0.0.1:5180/ki/api/colors
+  echo "Other services:"
+  cchk "KHOEM_AI health"              200 http://127.0.0.1:8790/health
+  cchk "AI backend status"            200 http://127.0.0.1:8787/api/status
+  cchk "EI-T health"                  200 http://127.0.0.1:3100/health
+  cchk "KSV gateway (needs token)"    401 http://127.0.0.1:4000/api/chat
+  cchk "CIDC health"                  200 http://127.0.0.1:8800/api/cidc/health
+  CK_OPT=1 cchk "KSV API health"      200 http://127.0.0.1:3000/api/health
+  echo
+  echo "ok=$CK_OK  bad=$CK_BAD  warn=$CK_WARN"
+  [ "$CK_BAD" = 0 ]
+}
+
+# ===== ai brand [--approve] (name KHOEM-AI must stay; logo must not change by accident) =====
+ai_brand() {
+  local UI="${UI_DIR:-$HOME/ai-project/AI}" LOCK="${BRAND_LOCK:-$HOME/KSV/brand.lock}" NAME="KHOEM-AI" FAIL=0 f sum want
+  local TEXTS=("$UI/index.html" "$UI/src/App.tsx") LOGOS=("$UI/public/logo.png")
+  _bs() { printf '~/%s' "${1#"$HOME"/}"; }
+  echo "brand ($NAME):"
+  for f in "${TEXTS[@]}"; do
+    if [ ! -f "$f" ]; then printf '  ✘ %s not found\n' "$(_bs "$f")"; FAIL=1
+    elif grep -q "$NAME" "$f"; then printf '  ✔ name "%s" in %s\n' "$NAME" "$(_bs "$f")"
+    else printf '  ✘ name "%s" is MISSING from %s\n' "$NAME" "$(_bs "$f")"; FAIL=1; fi
+  done
+  for f in "${LOGOS[@]}"; do
+    if [ ! -f "$f" ]; then printf '  ✘ logo %s not found\n' "$(_bs "$f")"; FAIL=1; continue; fi
+    sum=$(sha256sum "$f" | cut -d' ' -f1)
+    if [ "${1:-}" = "--approve" ]; then
+      [ "$FAIL" = 0 ] || { echo "  ✘ not approving: fix the name first"; return 1; }
+      mkdir -p "$(dirname "$LOCK")"
+      { grep -v " $f\$" "$LOCK" 2>/dev/null; echo "$sum  $f"; } > "$LOCK.tmp" && mv "$LOCK.tmp" "$LOCK"
+      printf '  ✔ logo approved: %s (%s)\n' "$(_bs "$f")" "${sum:0:12}"
+      continue
+    fi
+    want=$(grep " $f\$" "$LOCK" 2>/dev/null | cut -d' ' -f1)
+    if [ -z "$want" ]; then printf '  ! logo %s not approved yet: run  ai brand --approve\n' "$(_bs "$f")"
+    elif [ "$want" = "$sum" ]; then printf '  ✔ logo unchanged: %s\n' "$(_bs "$f")"
+    else printf '  ✘ logo CHANGED: %s (approved %s, now %s) - if on purpose: ai brand --approve\n' "$(_bs "$f")" "${want:0:12}" "${sum:0:12}"; FAIL=1; fi
+  done
+  [ "$FAIL" = 0 ] && echo "BRAND OK" || echo "BRAND CHANGED"
+  return "$FAIL"
+}
+
+# ===== ai audit (read-only: what is installed, running, pushed) =====
+AU_OK=0; AU_BAD=0
+achk() { # label hint command...
+  local label="$1" hint="$2"; shift 2
+  if "$@" >/dev/null 2>&1; then printf '  ✔ %s\n' "$label"; AU_OK=$((AU_OK+1))
+  else printf '  ✘ %s   → %s\n' "$label" "$hint"; AU_BAD=$((AU_BAD+1)); fi
+}
+au_has()  { grep -q -- "$2" "$1" 2>/dev/null; }
+au_file() { [ -f "$1" ]; }
+au_http() { local code; code=$(curl -s -m 4 -o /dev/null -w '%{http_code}' ${3:+-X "$3"} -H "Authorization: Bearer $(cat "$HOME/.iqai-token" 2>/dev/null)" "http://127.0.0.1:8799$1" 2>/dev/null); [ "$code" = "$2" ]; }
+ai_audit() {
+  local IQ="$HOME/IQ-AI" UI="$HOME/ai-project/AI" KSV="$HOME/KSV" MIK="$HOME/MI-K-VISION-3D" d up
+  AU_OK=0; AU_BAD=0
+  c16() { [ "$(ls "$UI/public/vehicles"/*.png 2>/dev/null | wc -l)" -eq 16 ]; }
+  k3()  { [ "$(grep -c 'createKaraokeGeometry(THREE, item.shape' "$MIK/src/components/Studio3D.tsx" 2>/dev/null)" = 3 ]; }
+  echo "IQ-AI server (~/IQ-AI)"
+  achk "slideshow route + module"        "bash iqai-slideshow-patch.sh"   au_file "$IQ/src/server/routes/videoSlideshow.mjs"
+  achk "story route + module"            "bash iqai-story-patch.sh"       au_file "$IQ/src/video/story.mjs"
+  achk "jobs queue (merged from main)"   "git merge origin/iqai-jobs-phase1" au_file "$IQ/src/jobs/jobManager.mjs"
+  achk "merge videos route"              "git merge origin/iqai-jobs-phase1" au_file "$IQ/src/server/routes/videoMerge.mjs"
+  achk "story is a job (video.story)"    "bash iqai-story-job-patch.sh"   au_has "$IQ/src/jobs/handlers.mjs" "video.story"
+  achk "narrated story (voice)"          "bash iqai-story-voice-patch.sh" au_has "$IQ/src/jobs/handlers.mjs" "buildNarrationTrack"
+  achk "TTS engine switched on (.env)"   "add IQAI_TTS=edge to ~/IQ-AI/.env" au_has "$IQ/.env" "IQAI_TTS=edge"
+  achk "running: GET /videos/story = 200" "ai restart"                   au_http /api/v1/videos/story 200
+  achk "running: GET /jobs = 200"        "ai restart"                     au_http /api/v1/jobs 200
+  achk "running: merge route answers (400)" "ai restart"                  au_http /api/v1/videos/merge 400 POST
+  echo "UI (~/ai-project/AI)"
+  achk "Slideshow tab"                   "bash ui-slideshow-patch.sh"     au_file "$UI/src/components/SlideshowTab.tsx"
+  achk "Story tab (runs as a job)"       "bash ui-story-job-patch.sh"     au_has "$UI/src/components/StoryTab.tsx" "iqaiStartJob"
+  achk "Story projects (save/open)"      "bash ui-story-projects-patch.sh" au_has "$UI/src/components/StoryTab.tsx" "storyProjects"
+  achk "Story narration voices"          "bash ui-story-voice-patch.sh"   au_has "$UI/src/components/StoryTab.tsx" "iqaiVoices"
+  achk "Create panel shows Story + Finish" "bash ui-story-patch2.sh / ui-finish-patch.sh" sh -c "grep -q StoryTab '$UI/src/components/CreatePanel.tsx' && grep -q FinishTab '$UI/src/components/CreatePanel.tsx'"
+  achk "Finish tab (mix + subtitles)"    "bash ui-finish-patch.sh"        au_file "$UI/src/components/FinishTab.tsx"
+  achk "3D vehicle viewer files"         "bash ui-cars-patch.sh"          au_file "$UI/src/components/ModelViewer.tsx"
+  achk "16 vehicle pictures"             "copy khoem-ai-cars.zip to Downloads, rerun ui-cars-patch.sh" c16
+  achk "3D Studio has the Cars button"   "bash ui-cars-wire-patch.sh"     au_has "$UI/src/components/ThreeDStudio.tsx" "ModelViewer"
+  achk "brand: name in index.html"       "restore KHOEM-AI"               au_has "$UI/index.html" "KHOEM-AI"
+  achk "brand: logo file present"        "restore public/logo.png"        au_file "$UI/public/logo.png"
+  echo "ai command (~/KSV)"
+  achk "ai status"                       "restore ai.sh"                  au_has "$KSV/ai.sh" "ai_status()"
+  achk "ai check / ai brand / ai audit"  "restore ai.sh"                  au_has "$KSV/ai.sh" "ai_brand()"
+  achk "brand logo approved"             "ai brand --approve"             au_has "$KSV/brand.lock" "logo.png"
+  echo "MI-K-VISION-3D"
+  achk "karaoke in HTML export (3 calls)" "bash patch-karaoke.sh"         k3
+  echo "git (branch, uncommitted files, commits not pushed)"
+  for d in "$IQ" "$UI" "$KSV" "$MIK"; do
+    if git -C "$d" rev-parse --git-dir >/dev/null 2>&1; then
+      up=$(git -C "$d" rev-list --count '@{u}..HEAD' 2>/dev/null || echo '?')
+      printf '  %-22s %-24s uncommitted %-3s unpushed %s\n' "~/${d#"$HOME"/}" "$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null)" \
+        "$(git -C "$d" status --porcelain 2>/dev/null | wc -l | tr -d ' ')" "$up"
+    fi
+  done
+  echo
+  echo "done: $AU_OK ok, $AU_BAD to do"
+}
+
 case "${1:-run}" in
   status)  ai_status ;;
-  check)   bash "$HOME/KSV/ai-check.sh" ;;
+  check)   ai_check ;;
+  brand)   ai_brand "${2:-}" ;;
+  audit)   ai_audit ;;
   stop)    stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop ;;
   restart) stop_gw; stop_iqai; stop_ki; stop_eit; stop_torch; stop_phone; stop_cai; bash "$LAUNCHER" stop; exec bash "$0" run ;;
   run)
@@ -220,5 +339,5 @@ case "${1:-run}" in
     stop_phone
     stop_cai
     ;;
-  *) echo "usage: ai [run|stop|restart|status|check]"; exit 1 ;;
+  *) echo "usage: ai [run|stop|restart|status|check|brand [--approve]|audit]"; exit 1 ;;
 esac
