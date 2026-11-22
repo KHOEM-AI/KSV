@@ -54,12 +54,19 @@ function safeReportedState(r) {
   return Object.keys(out).length ? out : null;
 }
 
+// Send the token only to this phone's own bridges (127.0.0.1:9300/9301), never to other LAN devices.
+function phoneAuth(url) {
+  const t = process.env.PHONE_BRIDGE_TOKEN || "";
+  const own = (url.hostname === "127.0.0.1" || url.hostname === "localhost") && (url.port === "9300" || url.port === "9301");
+  return t && own ? { "x-phone-token": t } : {};
+}
+
 const http = {
   async send(device, { command, params }) {
     const url = new URL("/command", device.endpoint);
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...phoneAuth(url) },
       body: JSON.stringify({ command, params }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

@@ -3,6 +3,7 @@
 // Localhost only. A flashlight cannot cause harm, so this one is LIVE by default.
 import http from 'node:http';
 import { execFile } from 'node:child_process';
+import { authStatus } from './phone-auth.mjs';
 
 const PORT = Number(process.env.PORT || 9300);
 const state = { power: false };
@@ -13,8 +14,10 @@ const torch = (arg) =>
 http.createServer((req, res) => {
   const send = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (req.method !== 'POST' || req.url !== '/command') return send(404, { ok: false });
+  const auth = authStatus(req);
+  if (auth !== 200) return send(auth, { ok: false, error: auth === 503 ? 'token not configured' : 'unauthorized' });
   let body = '';
-  req.on('data', (c) => (body += c));
+  req.on('data', (c) => { body += c; if (body.length > 1024) req.destroy(); });
   req.on('end', async () => {
     let msg = {};
     try { msg = JSON.parse(body); } catch { return send(400, { ok: false, error: 'bad json' }); }

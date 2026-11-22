@@ -7,6 +7,11 @@ LAUNCHER="$HOME/KHOEM_AI/KHOEM_AI/ai.sh"
 GW="$HOME/KSV/gateway"
 export AI_DIR="${AI_DIR:-$HOME/ai-project/AI}"
 
+# token for the phone bridges (outside git, chmod 600); the gateway and both bridges inherit it
+PBT_FILE="$HOME/.phone-bridge-token"
+if [ ! -s "$PBT_FILE" ]; then head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$PBT_FILE"; chmod 600 "$PBT_FILE"; fi
+export PHONE_BRIDGE_TOKEN="$(cat "$PBT_FILE")"
+
 stop_gw() { pkill -f "$GW/server.js" 2>/dev/null; }
 
 IQPID="$HOME/.iqai.pid"

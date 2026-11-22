@@ -3,6 +3,7 @@
 // Allowed: GET_STATUS (battery), VIBRATE, SPEAK, NOTIFY (fixed phrases only). No shell, no free text.
 import http from 'node:http';
 import { execFile } from 'node:child_process';
+import { authStatus } from './phone-auth.mjs';
 
 const PORT = Number(process.env.PORT || 9301);
 const DRY = process.env.KSV_PHONE_DRY === '1';
@@ -20,6 +21,8 @@ const run = (cmd, args) =>
 http.createServer((req, res) => {
   const send = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (req.method !== 'POST' || req.url !== '/command') return send(404, { ok: false });
+  const auth = authStatus(req);
+  if (auth !== 200) return send(auth, { ok: false, error: auth === 503 ? 'token not configured' : 'unauthorized' });
   let body = '';
   req.on('data', (c) => { body += c; if (body.length > 1024) req.destroy(); });
   req.on('end', async () => {
