@@ -68,7 +68,7 @@ app.use("/api", (req,res,next)=>{
 });
 
 // ===== ការពារ៖ token + allowlist =====
-const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN || "";
+const KHOEM_AI_API_KEY = process.env.KHOEM_AI_API_KEY || "";
 const SAFE = [
   { test: (r) => r.startsWith("ai/") && ALLOW.has(r.slice(2)) },
   /^ai\/api\/(health|models|status|chat)$/,
@@ -77,8 +77,8 @@ const SAFE = [
 const DANGEROUS = /(kill|resume|approvals|execute|control)/i;
 app.use("/api", (req, res, next) => {
   if (req.path === "/" ) return next();
-  if (!GATEWAY_TOKEN) return res.status(503).json({ error: "GATEWAY_TOKEN មិនទាន់កំណត់" });
-  if (req.get("x-gateway-token") !== GATEWAY_TOKEN) return res.status(401).json({ error: "unauthorized" });
+  if (!KHOEM_AI_API_KEY) return res.status(503).json({ error: "KHOEM_AI_API_KEY មិនទាន់កំណត់" });
+  if (req.get("x-gateway-token") !== KHOEM_AI_API_KEY) return res.status(401).json({ error: "unauthorized" });
   if (req.path.startsWith("/local/")) {
     const rest = req.path.replace(/^\/local\//, "").replace(/\/+$/, "");
     if (DANGEROUS.test(rest) || !SAFE.some((r) => r.test(rest)))

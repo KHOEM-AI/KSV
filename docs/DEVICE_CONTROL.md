@@ -28,7 +28,7 @@
       -> adapter: sim | http | mqtt
 
 - gateway ត្រូវការ `x-gateway-token` ហើយមិនអនុញ្ញាត browser ហៅផ្ទាល់ទេ។
-- Vite proxy អានសោ `GATEWAY_TOKEN` ពី `gateway/.env` នៅខាង server ពេលចាប់ផ្តើម
+- Vite proxy អានសោ `KHOEM_AI_API_KEY` ពី `gateway/.env` នៅខាង server ពេលចាប់ផ្តើម
   ហើយដាក់ចូល header ដោយខ្លួនឯង។ សោមិនទៅដល់ browser ទេ។
 - ត្រូវចាប់ផ្តើម `ai` ឡើងវិញ បើប្តូរ `gateway/.env`។
 - ពេលបើកផ្ទាំងលើកដំបូង UI ចុះឈ្មោះឧបករណ៍ដោយស្វ័យប្រវត្តិ (`ac-1`, `fan-1`) ជាមួយ adapter `sim`។
@@ -69,7 +69,7 @@ endpoint ត្រូវជា LAN/localhost ប៉ុណ្ណោះ។ ជម�
 - ចរន្តភ្លើងផ្ទះ 220V គ្រោះថ្នាក់។ សាកល្បងដំបូងជាមួយកង្ហារ USB 5V ឬអំពូល LED។
   កុំភ្ជាប់ខ្សែភ្លើងផ្ទះដោយខ្លួនឯង បើមិនមានបទពិសោធន៍។
 - proxy ប្រើសោ gateway ជំនួសអ្នកប្រើ។ កុំបើកច្រក 5173 ទៅបណ្តាញសាធារណៈ។
-- ឯកសារ `gateway/.env` (មាន `GATEWAY_TOKEN`) មិនត្រូវ commit ទៅ GitHub។
+- ឯកសារ `gateway/.env` (មាន `KHOEM_AI_API_KEY`) មិនត្រូវ commit ទៅ GitHub។
 - ពាក្យបញ្ជាដែលត្រូវការ `confirmed:true` (ឧ. `cooker START`) មិនទាន់មានក្នុងផ្ទាំង។ `fridge OFF` និង `washer START` មានក្នុងផ្ទាំង ហើយសួរបញ្ជាក់មុន។
 - គ្រប់ពាក្យបញ្ជាកត់ក្នុង `gateway/data/command-log.jsonl`។
 
@@ -77,7 +77,7 @@ endpoint ត្រូវជា LAN/localhost ប៉ុណ្ណោះ។ ជម�
 
 | រោគសញ្ញា | មូលហេតុ / ដំណោះស្រាយ |
 |---|---|
-| `curl .../ksv-api/types` ឆ្លើយ `unauthorized` | `gateway/.env` គ្មាន `GATEWAY_TOKEN` ឬមិនទាន់ចាប់ផ្តើម `ai` ឡើងវិញ |
+| `curl .../ksv-api/types` ឆ្លើយ `unauthorized` | `gateway/.env` គ្មាន `KHOEM_AI_API_KEY` ឬមិនទាន់ចាប់ផ្តើម `ai` ឡើងវិញ |
 | `curl` មិនឆ្លើយ / connection refused | gateway (4000) ឬ Vite (5173) មិនរត់ |
 | ផ្ទាំងបង្ហាញ `404` ឬ `unknown type` | gateway មិនទាន់ restart បន្ទាប់ពីកែ `catalog.js` |
 | ផ្ទាំងបង្ហាញកំហុសក្រហម | អានលេខកូដ (ឧ. `400 INVALID_PARAMS`) ហើយមើល `GET /api/ksv/types/<type>` |
