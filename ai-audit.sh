@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Read-only audit: which of the pieces built in this chat are installed, running and pushed.
 # Changes nothing. Run: bash ~/storage/downloads/ai-audit.sh   -> paste the output.
-IQ="$HOME/IQ-AI"; UI="$HOME/ai-project/AI"; KSV="$HOME/KSV"; MIK="$HOME/MI-K-VISION-3D"
+IQ="$HOME/IQ-AI"; UI="${UI_DIR:-$HOME/ai-project/AI}"; KSV="$HOME/KSV"; MIK="$HOME/MI-K-VISION-3D"
 OK=0; BAD=0
 chk() {  # chk "label" "fix hint" command...
   local label="$1" hint="$2"; shift 2
