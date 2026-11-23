@@ -7,7 +7,7 @@ import fs from 'node:fs';
 function gatewayToken(): string {
   try {
     const f = fileURLToPath(new URL('../gateway/.env', import.meta.url));
-    const m = fs.readFileSync(f, 'utf8').match(/^\s*(?:export\s+)?KHOEM_AI_API_KEY\s*=\s*(.*)$/m);
+    const m = fs.readFileSync(f, 'utf8').match(/^\s*(?:export\s+)?KSV_GATEWAY_TOKEN\s*=\s*(.*)$/m);
     return m ? m[1].trim().replace(/^['"]|['"]$/g, '') : '';
   } catch {
     return '';
