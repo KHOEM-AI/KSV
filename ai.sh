@@ -116,6 +116,55 @@ start_ksv() {
   [ "$ui" = 1 ] && echo "  ✔ KSV UI         :5173"
   [ "$ui" = 0 ] && echo "  ✘ KSV UI not ready (log: ~/ksv-ui.log)"
 }
+
+# KHOEM-AI: local FerretDB + SQLite
+FDB_BIN="${FDB_BIN:-$HOME/go/bin/ferretdb}"
+DB_DIR="${KSV_DB_DIR:-$HOME/KHOEM-AI}"
+DBPID="$HOME/.ferretdb.pid"
+
+stop_db() {
+  if [ -f "$DBPID" ]; then
+    kill "$(cat "$DBPID")" 2>/dev/null || true
+    rm -f "$DBPID"
+  fi
+}
+
+start_db() {
+  [ -x "$FDB_BIN" ] || {
+    echo "  x KHOEM-AI: FerretDB binary not found"
+    return 1
+  }
+
+  if (echo > /dev/tcp/127.0.0.1/27017) 2>/dev/null; then
+    echo "  ✔ KHOEM-AI     :27017 (already running)"
+    return 0
+  fi
+
+  mkdir -p "$DB_DIR" || return 1
+  chmod 700 "$DB_DIR"
+
+  GOMAXPROCS=2 "$FDB_BIN" \
+    --handler=sqlite \
+    --sqlite-url="file:$DB_DIR/" \
+    --listen-addr=127.0.0.1:27017 \
+    --debug-addr=127.0.0.1:8088 \
+    --telemetry=disable \
+    > "$HOME/ferretdb.log" 2>&1 &
+
+  echo $! > "$DBPID"
+
+  for _ in $(seq 1 15); do
+    if (echo > /dev/tcp/127.0.0.1/27017) 2>/dev/null; then
+      echo "  ✔ KHOEM-AI     :27017"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "  x KHOEM-AI not ready; see ~/ferretdb.log"
+  return 1
+}
+
 # MI-K 3D studio (~/MI-K-VISION-3D): UI :5176 (never 5173). Log: ~/mik-3d.log
 MIK_DIR="${MIK_DIR:-$HOME/MI-K-VISION-3D}"
 MIK_PORT="${MIK_PORT:-5176}"
@@ -141,7 +190,7 @@ start_mik() {
 CAI_SH="$HOME/CAI/ai.sh"
 start_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" start; }
 # stop_cai also stops the KSV UI/API and MI-K, so every stop path covers them
-stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; stop_mik; }
+stop_cai() { [ -f "$CAI_SH" ] && bash "$CAI_SH" stop >/dev/null 2>&1; stop_ksv; stop_mik; stop_db; }
 
 # ===== ai status =====
 svc() {
@@ -163,6 +212,7 @@ ai_status() {
   svc "CAI scan" 5180 /cai-scan.html
   svc "CAI share" 5181
   svc "KSV API" 3000
+  svc "KSV database" 8088 /debug/readyz
   svc "KSV UI" 5173
   svc "MI-K 3D" 5176
   svc "KHOEM_AI API" 8790
@@ -322,6 +372,7 @@ case "${1:-run}" in
     start_torch
     start_phone
     start_cai
+    start_db
     start_ksv
     start_mik
     bash "$LAUNCHER" run &
