@@ -20,6 +20,7 @@ import { evaluateSafetyForDevice } from "./core/safety/safety.engine.ts";
 import { auditDeviceCommand } from "./core/security/audit.log.ts";
 import { DefaultGatewayDispatcher } from "./core/gateway/gateway.dispatcher.ts";
 import { startMqttClient } from "./infrastructure/mqtt/client.ts";
+import { averageDurationMs, countByUtcDay, countByUtcHour, firstPerKey, topSitesByDevices } from "./infrastructure/database/portableAggregates.ts";
 import { registerDefaultProtocolAdapters } from "./core/protocol/adapters/index.ts";
 import { catalogMode, checkCatalogCommand } from "./core/devices/device.validator.ts";
 import { describeCatalog } from "./core/devices/device.catalog.ts";
@@ -3585,14 +3586,11 @@ app.get(
       }).lean();
       const orgStop = stops.find((x: any) => x.scope === "organization");
       const ids = devices.map((d: any) => d._id);
-      const lastEvents = ids.length
-        ? await SafetyLog.aggregate([
-            { $match: { deviceId: { $in: ids } } },
-            { $sort: { createdAt: -1 } },
-            { $group: { _id: "$deviceId", eventType: { $first: "$eventType" }, severity: { $first: "$severity" }, message: { $first: "$message" }, occurredAt: { $first: "$createdAt" } } },
-          ])
+      // FerretDB has no $first: read the newest events and keep the first one of each device in JS.
+      const recentEvents: any[] = ids.length
+        ? await SafetyLog.find({ deviceId: { $in: ids } }).sort({ createdAt: -1 }).limit(5000).lean()
         : [];
-      const lastById = new Map(lastEvents.map((e: any) => [String(e._id), e]));
+      const lastById = firstPerKey(recentEvents, "deviceId");
       const out = devices.map((d: any) => {
         const own = stops.find((x: any) => x.deviceId && String(x.deviceId) === String(d._id));
         const stopped = Boolean(orgStop || own);
@@ -3608,7 +3606,7 @@ app.get(
           controlMode: critical ? "read_only" : "controlled",
           isEmergencyStopped: stopped,
           lastEvent: last
-            ? { eventType: last.eventType, severity: last.severity, message: last.message, occurredAt: last.occurredAt }
+            ? { eventType: last.eventType, severity: last.severity, message: last.message, occurredAt: last.createdAt }
             : undefined,
         };
       });
@@ -4776,31 +4774,18 @@ async function resolveAIDevice(
           SafetyRule.countDocuments({ organizationId: orgId, isEnabled: true }),
           Device.find({ organizationId: orgId, gatewayId: { $ne: null } }).distinct("gatewayId"),
           Site.distinct("country", { organizationId: orgId, country: { $ne: null } }),
-          Command.aggregate([
-            { $match: { createdAt: { $gte: since24h } } },
-            { $group: { _id: { $hour: "$createdAt" }, count: { $sum: 1 } } },
-            { $sort: { _id: 1 } },
-          ]),
-          SafetyLog.aggregate([
-            { $match: { createdAt: { $gte: since24d } } },
-            { $group: { _id: { day: { $dayOfMonth: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } },
-            { $limit: 24 },
-          ]),
+          // FerretDB has no $hour/$dayOfMonth/$month: read the dates and count them in JS (portableAggregates.ts).
+          Command.find({ createdAt: { $gte: since24h } }).select("createdAt").lean().then((rows: any[]) => countByUtcHour(rows, "createdAt")),
+          SafetyLog.find({ createdAt: { $gte: since24d } }).select("createdAt").lean().then((rows: any[]) => countByUtcDay(rows, "createdAt").slice(-24)),
           SecurityIncident.countDocuments({ organizationId: orgId, status: { $ne: "resolved" } }),
-          Command.aggregate([
-            {
-              $match: {
-                sentAt: { $gte: since24h, $ne: null },
-                completedAt: { $ne: null },
-              },
-            },
-            {
-              $project: {
-                latency: { $subtract: ["$completedAt", "$sentAt"] },
-              },
-            },
-            { $group: { _id: null, avg: { $avg: "$latency" } } },
-          ]),
+          // FerretDB has no $subtract: average (completedAt - sentAt) in JS.
+          Command.find({ sentAt: { $gte: since24h, $ne: null }, completedAt: { $ne: null } })
+            .select("sentAt completedAt")
+            .lean()
+            .then((rows: any[]) => {
+              const avg = averageDurationMs(rows, "sentAt", "completedAt");
+              return avg === null ? [] : [{ avg }];
+            }),
           Organization.findById(orgId).lean(),
         ]);
 
@@ -4825,18 +4810,9 @@ async function resolveAIDevice(
         const uptimeDays = Math.max(1, Math.floor((now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000)));
 
         // Top sites by device count
-        const topSitesRaw = await Device.aggregate([
-          { $match: { organizationId: orgId, siteId: { $ne: null } } },
-          {
-            $group: {
-              _id: "$siteId",
-              total: { $sum: 1 },
-              online: { $sum: { $cond: [{ $eq: ["$status", "online"] }, 1, 0] } },
-            },
-          },
-          { $sort: { total: -1 } },
-          { $limit: 5 },
-        ]);
+        // FerretDB has no $cond/$eq: count total and online devices per site in JS.
+        const siteDevices: any[] = await Device.find({ organizationId: orgId, siteId: { $ne: null } }).select("siteId status").lean();
+        const topSitesRaw = topSitesByDevices(siteDevices, 5);
         const siteIds = topSitesRaw.map((s: { _id: unknown }) => s._id);
         const siteDocs = await Site.find({ _id: { $in: siteIds } }).lean();
         const siteById = new Map(siteDocs.map((s) => [String(s._id), s]));
