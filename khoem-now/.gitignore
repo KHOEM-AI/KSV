@@ -44,3 +44,4 @@ API/wire_*.py
 *.before-*
 *.orig
 *-old.*
+state.json
