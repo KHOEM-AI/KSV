@@ -246,6 +246,21 @@ cchk() { # name expected url [curl args...]   (optional=1 in CK_OPT -> warning o
   elif [ "${CK_OPT:-0}" = 1 ]; then printf '  ⚠ %-34s got %s, want %s (optional)\n' "$n" "$got" "$want"; CK_WARN=$((CK_WARN+1))
   else printf '  ✘ %-34s got %s, want %s\n' "$n" "$got" "$want"; CK_BAD=$((CK_BAD+1)); fi
 }
+# Like cchk, for KI routes that need x-ki-token. The token is read from ~/KI/.env and given to curl through a
+# config file descriptor, so it never appears on a command line (ps) and is never printed.
+kchk() { # name expected path   (CK_OPT=1 -> warning only)
+  local n="$1" want="$2" path="$3" tok got i
+  tok=$(grep -m1 '^KI_API_TOKEN=' "$HOME/KI/.env" 2>/dev/null | cut -d= -f2-)
+  if [ -z "$tok" ]; then printf '  ⚠ %-34s skipped (no KI_API_TOKEN in ~/KI/.env)\n' "$n"; CK_WARN=$((CK_WARN+1)); return; fi
+  for i in $(seq 1 "${AI_CHECK_WAIT:-1}"); do
+    got=$(curl -s -m 6 -o /dev/null -w '%{http_code}' -K <(printf 'header = "x-ki-token: %s"\n' "$tok") "http://127.0.0.1:5001$path" 2>/dev/null)
+    [ "$got" = "$want" ] && break
+    sleep 2
+  done
+  if [ "$got" = "$want" ]; then printf '  ✔ %-34s %s\n' "$n" "$got"; CK_OK=$((CK_OK+1))
+  elif [ "${CK_OPT:-0}" = 1 ]; then printf '  ⚠ %-34s got %s, want %s (optional)\n' "$n" "$got" "$want"; CK_WARN=$((CK_WARN+1))
+  else printf '  ✘ %-34s got %s, want %s\n' "$n" "$got" "$want"; CK_BAD=$((CK_BAD+1)); fi
+}
 ai_check() {
   CK_OK=0; CK_BAD=0; CK_WARN=0
   echo "KI (token required):"
@@ -266,6 +281,20 @@ ai_check() {
   cchk "KSV gateway (needs token)"    401 http://127.0.0.1:4000/api/chat
   cchk "CIDC health"                  200 http://127.0.0.1:8800/api/cidc/health
   CK_OPT=1 cchk "KSV API health"      200 http://127.0.0.1:3000/api/health
+  cchk "CIDC UI"                      200 http://127.0.0.1:5190/
+  echo "KI /v1 and /gw (token from ~/KI/.env):"
+  cchk "KI /v1, no token"             401 http://127.0.0.1:5001/v1
+  cchk "KI /gw, no token"             401 http://127.0.0.1:5001/gw
+  kchk "KI /v1 index"                 200 /v1
+  kchk "KI /v1/system"                200 /v1/system
+  kchk "KI /gw service list"          200 /gw
+  kchk "KI /v1/ksv"                   200 /v1/ksv
+  echo "Through the KI gateway (warning only: needs each module's key in ~/KI/.env):"
+  CK_OPT=1 kchk "gw ai health"        200 /gw/ai/api/health
+  CK_OPT=1 kchk "gw lang health"      200 /gw/lang/health
+  CK_OPT=1 kchk "gw ei-t health"      200 /gw/ei-t/health
+  CK_OPT=1 kchk "gw cidc health"      200 /gw/cidc/health
+  CK_OPT=1 kchk "gw iqai health"      200 /gw/iqai/health
   echo
   echo "ok=$CK_OK  bad=$CK_BAD  warn=$CK_WARN"
   [ "$CK_BAD" = 0 ]
